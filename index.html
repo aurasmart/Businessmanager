@@ -837,7 +837,7 @@
                     </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-item" style="cursor: default; background: #f9fafb;">
-                            <div style="font-weight: 600;" id="dropdownEmail">email@example.com</div>
+                            <div style="font-weight: 600;" id="dropdownEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="791c14181015391c01181409151c571a1614">[email&#160;protected]</a></div>
                             <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;" id="dropdownRole">Role: Viewer</div>
                         </div>
                         <div class="user-dropdown-item" onclick="handleLogout()">🚪 Logout</div>
@@ -1106,7 +1106,7 @@
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
@@ -1144,7 +1144,7 @@
         let selectedUserForPassword = null;
         
         // Backend API URL - Update this to your deployed backend URL
-        const BACKEND_API_URL = 'https://business-manager-backend-production-8034.up.railway.app/api/';  // Change to your production URL when deployed
+        const BACKEND_API_URL = 'https://business-manager-backend-production-8034.up.railway.app/api';  // ✅ No trailing slash!
 
         // ========================================
         // AUTHENTICATION
@@ -1496,7 +1496,18 @@
                     })
                 });
                 
-                const data = await response.json();
+                // ✅ Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    // Response is not JSON (probably HTML error page)
+                    const text = await response.text();
+                    console.error('❌ Non-JSON response:', text.substring(0, 200));
+                    throw new Error('Server error. Backend may be down or misconfigured. Check Railway logs.');
+                }
                 
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to create user');
@@ -1609,7 +1620,17 @@ They can login immediately!`);
                     })
                 });
                 
-                const data = await response.json();
+                // ✅ Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('❌ Non-JSON response:', text.substring(0, 200));
+                    throw new Error('Server error. Check backend logs.');
+                }
                 
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to reset password');
@@ -1652,7 +1673,17 @@ They can login immediately with the new password!`);
                     })
                 });
                 
-                const data = await response.json();
+                // ✅ Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('❌ Non-JSON response:', text.substring(0, 200));
+                    throw new Error('Server error. Check backend logs.');
+                }
                 
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to delete user');
@@ -3128,13 +3159,4 @@ ${email} has been completely removed from the system.`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
-
-        // Remove file from selection
-        function removeFile(id) {
-            selectedFiles = selectedFiles.filter(f => f.id !== id);
-            renderProjectSelectedFiles();
-        }
-    </script>
-</body>
-</html>
+    
