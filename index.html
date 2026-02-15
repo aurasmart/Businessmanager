@@ -2001,7 +2001,7 @@ ${email} has been completely removed from the system.`);
                 console.error('Error message:', error.message);
                 
                 if (error.code === 'permission-denied') {
-                    alert('⚠️ PERMISSION DENIED\n\nCannot write to Firebase.\n\nFix:\n1. Go to Firebase Console\n2. Click Firestore Database\n3. Click Rules tab\n4. Set: allow read, write: if true;\n5. Click Publish');
+                    alert('Logged Out');
                 } else {
                     alert('Failed to add customer: ' + error.message);
                 }
