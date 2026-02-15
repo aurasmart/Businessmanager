@@ -633,6 +633,70 @@
             color: #92400e;
         }
 
+        .role-superadmin {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        .user-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-card-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-card-email {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .password-display {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .copy-button:hover {
+            background: #1d4ed8;
+        }
+
         .user-menu {
             position: relative;
             display: inline-block;
@@ -743,6 +807,7 @@
                     <select id="signupRole" class="input">
                         <option value="viewer">Viewer (Read Only)</option>
                         <option value="admin">Admin (Full Access)</option>
+                        <option value="superadmin">Super Admin (User Management)</option>
                     </select>
                 </div>
                 <button class="btn btn-primary" onclick="handleSignup()">Create Account</button>
@@ -797,6 +862,7 @@
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('customers')">👥 Customers</button>
                 <button class="tab" onclick="switchTab('projects')">🏗️ Projects</button>
+                <button class="tab" id="userManagementTab" onclick="switchTab('users')" style="display: none;">⚙️ User Management</button>
             </div>
 
             <!-- Customers Tab -->
@@ -835,6 +901,132 @@
                     <!-- Project Details -->
                     <div id="projectDetailsPanel"></div>
                 </div>
+            </div>
+
+            <!-- User Management Tab (Super Admin Only) -->
+            <div id="usersTab" style="display: none;">
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>👥 User Management</h2>
+                        <button class="btn btn-primary" onclick="showCreateUserModal()">+ Create User</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="usersList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal (Super Admin) -->
+    <div class="modal" id="createUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New User</h2>
+                <button class="close-btn" onclick="closeModal('createUserModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="createUserError" class="error-message" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="createUserName" class="input" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="createUserEmail" class="input" placeholder="user@company.com">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="createUserRole" class="input">
+                        <option value="viewer">Viewer (Read Only)</option>
+                        <option value="admin">Admin (Full Access)</option>
+                        <option value="superadmin">Super Admin (User Management)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-secondary" onclick="generateRandomPassword()" style="width: 100%;">🎲 Generate Random Password</button>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="text" id="createUserPassword" class="input" placeholder="Min. 8 characters">
+                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                        User will receive this password. Ask them to change it after first login.
+                    </div>
+                </div>
+                <div id="generatedPasswordDisplay" style="display: none;">
+                    <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; display: block;">Generated Password:</label>
+                    <div class="password-display">
+                        <span id="generatedPasswordText"></span>
+                        <button class="copy-button" onclick="copyPassword()">📋 Copy</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #dc2626; margin-top: 0.25rem;">
+                        ⚠️ Save this password! Share it securely with the user.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createUserModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" onclick="createNewUser()" style="flex: 1">Create User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Role Modal -->
+    <div class="modal" id="changeRoleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change User Role</h2>
+                <button class="close-btn" onclick="closeModal('changeRoleModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem;">Change role for: <strong id="changeRoleUserEmail"></strong></p>
+                <div class="form-group">
+                    <label>New Role</label>
+                    <select id="newRoleSelect" class="input">
+                        <option value="viewer">Viewer (Read Only)</option>
+                        <option value="admin">Admin (Full Access)</option>
+                        <option value="superadmin">Super Admin (User Management)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('changeRoleModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" onclick="saveRoleChange()" style="flex: 1">Save Role</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal" id="resetPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reset User Password</h2>
+                <button class="close-btn" onclick="closeModal('resetPasswordModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem;">Reset password for: <strong id="resetPasswordUserEmail"></strong></p>
+                <div class="form-group">
+                    <button class="btn btn-secondary" onclick="generateResetPassword()" style="width: 100%;">🎲 Generate Random Password</button>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="text" id="resetPasswordInput" class="input" placeholder="Min. 8 characters">
+                </div>
+                <div id="resetPasswordDisplay" style="display: none;">
+                    <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; display: block;">Generated Password:</label>
+                    <div class="password-display">
+                        <span id="resetPasswordText"></span>
+                        <button class="copy-button" onclick="copyResetPassword()">📋 Copy</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #dc2626; margin-top: 0.25rem;">
+                        ⚠️ Save this password! Share it securely with the user.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('resetPasswordModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" onclick="resetUserPassword()" style="flex: 1">Reset Password</button>
             </div>
         </div>
     </div>
@@ -947,6 +1139,12 @@
         let editingProjectId = null;
         let currentUser = null;
         let userRole = null;
+        let allUsers = [];
+        let selectedUserForRole = null;
+        let selectedUserForPassword = null;
+        
+        // Backend API URL - Update this to your deployed backend URL
+        const BACKEND_API_URL = 'http://localhost:3000/api';  // Change to your production URL when deployed
 
         // ========================================
         // AUTHENTICATION
@@ -1077,23 +1275,58 @@
         }
 
         function isAdmin() {
-            return userRole === 'admin';
+            return userRole === 'admin' || userRole === 'superadmin';
+        }
+
+        function isSuperAdmin() {
+            return userRole === 'superadmin';
+        }
+
+        function canManageData() {
+            return userRole === 'admin' || userRole === 'superadmin';
+        }
+
+        function canManageUsers() {
+            return userRole === 'superadmin';
         }
 
         function updateUIForRole() {
             const isAdminUser = isAdmin();
+            const isSuperAdminUser = isSuperAdmin();
             
             // Update role badge
             const roleBadge = document.getElementById('userRoleBadge');
-            roleBadge.textContent = isAdminUser ? 'Admin' : 'Viewer';
-            roleBadge.className = isAdminUser ? 'role-badge-header role-admin' : 'role-badge-header role-viewer';
+            if (isSuperAdminUser) {
+                roleBadge.textContent = 'Super Admin';
+                roleBadge.className = 'role-badge-header role-superadmin';
+            } else if (isAdminUser) {
+                roleBadge.textContent = 'Admin';
+                roleBadge.className = 'role-badge-header role-admin';
+            } else {
+                roleBadge.textContent = 'Viewer';
+                roleBadge.className = 'role-badge-header role-viewer';
+            }
             
-            // Show/hide add buttons
-            document.getElementById('addCustomerBtn').style.display = isAdminUser ? 'block' : 'none';
-            document.getElementById('addProjectBtn').style.display = (isAdminUser && currentTab === 'projects') ? 'block' : 'none';
+            // Show/hide tabs and buttons
+            document.getElementById('userManagementTab').style.display = isSuperAdminUser ? 'block' : 'none';
+            document.getElementById('addCustomerBtn').style.display = canManageData() ? 'block' : 'none';
+            document.getElementById('addProjectBtn').style.display = (canManageData() && currentTab === 'projects') ? 'block' : 'none';
             
-            // Add read-only notice for viewers
-            if (!isAdminUser) {
+            // Add notices
+            if (isSuperAdminUser) {
+                const notice = document.createElement('div');
+                notice.className = 'readonly-notice';
+                notice.style.background = '#f3e8ff';
+                notice.style.borderColor = '#c084fc';
+                notice.style.color = '#6b21a8';
+                notice.innerHTML = '👑 <strong>Super Admin:</strong> You have full access to everything - user management AND business operations.';
+                notice.id = 'readonlyNotice';
+                
+                const container = document.getElementById('appContainer');
+                if (container && !document.getElementById('readonlyNotice')) {
+                    container.insertBefore(notice, container.firstChild);
+                }
+            } else if (!isAdminUser) {
                 const notice = document.createElement('div');
                 notice.className = 'readonly-notice';
                 notice.innerHTML = '👁️ <strong>View-Only Access:</strong> You can view all data but cannot make changes.';
@@ -1108,20 +1341,333 @@
                 if (notice) notice.remove();
             }
             
-            // Re-render UI to show/hide edit buttons
+            // Re-render UI
             if (currentTab === 'customers' && selectedCustomer) {
                 renderDetails();
             } else if (currentTab === 'projects' && selectedProject) {
                 renderProjectDetails();
+            } else if (currentTab === 'users' && isSuperAdminUser) {
+                loadAllUsers();
             }
         }
 
         function checkPermission(action = 'write') {
-            if (action === 'write' && !isAdmin()) {
+            if (action === 'write' && !canManageData()) {
                 alert('⛔ Permission Denied\n\nYou have view-only access. Contact an admin to make changes.');
                 return false;
             }
+            if (action === 'manage-users' && !isSuperAdmin()) {
+                alert('⛔ Permission Denied\n\nOnly Super Admins can manage users.');
+                return false;
+            }
             return true;
+        }
+
+        // ========================================
+        // USER MANAGEMENT (SUPER ADMIN ONLY)
+        // ========================================
+
+        async function loadAllUsers() {
+            if (!isSuperAdmin()) return;
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                allUsers = [];
+                usersSnapshot.forEach(doc => {
+                    allUsers.push({
+                        uid: doc.id,
+                        ...doc.data()
+                    });
+                });
+                renderUsersList();
+            } catch (error) {
+                console.error('Error loading users:', error);
+                alert('Failed to load users');
+            }
+        }
+
+        function renderUsersList() {
+            if (!isSuperAdmin()) return;
+            
+            const usersHtml = allUsers.length === 0 ?
+                '<div class="empty-state">No users yet</div>' :
+                allUsers.map(user => {
+                    const roleClass = `status-${user.role}`;
+                    const roleBadgeClass = user.role === 'superadmin' ? 'role-superadmin' : user.role === 'admin' ? 'role-admin' : 'role-viewer';
+                    const roleLabel = user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Viewer';
+                    
+                    return `
+                        <div class="user-card">
+                            <div class="user-card-header">
+                                <div>
+                                    <div class="user-card-name">${user.name || 'Unnamed User'}</div>
+                                    <div class="user-card-email">${user.email}</div>
+                                </div>
+                                <span class="status-badge ${roleBadgeClass}">${roleLabel}</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #6b7280;">
+                                Created: ${new Date(user.createdAt).toLocaleDateString()}
+                            </div>
+                            ${user.uid !== currentUser.uid ? `
+                                <div class="user-actions">
+                                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showChangeRoleModal('${user.uid}', '${user.email}', '${user.role}')">Change Role</button>
+                                    <button class="btn btn-warning" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showResetPasswordModal('${user.uid}', '${user.email}')">Reset Password</button>
+                                    <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="deleteUser('${user.uid}', '${user.email}')">Delete</button>
+                                </div>
+                            ` : '<div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem; font-style: italic;">This is your account</div>'}
+                        </div>
+                    `;
+                }).join('');
+            
+            document.getElementById('usersList').innerHTML = usersHtml;
+        }
+
+        function showCreateUserModal() {
+            if (!checkPermission('manage-users')) return;
+            
+            document.getElementById('createUserName').value = '';
+            document.getElementById('createUserEmail').value = '';
+            document.getElementById('createUserRole').value = 'viewer';
+            document.getElementById('createUserPassword').value = '';
+            document.getElementById('generatedPasswordDisplay').style.display = 'none';
+            document.getElementById('createUserError').style.display = 'none';
+            document.getElementById('createUserModal').classList.add('show');
+        }
+
+        function generateRandomPassword() {
+            const length = 12;
+            const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                password += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            document.getElementById('createUserPassword').value = password;
+            document.getElementById('generatedPasswordText').textContent = password;
+            document.getElementById('generatedPasswordDisplay').style.display = 'block';
+        }
+
+        function copyPassword() {
+            const password = document.getElementById('generatedPasswordText').textContent;
+            navigator.clipboard.writeText(password).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        async function createNewUser() {
+            if (!checkPermission('manage-users')) return;
+            
+            const name = document.getElementById('createUserName').value.trim();
+            const email = document.getElementById('createUserEmail').value.trim();
+            const role = document.getElementById('createUserRole').value;
+            const password = document.getElementById('createUserPassword').value;
+            
+            const errorDiv = document.getElementById('createUserError');
+            
+            if (!name || !email || !password) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (password.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Get current user's auth token
+                const idToken = await currentUser.getIdToken();
+                
+                // Call backend API to create user
+                const response = await fetch(`${BACKEND_API_URL}/users/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        displayName: name,
+                        role: role
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create user');
+                }
+                
+                console.log('✅ User created successfully:', data);
+                alert(`✅ User created successfully!
+
+Email: ${email}
+Password: ${password}
+Role: ${role === 'superadmin' ? 'Super Admin' : role === 'admin' ? 'Admin' : 'Viewer'}
+
+Share these credentials securely with the user.
+They can login immediately!`);
+                
+                closeModal('createUserModal');
+                loadAllUsers();
+                
+            } catch (error) {
+                console.error('❌ Error creating user:', error);
+                errorDiv.textContent = 'Failed to create user: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showChangeRoleModal(uid, email, currentRole) {
+            if (!checkPermission('manage-users')) return;
+            
+            selectedUserForRole = uid;
+            document.getElementById('changeRoleUserEmail').textContent = email;
+            document.getElementById('newRoleSelect').value = currentRole;
+            document.getElementById('changeRoleModal').classList.add('show');
+        }
+
+        async function saveRoleChange() {
+            if (!checkPermission('manage-users')) return;
+            
+            const newRole = document.getElementById('newRoleSelect').value;
+            
+            try {
+                await db.collection('users').doc(selectedUserForRole).update({
+                    role: newRole
+                });
+                
+                console.log('✅ Role updated successfully');
+                alert('Role updated successfully! User will see changes on next login.');
+                closeModal('changeRoleModal');
+                loadAllUsers();
+            } catch (error) {
+                console.error('Error updating role:', error);
+                alert('Failed to update role: ' + error.message);
+            }
+        }
+
+        function showResetPasswordModal(uid, email) {
+            if (!checkPermission('manage-users')) return;
+            
+            selectedUserForPassword = { uid, email };
+            document.getElementById('resetPasswordUserEmail').textContent = email;
+            document.getElementById('resetPasswordInput').value = '';
+            document.getElementById('resetPasswordDisplay').style.display = 'none';
+            document.getElementById('resetPasswordModal').classList.add('show');
+        }
+
+        function generateResetPassword() {
+            const length = 12;
+            const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                password += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            document.getElementById('resetPasswordInput').value = password;
+            document.getElementById('resetPasswordText').textContent = password;
+            document.getElementById('resetPasswordDisplay').style.display = 'block';
+        }
+
+        function copyResetPassword() {
+            const password = document.getElementById('resetPasswordText').textContent;
+            navigator.clipboard.writeText(password).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        async function resetUserPassword() {
+            if (!checkPermission('manage-users')) return;
+            
+            const newPassword = document.getElementById('resetPasswordInput').value;
+            
+            if (!newPassword || newPassword.length < 8) {
+                alert('Password must be at least 8 characters');
+                return;
+            }
+            
+            try {
+                // Get current user's auth token
+                const idToken = await currentUser.getIdToken();
+                
+                // Call backend API to reset password
+                const response = await fetch(`${BACKEND_API_URL}/users/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        email: selectedUserForPassword.email,
+                        newPassword: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to reset password');
+                }
+                
+                console.log('✅ Password reset successfully');
+                alert(`✅ Password reset successfully!
+
+User: ${selectedUserForPassword.email}
+New Password: ${newPassword}
+
+Share this password securely with the user.
+They can login immediately with the new password!`);
+                
+                closeModal('resetPasswordModal');
+            } catch (error) {
+                console.error('❌ Error resetting password:', error);
+                alert('Failed to reset password: ' + error.message);
+            }
+        }
+
+        async function deleteUser(uid, email) {
+            if (!checkPermission('manage-users')) return;
+            
+            if (!confirm(`Are you sure you want to delete user: ${email}?\n\nThis will:\n- Remove from Firestore\n- Delete Firebase Authentication account\n\nThis action cannot be undone.`)) return;
+            
+            try {
+                // Get current user's auth token
+                const idToken = await currentUser.getIdToken();
+                
+                // Call backend API to delete user completely
+                const response = await fetch(`${BACKEND_API_URL}/users/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        uid: uid
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to delete user');
+                }
+                
+                console.log('✅ User deleted successfully');
+                alert(`✅ User deleted successfully!
+
+${email} has been completely removed from the system.`);
+                
+                loadAllUsers();
+            } catch (error) {
+                console.error('❌ Error deleting user:', error);
+                alert('Failed to delete user: ' + error.message);
+            }
         }
 
         // Firebase Connection Test
@@ -1880,13 +2426,24 @@
             if (tab === 'customers') {
                 document.getElementById('customersTab').style.display = 'block';
                 document.getElementById('projectsTab').style.display = 'none';
-                document.getElementById('addCustomerBtn').style.display = 'block';
+                document.getElementById('usersTab').style.display = 'none';
+                document.getElementById('addCustomerBtn').style.display = canManageData() ? 'block' : 'none';
                 document.getElementById('addProjectBtn').style.display = 'none';
-            } else {
+            } else if (tab === 'projects') {
                 document.getElementById('customersTab').style.display = 'none';
                 document.getElementById('projectsTab').style.display = 'block';
+                document.getElementById('usersTab').style.display = 'none';
                 document.getElementById('addCustomerBtn').style.display = 'none';
-                document.getElementById('addProjectBtn').style.display = 'block';
+                document.getElementById('addProjectBtn').style.display = canManageData() ? 'block' : 'none';
+            } else if (tab === 'users') {
+                document.getElementById('customersTab').style.display = 'none';
+                document.getElementById('projectsTab').style.display = 'none';
+                document.getElementById('usersTab').style.display = 'block';
+                document.getElementById('addCustomerBtn').style.display = 'none';
+                document.getElementById('addProjectBtn').style.display = 'none';
+                if (isSuperAdmin()) {
+                    loadAllUsers();
+                }
             }
         }
 
