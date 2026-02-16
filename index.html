@@ -1416,9 +1416,9 @@
                     <label>📊 BOQ (Bill of Quantities)</label>
                     <div class="file-upload" onclick="document.getElementById('leadBOQFiles').click()">
                         <div>📎 Click to upload BOQ files</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Excel, PDF, Word - No size limit</div>
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Any file type • No size limit</div>
                     </div>
-                    <input type="file" id="leadBOQFiles" multiple accept=".pdf,.xlsx,.xls,.doc,.docx,.csv" style="display: none" onchange="handleLeadBOQFiles(this.files)">
+                    <input type="file" id="leadBOQFiles" multiple style="display: none" onchange="handleLeadBOQFiles(this.files)">
                     <div class="selected-files" id="leadBOQFilesList"></div>
                 </div>
 
@@ -1427,9 +1427,9 @@
                     <label>🎨 Design Bundle</label>
                     <div class="file-upload" onclick="document.getElementById('leadDesignFiles').click()">
                         <div>📎 Click to upload design files</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Images, PDFs, CAD files - No size limit</div>
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Any file type • No size limit</div>
                     </div>
-                    <input type="file" id="leadDesignFiles" multiple accept="image/*,.pdf,.dwg,.dxf,.skp" style="display: none" onchange="handleLeadDesignFiles(this.files)">
+                    <input type="file" id="leadDesignFiles" multiple style="display: none" onchange="handleLeadDesignFiles(this.files)">
                     <div class="selected-files" id="leadDesignFilesList"></div>
                 </div>
             </div>
@@ -3277,14 +3277,12 @@ ${email} has been completely removed from the system.`);
                                 <div class="files-grid">
                                     ${m.files.map(f => `
                                         <div class="attached-file">
-                                            ${f.type.startsWith('image/') ? 
-                                                `<img src="${f.data}" class="file-thumbnail" alt="${f.name}">` :
-                                                `<div class="file-icon">${getFileIcon(f.type)}</div>`
-                                            }
+                                            <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                                             <div style="flex: 1; min-width: 0; overflow: hidden;">
                                                 <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                                <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                             </div>
-                                            <button class="download-btn" onclick='downloadFile(${JSON.stringify(f)})' title="Download">⬇️</button>
+                                            <a href="${f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
                                         </div>
                                     `).join('')}
                                 </div>
@@ -3474,10 +3472,10 @@ ${email} has been completely removed from the system.`);
                                     <button class="btn btn-warning" onclick="addProjectMaterial()">Add Material</button>
                                 </div>
                                 <div class="file-upload" onclick="document.getElementById('projectFileInput').click()">
-                                    <div>📎 Click to attach files</div>
-                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Max 2MB per file</div>
+                                    <div>📎 Click to upload files to OneDrive</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Any file type, any size</div>
                                 </div>
-                                <input type="file" id="projectFileInput" multiple accept="image/*,.pdf" style="display: none" onchange="handleProjectFiles(this.files)">
+                                <input type="file" id="projectFileInput" multiple style="display: none" onchange="handleProjectFiles(this.files)">
                                 <div class="selected-files" id="projectSelectedFiles"></div>
                             </div>
                         ` : ''}
@@ -3577,26 +3575,107 @@ ${email} has been completely removed from the system.`);
             }
         }
 
-        function handleProjectFiles(files) {
-            Array.from(files).forEach(file => {
-                if (file.size > 2 * 1024 * 1024) {
-                    alert(file.name + ' is too large (max 2MB)');
-                    return;
+        async function handleProjectFiles(files) {
+            for (const file of Array.from(files)) {
+                // Initialize OneDrive if not already done
+                if (!msalInstance) {
+                    initializeOneDrive();
+                }
+                
+                // Check OneDrive connection
+                if (!oneDriveAccessToken) {
+                    const connected = await connectOneDrive();
+                    if (!connected) {
+                        alert('Please connect OneDrive to upload files');
+                        return;
+                    }
                 }
 
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    selectedFiles.push({
-                        id: Date.now().toString() + Math.random(),
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        data: e.target.result
-                    });
-                    renderProjectSelectedFiles();
+                reader.onload = async (e) => {
+                    try {
+                        const fileData = {
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            data: e.target.result
+                        };
+
+                        // Show upload progress
+                        document.getElementById('syncStatus').textContent = `Uploading ${file.name} to OneDrive...`;
+
+                        // Upload to OneDrive (using 'materials' folder)
+                        const folderPath = 'Business Manager Files/Materials';
+                        const timestamp = Date.now();
+                        const randomId = Math.random().toString(36).substr(2, 9);
+                        const fileName = `material_${timestamp}_${randomId}_${file.name}`;
+                        const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${folderPath}/${fileName}:/content`;
+                        
+                        // Convert base64 to blob
+                        const base64Data = fileData.data.split(',')[1];
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: file.type });
+
+                        const response = await fetch(uploadUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${oneDriveAccessToken}`,
+                                'Content-Type': file.type
+                            },
+                            body: blob
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Upload failed: ${response.statusText}`);
+                        }
+
+                        const result = await response.json();
+
+                        // Create sharing link
+                        const shareUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${result.id}/createLink`;
+                        const shareResponse = await fetch(shareUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${oneDriveAccessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                type: 'view',
+                                scope: 'anonymous'
+                            })
+                        });
+
+                        const shareResult = await shareResponse.json();
+
+                        const oneDriveFile = {
+                            id: result.id,
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            oneDriveId: result.id,
+                            webUrl: result.webUrl,
+                            downloadUrl: result['@microsoft.graph.downloadUrl'],
+                            shareLink: shareResult.link.webUrl,
+                            uploadedAt: new Date().toISOString()
+                        };
+                        
+                        selectedFiles.push(oneDriveFile);
+                        renderProjectSelectedFiles();
+
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        alert(`Failed to upload ${file.name}: ${error.message}`);
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    }
                 };
                 reader.readAsDataURL(file);
-            });
+            }
         }
 
         function renderProjectSelectedFiles() {
@@ -3607,18 +3686,15 @@ ${email} has been completely removed from the system.`);
 
             const html = `
                 <div style="margin-top: 0.75rem;">
-                    <div style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;">Selected Files:</div>
+                    <div style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;">Uploaded Files:</div>
                     ${selectedFiles.map(f => `
                         <div class="file-item">
-                            ${f.type.startsWith('image/') ?
-                                `<img src="${f.data}" class="file-thumbnail" alt="${f.name}">` :
-                                `<div class="file-icon">${getFileIcon(f.type)}</div>`
-                            }
+                            <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.name}</div>
-                                <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(f.size)}</div>
+                                <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(f.size)} • OneDrive</div>
                             </div>
-                            <button class="btn btn-danger" onclick="removeFile('${f.id}')">×</button>
+                            <button class="btn btn-danger" onclick="removeFile('${f.id || f.oneDriveId}')">×</button>
                         </div>
                     `).join('')}
                 </div>
