@@ -761,6 +761,89 @@
             font-size: 0.875rem;
             color: #92400e;
         }
+
+        /* Lead Pipeline Styles */
+        .lead-pipeline {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem;
+            min-height: 500px;
+        }
+
+        .lead-column {
+            flex: 0 0 280px;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .lead-column-header {
+            font-weight: 600;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            color: white;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .lead-column-count {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-left: 0.5rem;
+        }
+
+        .lead-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lead-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .lead-card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .lead-card-company {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .lead-card-value {
+            font-size: 0.875rem;
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .lead-card-date {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+
+        .stage-new { background: #3b82f6; }
+        .stage-site_survey { background: #06b6d4; }
+        .stage-initial_quote { background: #8b5cf6; }
+        .stage-negotiation { background: #f59e0b; }
+        .stage-final_quote { background: #ec4899; }
+        .stage-mockup { background: #6366f1; }
+        .stage-won { background: #10b981; }
+        .stage-loi { background: #14b8a6; }
+        .stage-on_hold { background: #64748b; }
+        .stage-dropped { background: #ef4444; }
     </style>
 </head>
 <body>
@@ -825,7 +908,6 @@
                 <span class="sync-status" id="syncStatus">☁️ Cloud Sync Active</span>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="btn btn-secondary" onclick="testFirebaseConnection()" style="background: #10b981; color: white; border: none;">🧪 Test Firebase</button>
                 <button class="btn btn-primary" id="addCustomerBtn" onclick="showAddCustomerModal()">+ Add Customer</button>
                 <button class="btn btn-primary" id="addProjectBtn" onclick="showAddProjectModal()" style="display: none;">+ Add Project</button>
                 
@@ -837,7 +919,7 @@
                     </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-item" style="cursor: default; background: #f9fafb;">
-                            <div style="font-weight: 600;" id="dropdownEmail">email@example.com</div>
+                            <div style="font-weight: 600;" id="dropdownEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d0b5bdb1b9bc90b5a8b1bda0bcb5feb3bfbd">[email&#160;protected]</a></div>
                             <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;" id="dropdownRole">Role: Viewer</div>
                         </div>
                         <div class="user-dropdown-item" onclick="handleLogout()">🚪 Logout</div>
@@ -860,9 +942,52 @@
         <div id="mainContent" style="display: none;">
             <!-- Tabs -->
             <div class="tabs">
+                <button class="tab" onclick="switchTab('leads')">🎯 Sales Leads</button>
                 <button class="tab active" onclick="switchTab('customers')">👥 Customers</button>
                 <button class="tab" onclick="switchTab('projects')">🏗️ Projects</button>
                 <button class="tab" id="userManagementTab" onclick="switchTab('users')" style="display: none;">⚙️ User Management</button>
+            </div>
+
+            <!-- Leads Tab -->
+            <div id="leadsTab" style="display: none;">
+                <div class="grid">
+                    <!-- Lead Pipeline -->
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="text" class="search-box" placeholder="🔍 Search leads..." id="leadSearchInput" oninput="filterLeads()" style="margin: 0;">
+                                    <select class="input" id="leadStageFilter" onchange="filterLeadsByStage()" style="width: auto; margin: 0;">
+                                        <option value="all">All Stages</option>
+                                        <option value="new">New</option>
+                                        <option value="site_survey">Site Survey Scheduled</option>
+                                        <option value="initial_quote">Initial Quote Shared</option>
+                                        <option value="negotiation">Negotiation</option>
+                                        <option value="final_quote">Final Quote Shared</option>
+                                        <option value="mockup">Mockup</option>
+                                        <option value="won">Won with Token Advance</option>
+                                        <option value="loi">LOI Received</option>
+                                        <option value="on_hold">On Hold</option>
+                                        <option value="dropped">Dropped</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="showAddLeadModal()">+ Add Lead</button>
+                            </div>
+                        </div>
+                        <div class="lead-pipeline" id="leadPipeline"></div>
+                    </div>
+
+                    <!-- Lead Details Panel -->
+                    <div class="card" style="grid-column: 1 / -1;" id="leadDetailsPanelCard" style="display: none;">
+                        <div class="card-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Lead Details</h3>
+                                <button class="btn btn-secondary" onclick="closeLeadDetails()">✕ Close</button>
+                            </div>
+                        </div>
+                        <div id="leadDetailsPanel"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Customers Tab -->
@@ -1105,6 +1230,216 @@
         </div>
     </div>
 
+    <!-- Generate Delivery Challan Modal -->
+    <div class="modal" id="challanModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="challanModalTitle">Generate Delivery Challan</h2>
+                <span class="close" onclick="closeModal('challanModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Challan Number*</label>
+                    <input type="text" class="input" id="challanNumber" placeholder="DC-001">
+                </div>
+                <div class="form-group">
+                    <label>Delivery Date*</label>
+                    <input type="date" class="input" id="challanDeliveryDate">
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Number</label>
+                    <input type="text" class="input" id="challanVehicle" placeholder="MH-01-AB-1234">
+                </div>
+                <div class="form-group">
+                    <label>Received By</label>
+                    <input type="text" class="input" id="challanReceivedBy" placeholder="Name of receiver">
+                </div>
+                <div class="form-group">
+                    <label>Select Materials to Deliver*</label>
+                    <div id="materialCheckboxes" style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea class="input" id="challanRemarks" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('challanModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDeliveryChallan()" style="flex: 1">Generate Challan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Installation/Handover Modal -->
+    <div class="modal" id="installationModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Add Installation / Handover</h2>
+                <span class="close" onclick="closeModal('installationModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Delivered Item*</label>
+                    <select class="input" id="installationItemSelect">
+                        <option value="">-- Select Item --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Item Name*</label>
+                    <input type="text" class="input" id="installationItemName" placeholder="Material/Item name">
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="text" class="input" id="installationQuantity" placeholder="e.g., 50 bags, 100 sq ft">
+                </div>
+                <div class="form-group">
+                    <label>Status*</label>
+                    <select class="input" id="installationStatus">
+                        <option value="pending">Pending</option>
+                        <option value="installed">Installed</option>
+                        <option value="handed_over">Handed Over</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Installation Date</label>
+                    <input type="date" class="input" id="installationDate">
+                </div>
+                <div class="form-group">
+                    <label>Installed By</label>
+                    <input type="text" class="input" id="installedBy" placeholder="Contractor/Team name">
+                </div>
+                <div class="form-group">
+                    <label>Handover Date</label>
+                    <input type="date" class="input" id="handoverDate">
+                </div>
+                <div class="form-group">
+                    <label>Handed Over To</label>
+                    <input type="text" class="input" id="handedOverTo" placeholder="Client/Customer name">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" class="input" id="installationLocation" placeholder="e.g., Bedroom 1, Kitchen">
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea class="input" id="installationRemarks" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('installationModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-success" onclick="saveInstallation()" style="flex: 1">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Lead Modal -->
+    <div class="modal" id="leadModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="leadModalTitle">Add Sales Lead</h2>
+                <span class="close" onclick="closeModal('leadModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Contact Person*</label>
+                        <input type="text" class="input" id="leadContactPerson" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" class="input" id="leadCompany" placeholder="ABC Corporation">
+                    </div>
+                    <div class="form-group">
+                        <label>Email*</label>
+                        <input type="email" class="input" id="leadEmail" placeholder="contact@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone*</label>
+                        <input type="tel" class="input" id="leadPhone" placeholder="+91 98765 43210">
+                    </div>
+                    <div class="form-group">
+                        <label>Project Type</label>
+                        <input type="text" class="input" id="leadProjectType" placeholder="e.g., Office Interior, Home Automation">
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Value</label>
+                        <input type="number" class="input" id="leadValue" placeholder="500000">
+                    </div>
+                    <div class="form-group">
+                        <label>Stage*</label>
+                        <select class="input" id="leadStage">
+                            <option value="new">New</option>
+                            <option value="site_survey">Site Survey Scheduled</option>
+                            <option value="initial_quote">Initial Quote Shared</option>
+                            <option value="negotiation">Negotiation</option>
+                            <option value="final_quote">Final Quote Shared</option>
+                            <option value="mockup">Mockup</option>
+                            <option value="won">Won with Token Advance</option>
+                            <option value="loi">LOI Received</option>
+                            <option value="on_hold">On Hold</option>
+                            <option value="dropped">Dropped</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <select class="input" id="leadSource">
+                            <option value="">Select source...</option>
+                            <option value="website">Website</option>
+                            <option value="referral">Referral</option>
+                            <option value="cold_call">Cold Call</option>
+                            <option value="social_media">Social Media</option>
+                            <option value="exhibition">Exhibition</option>
+                            <option value="email_campaign">Email Campaign</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Expected Close Date</label>
+                        <input type="date" class="input" id="leadCloseDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="input" id="leadPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Requirements/Notes</label>
+                    <textarea class="input" id="leadNotes" rows="4" placeholder="Project requirements, budget constraints, timeline..."></textarea>
+                </div>
+                
+                <!-- BOQ Files Section -->
+                <div class="form-group">
+                    <label>📊 BOQ (Bill of Quantities)</label>
+                    <div class="file-upload" onclick="document.getElementById('leadBOQFiles').click()">
+                        <div>📎 Click to upload BOQ files</div>
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Excel, PDF, Word - No size limit</div>
+                    </div>
+                    <input type="file" id="leadBOQFiles" multiple accept=".pdf,.xlsx,.xls,.doc,.docx,.csv" style="display: none" onchange="handleLeadBOQFiles(this.files)">
+                    <div class="selected-files" id="leadBOQFilesList"></div>
+                </div>
+
+                <!-- Design Bundle Files Section -->
+                <div class="form-group">
+                    <label>🎨 Design Bundle</label>
+                    <div class="file-upload" onclick="document.getElementById('leadDesignFiles').click()">
+                        <div>📎 Click to upload design files</div>
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Images, PDFs, CAD files - No size limit</div>
+                    </div>
+                    <input type="file" id="leadDesignFiles" multiple accept="image/*,.pdf,.dwg,.dxf,.skp" style="display: none" onchange="handleLeadDesignFiles(this.files)">
+                    <div class="selected-files" id="leadDesignFilesList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('leadModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" onclick="saveLead()" style="flex: 1" id="saveLeadBtn">Add Lead</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -1131,12 +1466,19 @@
         let projectsListener;
         let customers = [];
         let projects = [];
+        let leads = [];
         let selectedCustomer = null;
         let selectedProject = null;
+        let selectedLead = null;
         let selectedFiles = [];
+        let selectedBOQFiles = [];
+        let selectedDesignFiles = [];
         let currentTab = 'customers';
         let projectStageFilter = 'all';
+        let leadStageFilter = 'all';
         let editingProjectId = null;
+        let editingLeadId = null;
+        let leadsListener;
         let currentUser = null;
         let userRole = null;
         let allUsers = [];
@@ -1931,6 +2273,36 @@ ${email} has been completely removed from the system.`);
             }, (error) => {
                 console.error('❌ Projects snapshot error:', error);
             });
+
+            // Listen to leads real-time updates
+            leadsListener = db.collection('leads').onSnapshot((snapshot) => {
+                console.log('📡 Received leads update:', snapshot.size, 'leads');
+                leads = [];
+                snapshot.forEach((doc) => {
+                    leads.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Sort by creation date
+                leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                if (currentTab === 'leads') {
+                    renderLeadPipeline();
+                }
+                
+                // Update selected lead if viewing one
+                if (selectedLead) {
+                    const updated = leads.find(l => l.id === selectedLead.id);
+                    if (updated) {
+                        selectedLead = updated;
+                        renderLeadDetails();
+                    }
+                }
+            }, (error) => {
+                console.error('❌ Leads snapshot error:', error);
+            });
         }
 
         // Fallback to localStorage if Firebase not configured
@@ -1943,16 +2315,22 @@ ${email} has been completely removed from the system.`);
             if (projectData) {
                 projects = JSON.parse(projectData);
             }
+            const leadsData = localStorage.getItem('business-manager-leads');
+            if (leadsData) {
+                leads = JSON.parse(leadsData);
+            }
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             renderCustomerList();
             renderProjectList();
+            renderLeadPipeline();
             renderDetails();
         }
 
         function saveToLocalStorage() {
             localStorage.setItem('business-manager-data', JSON.stringify(customers));
             localStorage.setItem('business-manager-projects', JSON.stringify(projects));
+            localStorage.setItem('business-manager-leads', JSON.stringify(leads));
         }
 
         // Add customer
@@ -2423,19 +2801,30 @@ ${email} has been completely removed from the system.`);
             event.target.classList.add('active');
             
             // Show/hide content
-            if (tab === 'customers') {
+            if (tab === 'leads') {
+                document.getElementById('leadsTab').style.display = 'block';
+                document.getElementById('customersTab').style.display = 'none';
+                document.getElementById('projectsTab').style.display = 'none';
+                document.getElementById('usersTab').style.display = 'none';
+                document.getElementById('addCustomerBtn').style.display = 'none';
+                document.getElementById('addProjectBtn').style.display = 'none';
+                renderLeadPipeline();
+            } else if (tab === 'customers') {
+                document.getElementById('leadsTab').style.display = 'none';
                 document.getElementById('customersTab').style.display = 'block';
                 document.getElementById('projectsTab').style.display = 'none';
                 document.getElementById('usersTab').style.display = 'none';
                 document.getElementById('addCustomerBtn').style.display = canManageData() ? 'block' : 'none';
                 document.getElementById('addProjectBtn').style.display = 'none';
             } else if (tab === 'projects') {
+                document.getElementById('leadsTab').style.display = 'none';
                 document.getElementById('customersTab').style.display = 'none';
                 document.getElementById('projectsTab').style.display = 'block';
                 document.getElementById('usersTab').style.display = 'none';
                 document.getElementById('addCustomerBtn').style.display = 'none';
                 document.getElementById('addProjectBtn').style.display = canManageData() ? 'block' : 'none';
             } else if (tab === 'users') {
+                document.getElementById('leadsTab').style.display = 'none';
                 document.getElementById('customersTab').style.display = 'none';
                 document.getElementById('projectsTab').style.display = 'none';
                 document.getElementById('usersTab').style.display = 'block';
@@ -2740,6 +3129,78 @@ ${email} has been completely removed from the system.`);
                     </div>
                 `).join('');
 
+            // Delivery Challans HTML
+            const deliveryChallans = selectedProject.deliveryChallans || [];
+            const deliveryChallansHtml = deliveryChallans.length === 0 ?
+                '<div class="empty-state">No delivery challans yet</div>' :
+                deliveryChallans.map(dc => `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-title">Challan #${dc.challanNumber}</div>
+                            <div class="item-detail">
+                                📅 Date: ${new Date(dc.deliveryDate).toLocaleDateString()}
+                                ${dc.vehicleNumber ? ` | 🚛 Vehicle: ${dc.vehicleNumber}` : ''}
+                            </div>
+                            <div class="item-date">
+                                <strong>Items:</strong> ${dc.items.map(item => `${item.name} (${item.quantity})`).join(', ')}
+                            </div>
+                            ${dc.receivedBy ? `<div class="item-date">Received by: ${dc.receivedBy}</div>` : ''}
+                            ${dc.remarks ? `<div class="item-date">Remarks: ${dc.remarks}</div>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary" onclick="downloadChallan('${dc.id}')">📄 Download PDF</button>
+                            ${isAdmin() ? `<button class="btn btn-danger" onclick="deleteDeliveryChallan('${dc.id}')">Delete</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            // Material Installed/Handover HTML
+            const installations = selectedProject.installations || [];
+            const installationsHtml = installations.length === 0 ?
+                '<div class="empty-state">No installations/handovers yet</div>' :
+                installations.map(inst => {
+                    const statusColors = {
+                        'installed': 'green',
+                        'handed_over': 'blue',
+                        'pending': 'orange'
+                    };
+                    const statusLabels = {
+                        'installed': 'Installed',
+                        'handed_over': 'Handed Over',
+                        'pending': 'Pending'
+                    };
+                    const statusColor = statusColors[inst.status] || 'gray';
+                    const statusLabel = statusLabels[inst.status] || inst.status;
+                    
+                    return `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-title">
+                                ${inst.itemName}
+                                <span class="status-badge ${statusColor}" style="display: inline-block; margin-left: 0.5rem; font-size: 0.75rem;">
+                                    ${statusLabel}
+                                </span>
+                            </div>
+                            <div class="item-detail">
+                                ${inst.installationDate ? `🔧 Installed: ${new Date(inst.installationDate).toLocaleDateString()}` : ''}
+                                ${inst.installationDate && inst.handoverDate ? ' | ' : ''}
+                                ${inst.handoverDate ? `✅ Handed Over: ${new Date(inst.handoverDate).toLocaleDateString()}` : ''}
+                            </div>
+                            ${inst.quantity ? `<div class="item-date">Quantity: ${inst.quantity}</div>` : ''}
+                            ${inst.installedBy ? `<div class="item-date">Installed by: ${inst.installedBy}</div>` : ''}
+                            ${inst.handedOverTo ? `<div class="item-date">Handed over to: ${inst.handedOverTo}</div>` : ''}
+                            ${inst.location ? `<div class="item-date">Location: ${inst.location}</div>` : ''}
+                            ${inst.remarks ? `<div class="item-date">Remarks: ${inst.remarks}</div>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            ${isAdmin() ? `
+                                <button class="btn btn-secondary" onclick="updateInstallationStatus('${inst.id}')">Update Status</button>
+                                <button class="btn btn-danger" onclick="deleteInstallation('${inst.id}')">Delete</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `}).join('');
+
             document.getElementById('projectDetailsPanel').innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <!-- Project Header -->
@@ -2856,6 +3317,32 @@ ${email} has been completely removed from the system.`);
                             </div>
                         ` : ''}
                         <div>${materialsHtml}</div>
+                    </div>
+
+                    <!-- Delivery Challan Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>🚚 Delivery Challans</span>
+                                ${isAdmin() && materials.length > 0 ? `
+                                    <button class="btn btn-primary" onclick="showGenerateChallanModal()">+ Generate Challan</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div>${deliveryChallansHtml}</div>
+                    </div>
+
+                    <!-- Material Installed/Handover Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>✅ Material Installed / Handover</span>
+                                ${isAdmin() && deliveryChallans.length > 0 ? `
+                                    <button class="btn btn-success" onclick="showInstallationModal()">+ Add Installation/Handover</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div>${installationsHtml}</div>
                     </div>
                 </div>
             `;
@@ -3036,6 +3523,974 @@ ${email} has been completely removed from the system.`);
             }
         }
 
+        // ========================================
+        // DELIVERY CHALLAN FUNCTIONS
+        // ========================================
+
+        function showGenerateChallanModal() {
+            if (!checkPermission('write')) return;
+            
+            const materials = selectedProject.materials || [];
+            if (materials.length === 0) {
+                alert('No materials available to create delivery challan');
+                return;
+            }
+
+            // Populate material checkboxes
+            const checkboxContainer = document.getElementById('materialCheckboxes');
+            checkboxContainer.innerHTML = materials.map(m => `
+                <div style="padding: 0.5rem; border-bottom: 1px solid #f3f4f6;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" value="${m.id}" data-name="${m.name}" data-quantity="${m.quantity || ''}" style="margin-right: 0.5rem;">
+                        <span>${m.name}${m.quantity ? ` (${m.quantity})` : ''}</span>
+                    </label>
+                </div>
+            `).join('');
+
+            // Set default challan number
+            const challanCount = (selectedProject.deliveryChallans || []).length + 1;
+            document.getElementById('challanNumber').value = `DC-${String(challanCount).padStart(3, '0')}`;
+            
+            // Set today's date
+            document.getElementById('challanDeliveryDate').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('challanModal').classList.add('show');
+        }
+
+        async function saveDeliveryChallan() {
+            if (!checkPermission('write')) return;
+
+            const challanNumber = document.getElementById('challanNumber').value.trim();
+            const deliveryDate = document.getElementById('challanDeliveryDate').value;
+            const vehicleNumber = document.getElementById('challanVehicle').value.trim();
+            const receivedBy = document.getElementById('challanReceivedBy').value.trim();
+            const remarks = document.getElementById('challanRemarks').value.trim();
+
+            if (!challanNumber) {
+                alert('Please enter challan number');
+                return;
+            }
+
+            if (!deliveryDate) {
+                alert('Please select delivery date');
+                return;
+            }
+
+            // Get selected materials
+            const checkboxes = document.querySelectorAll('#materialCheckboxes input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one material');
+                return;
+            }
+
+            const selectedItems = Array.from(checkboxes).map(cb => ({
+                id: cb.value,
+                name: cb.dataset.name,
+                quantity: cb.dataset.quantity
+            }));
+
+            const challan = {
+                id: Date.now().toString(),
+                challanNumber: challanNumber,
+                deliveryDate: deliveryDate,
+                vehicleNumber: vehicleNumber,
+                receivedBy: receivedBy,
+                remarks: remarks,
+                items: selectedItems,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser?.uid
+            };
+
+            try {
+                if (db) {
+                    const deliveryChallans = [...(selectedProject.deliveryChallans || []), challan];
+                    await db.collection('projects').doc(selectedProject.id).update({ deliveryChallans });
+                } else {
+                    selectedProject.deliveryChallans = [...(selectedProject.deliveryChallans || []), challan];
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+
+                closeModal('challanModal');
+                alert('✅ Delivery Challan generated successfully!');
+            } catch (error) {
+                console.error('Error generating challan:', error);
+                alert('Failed to generate delivery challan');
+            }
+        }
+
+        async function deleteDeliveryChallan(id) {
+            if (!checkPermission('write')) return;
+
+            if (!confirm('Delete this delivery challan?')) return;
+
+            try {
+                if (db) {
+                    const deliveryChallans = (selectedProject.deliveryChallans || []).filter(dc => dc.id !== id);
+                    await db.collection('projects').doc(selectedProject.id).update({ deliveryChallans });
+                } else {
+                    selectedProject.deliveryChallans = (selectedProject.deliveryChallans || []).filter(dc => dc.id !== id);
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+            } catch (error) {
+                console.error('Error deleting challan:', error);
+                alert('Failed to delete delivery challan');
+            }
+        }
+
+        function downloadChallan(id) {
+            const challan = (selectedProject.deliveryChallans || []).find(dc => dc.id === id);
+            if (!challan) return;
+
+            // Create challan HTML for PDF
+            const challanHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Delivery Challan ${challan.challanNumber}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #333; padding-bottom: 20px; }
+                        .company-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+                        .challan-title { font-size: 20px; color: #666; }
+                        .info-section { margin: 20px 0; }
+                        .info-row { display: flex; margin: 10px 0; }
+                        .label { font-weight: bold; width: 150px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background-color: #f3f4f6; font-weight: bold; }
+                        .footer { margin-top: 50px; border-top: 2px solid #333; padding-top: 20px; }
+                        .signature { margin-top: 60px; }
+                        .signature-line { border-top: 1px solid #333; width: 200px; display: inline-block; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-name">AURA SMART</div>
+                        <div class="challan-title">DELIVERY CHALLAN</div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-row">
+                            <div class="label">Challan No:</div>
+                            <div>${challan.challanNumber}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Date:</div>
+                            <div>${new Date(challan.deliveryDate).toLocaleDateString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Project:</div>
+                            <div>${selectedProject.name}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Customer:</div>
+                            <div>${selectedProject.customerName || '-'}</div>
+                        </div>
+                        ${challan.vehicleNumber ? `
+                        <div class="info-row">
+                            <div class="label">Vehicle No:</div>
+                            <div>${challan.vehicleNumber}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">Sr. No.</th>
+                                <th>Item Description</th>
+                                <th style="width: 150px;">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${challan.items.map((item, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.name}</td>
+                                    <td>${item.quantity || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    ${challan.remarks ? `
+                    <div class="info-section">
+                        <div class="label">Remarks:</div>
+                        <div>${challan.remarks}</div>
+                    </div>
+                    ` : ''}
+
+                    <div class="footer">
+                        <div class="signature">
+                            <div>Delivered By</div>
+                            <div class="signature-line"></div>
+                        </div>
+                        <div class="signature" style="float: right;">
+                            <div>Received By${challan.receivedBy ? `: ${challan.receivedBy}` : ''}</div>
+                            <div class="signature-line"></div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window and print
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(challanHTML);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // ========================================
+        // MATERIAL INSTALLATION/HANDOVER FUNCTIONS
+        // ========================================
+
+        function showInstallationModal() {
+            if (!checkPermission('write')) return;
+
+            const deliveryChallans = selectedProject.deliveryChallans || [];
+            if (deliveryChallans.length === 0) {
+                alert('No delivered items available. Please create a delivery challan first.');
+                return;
+            }
+
+            // Populate item dropdown from delivery challans
+            const itemSelect = document.getElementById('installationItemSelect');
+            const allItems = [];
+            deliveryChallans.forEach(dc => {
+                dc.items.forEach(item => {
+                    allItems.push({
+                        name: item.name,
+                        quantity: item.quantity,
+                        challanId: dc.id
+                    });
+                });
+            });
+
+            itemSelect.innerHTML = '<option value="">-- Select Item --</option>' +
+                allItems.map((item, index) => 
+                    `<option value="${index}" data-name="${item.name}" data-quantity="${item.quantity}">${item.name}${item.quantity ? ` (${item.quantity})` : ''}</option>`
+                ).join('');
+
+            // Auto-fill item name when selected
+            itemSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    document.getElementById('installationItemName').value = selectedOption.dataset.name;
+                    document.getElementById('installationQuantity').value = selectedOption.dataset.quantity || '';
+                }
+            });
+
+            // Set today's date for installation
+            document.getElementById('installationDate').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('installationModal').classList.add('show');
+        }
+
+        async function saveInstallation() {
+            if (!checkPermission('write')) return;
+
+            const itemName = document.getElementById('installationItemName').value.trim();
+            const quantity = document.getElementById('installationQuantity').value.trim();
+            const status = document.getElementById('installationStatus').value;
+            const installationDate = document.getElementById('installationDate').value;
+            const installedBy = document.getElementById('installedBy').value.trim();
+            const handoverDate = document.getElementById('handoverDate').value;
+            const handedOverTo = document.getElementById('handedOverTo').value.trim();
+            const location = document.getElementById('installationLocation').value.trim();
+            const remarks = document.getElementById('installationRemarks').value.trim();
+
+            if (!itemName) {
+                alert('Please enter item name');
+                return;
+            }
+
+            const installation = {
+                id: Date.now().toString(),
+                itemName: itemName,
+                quantity: quantity,
+                status: status,
+                installationDate: installationDate || null,
+                installedBy: installedBy,
+                handoverDate: handoverDate || null,
+                handedOverTo: handedOverTo,
+                location: location,
+                remarks: remarks,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser?.uid
+            };
+
+            try {
+                if (db) {
+                    const installations = [...(selectedProject.installations || []), installation];
+                    await db.collection('projects').doc(selectedProject.id).update({ installations });
+                } else {
+                    selectedProject.installations = [...(selectedProject.installations || []), installation];
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+
+                closeModal('installationModal');
+                
+                // Clear form
+                document.getElementById('installationItemSelect').value = '';
+                document.getElementById('installationItemName').value = '';
+                document.getElementById('installationQuantity').value = '';
+                document.getElementById('installationStatus').value = 'pending';
+                document.getElementById('installationDate').value = '';
+                document.getElementById('installedBy').value = '';
+                document.getElementById('handoverDate').value = '';
+                document.getElementById('handedOverTo').value = '';
+                document.getElementById('installationLocation').value = '';
+                document.getElementById('installationRemarks').value = '';
+
+                alert('✅ Installation/Handover record added successfully!');
+            } catch (error) {
+                console.error('Error saving installation:', error);
+                alert('Failed to save installation record');
+            }
+        }
+
+        async function updateInstallationStatus(id) {
+            if (!checkPermission('write')) return;
+
+            const installation = (selectedProject.installations || []).find(inst => inst.id === id);
+            if (!installation) return;
+
+            const statuses = ['pending', 'installed', 'handed_over'];
+            const currentIndex = statuses.indexOf(installation.status);
+            const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+
+            try {
+                if (db) {
+                    const installations = (selectedProject.installations || []).map(inst => {
+                        if (inst.id === id) {
+                            const updated = {...inst, status: nextStatus};
+                            // Auto-set dates based on status
+                            if (nextStatus === 'installed' && !updated.installationDate) {
+                                updated.installationDate = new Date().toISOString().split('T')[0];
+                            }
+                            if (nextStatus === 'handed_over' && !updated.handoverDate) {
+                                updated.handoverDate = new Date().toISOString().split('T')[0];
+                            }
+                            return updated;
+                        }
+                        return inst;
+                    });
+                    await db.collection('projects').doc(selectedProject.id).update({ installations });
+                } else {
+                    selectedProject.installations = (selectedProject.installations || []).map(inst => {
+                        if (inst.id === id) {
+                            const updated = {...inst, status: nextStatus};
+                            if (nextStatus === 'installed' && !updated.installationDate) {
+                                updated.installationDate = new Date().toISOString().split('T')[0];
+                            }
+                            if (nextStatus === 'handed_over' && !updated.handoverDate) {
+                                updated.handoverDate = new Date().toISOString().split('T')[0];
+                            }
+                            return updated;
+                        }
+                        return inst;
+                    });
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+            } catch (error) {
+                console.error('Error updating installation status:', error);
+                alert('Failed to update status');
+            }
+        }
+
+        async function deleteInstallation(id) {
+            if (!checkPermission('write')) return;
+
+            if (!confirm('Delete this installation/handover record?')) return;
+
+            try {
+                if (db) {
+                    const installations = (selectedProject.installations || []).filter(inst => inst.id !== id);
+                    await db.collection('projects').doc(selectedProject.id).update({ installations });
+                } else {
+                    selectedProject.installations = (selectedProject.installations || []).filter(inst => inst.id !== id);
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+            } catch (error) {
+                console.error('Error deleting installation:', error);
+                alert('Failed to delete installation record');
+            }
+        }
+
+        // ========================================
+        // SALES LEADS MANAGEMENT
+        // ========================================
+
+        const leadStages = [
+            { id: 'new', label: 'New', color: 'stage-new' },
+            { id: 'site_survey', label: 'Site Survey Scheduled', color: 'stage-site_survey' },
+            { id: 'initial_quote', label: 'Initial Quote Shared', color: 'stage-initial_quote' },
+            { id: 'negotiation', label: 'Negotiation', color: 'stage-negotiation' },
+            { id: 'final_quote', label: 'Final Quote Shared', color: 'stage-final_quote' },
+            { id: 'mockup', label: 'Mockup', color: 'stage-mockup' },
+            { id: 'won', label: 'Won with Token Advance', color: 'stage-won' },
+            { id: 'loi', label: 'LOI Received', color: 'stage-loi' },
+            { id: 'on_hold', label: 'On Hold', color: 'stage-on_hold' },
+            { id: 'dropped', label: 'Dropped', color: 'stage-dropped' }
+        ];
+
+        function renderLeadPipeline() {
+            const pipeline = document.getElementById('leadPipeline');
+            if (!pipeline) return;
+
+            const searchTerm = document.getElementById('leadSearchInput')?.value.toLowerCase() || '';
+            const stageFilter = leadStageFilter;
+
+            pipeline.innerHTML = leadStages.map(stage => {
+                const stageLeads = leads.filter(lead => {
+                    const matchesStage = stageFilter === 'all' || lead.stage === stage.id;
+                    const matchesSearch = !searchTerm || 
+                        lead.contactPerson.toLowerCase().includes(searchTerm) ||
+                        (lead.company && lead.company.toLowerCase().includes(searchTerm)) ||
+                        (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
+                        (lead.phone && lead.phone.toLowerCase().includes(searchTerm));
+                    
+                    return lead.stage === stage.id && matchesStage && matchesSearch;
+                });
+
+                return `
+                    <div class="lead-column">
+                        <div class="lead-column-header ${stage.color}">
+                            ${stage.label}
+                            <span class="lead-column-count">(${stageLeads.length})</span>
+                        </div>
+                        ${stageLeads.length === 0 ? 
+                            '<div style="text-align: center; color: #9ca3af; font-size: 0.875rem; padding: 1rem;">No leads</div>' :
+                            stageLeads.map(lead => `
+                                <div class="lead-card" onclick="selectLead('${lead.id}')">
+                                    <div class="lead-card-title">${lead.contactPerson}</div>
+                                    ${lead.company ? `<div class="lead-card-company">🏢 ${lead.company}</div>` : ''}
+                                    ${lead.projectType ? `<div class="lead-card-company">📋 ${lead.projectType}</div>` : ''}
+                                    ${lead.value ? `<div class="lead-card-value">₹${formatCurrency(lead.value)}</div>` : ''}
+                                    <div class="lead-card-date">Created: ${formatDate(lead.createdAt)}</div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectLead(id) {
+            selectedLead = leads.find(l => l.id === id);
+            if (!selectedLead) return;
+
+            const card = document.getElementById('leadDetailsPanelCard');
+            card.style.display = 'block';
+
+            renderLeadDetails();
+        }
+
+        function closeLeadDetails() {
+            selectedLead = null;
+            document.getElementById('leadDetailsPanelCard').style.display = 'none';
+        }
+
+        function renderLeadDetails() {
+            if (!selectedLead) return;
+
+            const stage = leadStages.find(s => s.id === selectedLead.stage);
+            const stageLabel = stage ? stage.label : selectedLead.stage;
+            const stageClass = stage ? stage.color : '';
+
+            const activities = selectedLead.activities || [];
+
+            document.getElementById('leadDetailsPanel').innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem;">
+                    <!-- Lead Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h2 style="margin: 0 0 0.5rem 0;">${selectedLead.contactPerson}</h2>
+                            ${selectedLead.company ? `<p style="margin: 0; color: #6b7280;">🏢 ${selectedLead.company}</p>` : ''}
+                        </div>
+                        <span class="status-badge ${stageClass}" style="font-size: 0.875rem;">${stageLabel}</span>
+                    </div>
+
+                    <!-- Lead Info Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        ${selectedLead.email ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Email</div>
+                                <div>📧 ${selectedLead.email}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.phone ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Phone</div>
+                                <div>📞 ${selectedLead.phone}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.projectType ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Project Type</div>
+                                <div>📋 ${selectedLead.projectType}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.value ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Estimated Value</div>
+                                <div style="font-weight: 600; color: #16a34a;">₹${formatCurrency(selectedLead.value)}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.source ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Source</div>
+                                <div>📍 ${selectedLead.source}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.priority ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Priority</div>
+                                <div>${selectedLead.priority === 'high' ? '🔴' : selectedLead.priority === 'medium' ? '🟡' : '🟢'} ${selectedLead.priority.charAt(0).toUpperCase() + selectedLead.priority.slice(1)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${selectedLead.notes ? `
+                        <div>
+                            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Requirements/Notes</div>
+                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${selectedLead.notes}</div>
+                        </div>
+                    ` : ''}
+
+                    <!-- BOQ Files -->
+                    ${selectedLead.boqFiles && selectedLead.boqFiles.length > 0 ? `
+                        <div>
+                            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">📊 BOQ Files (${selectedLead.boqFiles.length})</div>
+                            <div class="files-grid">
+                                ${selectedLead.boqFiles.map(f => `
+                                    <div class="attached-file">
+                                        <div class="file-icon">${getFileIcon(f.type)}</div>
+                                        <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                            <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
+                                        </div>
+                                        <button class="download-btn" onclick='downloadFile(${JSON.stringify(f)})' title="Download">⬇️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Design Files -->
+                    ${selectedLead.designFiles && selectedLead.designFiles.length > 0 ? `
+                        <div>
+                            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">🎨 Design Bundle (${selectedLead.designFiles.length})</div>
+                            <div class="files-grid">
+                                ${selectedLead.designFiles.map(f => `
+                                    <div class="attached-file">
+                                        ${f.type.startsWith('image/') ? 
+                                            `<img src="${f.data}" class="file-thumbnail" alt="${f.name}">` :
+                                            `<div class="file-icon">${getFileIcon(f.type)}</div>`
+                                        }
+                                        <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                            <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
+                                        </div>
+                                        <button class="download-btn" onclick='downloadFile(${JSON.stringify(f)})' title="Download">⬇️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${isAdmin() ? `
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <select class="input" style="flex: 1; min-width: 200px;" onchange="updateLeadStage(this.value)">
+                                ${leadStages.map(s => `
+                                    <option value="${s.id}" ${selectedLead.stage === s.id ? 'selected' : ''}>${s.label}</option>
+                                `).join('')}
+                            </select>
+                            <button class="btn btn-primary" onclick="showEditLeadModal()">✏️ Edit</button>
+                            <button class="btn btn-secondary" onclick="showAddActivityModal()">+ Add Activity</button>
+                            ${selectedLead.stage === 'won' ? `
+                                <button class="btn btn-success" onclick="convertLeadToCustomer()">Convert to Customer</button>
+                            ` : ''}
+                            <button class="btn btn-danger" onclick="deleteLead('${selectedLead.id}')">🗑️ Delete</button>
+                        </div>
+                    ` : ''}
+
+                    <!-- Activities -->
+                    <div>
+                        <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Activity Timeline</div>
+                        ${activities.length === 0 ? 
+                            '<div style="text-align: center; color: #9ca3af; padding: 1rem;">No activities yet</div>' :
+                            activities.map(activity => `
+                                <div style="border-left: 2px solid #e5e7eb; padding-left: 1rem; margin-bottom: 1rem;">
+                                    <div style="font-size: 0.875rem; font-weight: 600;">${activity.type}</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">${formatDate(activity.date)}</div>
+                                    <div style="margin-top: 0.25rem;">${activity.description}</div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========================================
+        // LEAD FILE HANDLING
+        // ========================================
+
+        function handleLeadBOQFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedBOQFiles.push({
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: e.target.result
+                    });
+                    displayLeadBOQFiles();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function handleLeadDesignFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedDesignFiles.push({
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: e.target.result
+                    });
+                    displayLeadDesignFiles();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function displayLeadBOQFiles() {
+            const container = document.getElementById('leadBOQFilesList');
+            if (!container) return;
+
+            container.innerHTML = selectedBOQFiles.map((file, index) => `
+                <div class="attached-file">
+                    <div class="file-icon">${getFileIcon(file.type)}</div>
+                    <div style="flex: 1; min-width: 0; overflow: hidden;">
+                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeLeadBOQFile(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function displayLeadDesignFiles() {
+            const container = document.getElementById('leadDesignFilesList');
+            if (!container) return;
+
+            container.innerHTML = selectedDesignFiles.map((file, index) => `
+                <div class="attached-file">
+                    ${file.type.startsWith('image/') ? 
+                        `<img src="${file.data}" class="file-thumbnail" alt="${file.name}">` :
+                        `<div class="file-icon">${getFileIcon(file.type)}</div>`
+                    }
+                    <div style="flex: 1; min-width: 0; overflow: hidden;">
+                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeLeadDesignFile(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeLeadBOQFile(index) {
+            selectedBOQFiles.splice(index, 1);
+            displayLeadBOQFiles();
+        }
+
+        function removeLeadDesignFile(index) {
+            selectedDesignFiles.splice(index, 1);
+            displayLeadDesignFiles();
+        }
+
+        function showAddLeadModal() {
+            if (!checkPermission('write')) return;
+
+            editingLeadId = null;
+            document.getElementById('leadModalTitle').textContent = 'Add Sales Lead';
+            document.getElementById('saveLeadBtn').textContent = 'Add Lead';
+            
+            // Clear form
+            document.getElementById('leadContactPerson').value = '';
+            document.getElementById('leadCompany').value = '';
+            document.getElementById('leadEmail').value = '';
+            document.getElementById('leadPhone').value = '';
+            document.getElementById('leadProjectType').value = '';
+            document.getElementById('leadValue').value = '';
+            document.getElementById('leadStage').value = 'new';
+            document.getElementById('leadSource').value = '';
+            document.getElementById('leadCloseDate').value = '';
+            document.getElementById('leadPriority').value = 'medium';
+            document.getElementById('leadNotes').value = '';
+
+            // Clear files
+            selectedBOQFiles = [];
+            selectedDesignFiles = [];
+            displayLeadBOQFiles();
+            displayLeadDesignFiles();
+
+            document.getElementById('leadModal').classList.add('show');
+        }
+
+        function showEditLeadModal() {
+            if (!checkPermission('write') || !selectedLead) return;
+
+            editingLeadId = selectedLead.id;
+            document.getElementById('leadModalTitle').textContent = 'Edit Sales Lead';
+            document.getElementById('saveLeadBtn').textContent = 'Update Lead';
+
+            // Fill form with existing data
+            document.getElementById('leadContactPerson').value = selectedLead.contactPerson || '';
+            document.getElementById('leadCompany').value = selectedLead.company || '';
+            document.getElementById('leadEmail').value = selectedLead.email || '';
+            document.getElementById('leadPhone').value = selectedLead.phone || '';
+            document.getElementById('leadProjectType').value = selectedLead.projectType || '';
+            document.getElementById('leadValue').value = selectedLead.value || '';
+            document.getElementById('leadStage').value = selectedLead.stage || 'new';
+            document.getElementById('leadSource').value = selectedLead.source || '';
+            document.getElementById('leadCloseDate').value = selectedLead.expectedCloseDate || '';
+            document.getElementById('leadPriority').value = selectedLead.priority || 'medium';
+            document.getElementById('leadNotes').value = selectedLead.notes || '';
+
+            // Load existing files
+            selectedBOQFiles = selectedLead.boqFiles || [];
+            selectedDesignFiles = selectedLead.designFiles || [];
+            displayLeadBOQFiles();
+            displayLeadDesignFiles();
+
+            document.getElementById('leadModal').classList.add('show');
+        }
+
+        async function saveLead() {
+            if (!checkPermission('write')) return;
+
+            const contactPerson = document.getElementById('leadContactPerson').value.trim();
+            const company = document.getElementById('leadCompany').value.trim();
+            const email = document.getElementById('leadEmail').value.trim();
+            const phone = document.getElementById('leadPhone').value.trim();
+            const projectType = document.getElementById('leadProjectType').value.trim();
+            const value = parseFloat(document.getElementById('leadValue').value) || 0;
+            const stage = document.getElementById('leadStage').value;
+            const source = document.getElementById('leadSource').value;
+            const expectedCloseDate = document.getElementById('leadCloseDate').value;
+            const priority = document.getElementById('leadPriority').value;
+            const notes = document.getElementById('leadNotes').value.trim();
+
+            if (!contactPerson) {
+                alert('Please enter contact person name');
+                return;
+            }
+
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            if (!phone) {
+                alert('Please enter phone number');
+                return;
+            }
+
+            const lead = {
+                contactPerson,
+                company,
+                email,
+                phone,
+                projectType,
+                value,
+                stage,
+                source,
+                expectedCloseDate,
+                priority,
+                notes,
+                boqFiles: selectedBOQFiles,
+                designFiles: selectedDesignFiles,
+                activities: editingLeadId ? (leads.find(l => l.id === editingLeadId)?.activities || []) : [],
+                createdAt: editingLeadId ? (leads.find(l => l.id === editingLeadId)?.createdAt) : new Date().toISOString(),
+                createdBy: currentUser?.uid
+            };
+
+            try {
+                if (editingLeadId) {
+                    // Update existing lead
+                    if (db) {
+                        await db.collection('leads').doc(editingLeadId).update(lead);
+                    } else {
+                        const index = leads.findIndex(l => l.id === editingLeadId);
+                        leads[index] = { ...leads[index], ...lead };
+                        saveToLocalStorage();
+                        renderLeadPipeline();
+                        if (selectedLead && selectedLead.id === editingLeadId) {
+                            selectedLead = { ...selectedLead, ...lead };
+                            renderLeadDetails();
+                        }
+                    }
+                } else {
+                    // Add new lead
+                    const newLead = {
+                        id: Date.now().toString(),
+                        ...lead
+                    };
+
+                    if (db) {
+                        await db.collection('leads').doc(newLead.id).set(newLead);
+                    } else {
+                        leads.push(newLead);
+                        saveToLocalStorage();
+                        renderLeadPipeline();
+                    }
+                }
+
+                closeModal('leadModal');
+                editingLeadId = null;
+            } catch (error) {
+                console.error('Error saving lead:', error);
+                alert('Failed to save lead');
+            }
+        }
+
+        async function updateLeadStage(newStage) {
+            if (!checkPermission('write') || !selectedLead) return;
+
+            const oldStage = selectedLead.stage;
+            
+            try {
+                const activity = {
+                    type: 'Stage Change',
+                    description: `Moved from ${leadStages.find(s => s.id === oldStage)?.label || oldStage} to ${leadStages.find(s => s.id === newStage)?.label || newStage}`,
+                    date: new Date().toISOString(),
+                    by: currentUser?.email || 'Unknown'
+                };
+
+                const activities = [...(selectedLead.activities || []), activity];
+
+                if (db) {
+                    await db.collection('leads').doc(selectedLead.id).update({ 
+                        stage: newStage,
+                        activities: activities
+                    });
+                } else {
+                    const index = leads.findIndex(l => l.id === selectedLead.id);
+                    leads[index].stage = newStage;
+                    leads[index].activities = activities;
+                    selectedLead.stage = newStage;
+                    selectedLead.activities = activities;
+                    saveToLocalStorage();
+                    renderLeadPipeline();
+                    renderLeadDetails();
+                }
+            } catch (error) {
+                console.error('Error updating lead stage:', error);
+                alert('Failed to update stage');
+            }
+        }
+
+        async function deleteLead(id) {
+            if (!checkPermission('write')) return;
+
+            if (!confirm('Are you sure you want to delete this lead?')) return;
+
+            try {
+                if (db) {
+                    await db.collection('leads').doc(id).delete();
+                } else {
+                    leads = leads.filter(l => l.id !== id);
+                    saveToLocalStorage();
+                    renderLeadPipeline();
+                }
+
+                closeLeadDetails();
+            } catch (error) {
+                console.error('Error deleting lead:', error);
+                alert('Failed to delete lead');
+            }
+        }
+
+        function filterLeads() {
+            renderLeadPipeline();
+        }
+
+        function filterLeadsByStage() {
+            leadStageFilter = document.getElementById('leadStageFilter').value;
+            renderLeadPipeline();
+        }
+
+        function convertLeadToCustomer() {
+            if (!selectedLead || selectedLead.stage !== 'won') {
+                alert('Only won leads can be converted to customers');
+                return;
+            }
+
+            // Pre-fill customer modal with lead data
+            document.getElementById('customerName').value = selectedLead.contactPerson;
+            document.getElementById('customerEmail').value = selectedLead.email;
+            document.getElementById('customerPhone').value = selectedLead.phone;
+            document.getElementById('customerCompany').value = selectedLead.company || '';
+            
+            // Switch to customers tab and show modal
+            switchTab('customers');
+            showAddCustomerModal();
+            
+            alert('Lead data has been pre-filled. Please complete and save the customer details.');
+        }
+
+        function showAddActivityModal() {
+            if (!checkPermission('write') || !selectedLead) return;
+
+            const activityType = prompt('Activity type (e.g., Call, Email, Meeting, Follow-up):');
+            if (!activityType) return;
+
+            const activityDesc = prompt('Activity description:');
+            if (!activityDesc) return;
+
+            addLeadActivity(activityType, activityDesc);
+        }
+
+        async function addLeadActivity(type, description) {
+            if (!selectedLead) return;
+
+            const activity = {
+                type: type,
+                description: description,
+                date: new Date().toISOString(),
+                by: currentUser?.email || 'Unknown'
+            };
+
+            try {
+                const activities = [...(selectedLead.activities || []), activity];
+
+                if (db) {
+                    await db.collection('leads').doc(selectedLead.id).update({ activities });
+                } else {
+                    const index = leads.findIndex(l => l.id === selectedLead.id);
+                    leads[index].activities = activities;
+                    selectedLead.activities = activities;
+                    saveToLocalStorage();
+                    renderLeadDetails();
+                }
+            } catch (error) {
+                console.error('Error adding activity:', error);
+                alert('Failed to add activity');
+            }
+        }
+
         // Helper to switch to projects tab and select a project
         function switchToProject(projectId) {
             currentTab = 'projects';
@@ -3130,11 +4585,35 @@ ${email} has been completely removed from the system.`);
             document.body.removeChild(link);
         }
 
-        // Remove file from selection
-        function removeFile(id) {
-            selectedFiles = selectedFiles.filter(f => f.id !== id);
-            renderProjectSelectedFiles();
-        }
+        // Make all onclick functions globally accessible
+        window.handleLogin = handleLogin;
+        window.handleSignup = handleSignup;
+        window.handleLogout = handleLogout;
+        window.toggleAuthForm = toggleAuthForm;
+        window.toggleUserMenu = toggleUserMenu;
+        window.showGenerateChallanModal = showGenerateChallanModal;
+        window.saveDeliveryChallan = saveDeliveryChallan;
+        window.deleteDeliveryChallan = deleteDeliveryChallan;
+        window.downloadChallan = downloadChallan;
+        window.showInstallationModal = showInstallationModal;
+        window.saveInstallation = saveInstallation;
+        window.updateInstallationStatus = updateInstallationStatus;
+        window.deleteInstallation = deleteInstallation;
+        window.showAddLeadModal = showAddLeadModal;
+        window.showEditLeadModal = showEditLeadModal;
+        window.saveLead = saveLead;
+        window.selectLead = selectLead;
+        window.closeLeadDetails = closeLeadDetails;
+        window.updateLeadStage = updateLeadStage;
+        window.deleteLead = deleteLead;
+        window.filterLeads = filterLeads;
+        window.filterLeadsByStage = filterLeadsByStage;
+        window.convertLeadToCustomer = convertLeadToCustomer;
+        window.showAddActivityModal = showAddActivityModal;
+        window.handleLeadBOQFiles = handleLeadBOQFiles;
+        window.handleLeadDesignFiles = handleLeadDesignFiles;
+        window.removeLeadBOQFile = removeLeadBOQFile;
+        window.removeLeadDesignFile = removeLeadDesignFile;
     </script>
 </body>
 </html>
