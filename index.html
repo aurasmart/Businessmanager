@@ -834,16 +834,13 @@
             margin-top: 0.5rem;
         }
 
-        .stage-new { background: #3b82f6; }
-        .stage-site_survey { background: #06b6d4; }
-        .stage-initial_quote { background: #8b5cf6; }
+        .stage-contacted { background: #3b82f6; }
+        .stage-proposal_shared { background: #8b5cf6; }
         .stage-negotiation { background: #f59e0b; }
-        .stage-final_quote { background: #ec4899; }
-        .stage-mockup { background: #6366f1; }
-        .stage-won { background: #10b981; }
-        .stage-loi { background: #14b8a6; }
-        .stage-on_hold { background: #64748b; }
+        .stage-won_token { background: #10b981; }
+        .stage-won_material { background: #059669; }
         .stage-dropped { background: #ef4444; }
+        .stage-on_hold { background: #64748b; }
     </style>
 </head>
 <body>
@@ -1358,6 +1355,26 @@
                         <input type="tel" class="input" id="leadPhone" placeholder="+91 98765 43210">
                     </div>
                     <div class="form-group">
+                        <label>Lead Gen Date*</label>
+                        <input type="date" class="input" id="leadGenDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Property Type</label>
+                        <select class="input" id="leadPropertyType">
+                            <option value="">Select property type...</option>
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="hospitality">Hospitality</option>
+                            <option value="retail">Retail</option>
+                            <option value="mixed_use">Mixed Use</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Community Name/Location</label>
+                        <input type="text" class="input" id="leadLocation" placeholder="e.g., DLF Phase 3, Gurgaon">
+                    </div>
+                    <div class="form-group">
                         <label>Project Type</label>
                         <input type="text" class="input" id="leadProjectType" placeholder="e.g., Office Interior, Home Automation">
                     </div>
@@ -1368,21 +1385,18 @@
                     <div class="form-group">
                         <label>Stage*</label>
                         <select class="input" id="leadStage">
-                            <option value="new">New</option>
-                            <option value="site_survey">Site Survey Scheduled</option>
-                            <option value="initial_quote">Initial Quote Shared</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="proposal_shared">Proposal Shared</option>
                             <option value="negotiation">Negotiation</option>
-                            <option value="final_quote">Final Quote Shared</option>
-                            <option value="mockup">Mockup</option>
-                            <option value="won">Won with Token Advance</option>
-                            <option value="loi">LOI Received</option>
-                            <option value="on_hold">On Hold</option>
+                            <option value="won_token">Won with Token</option>
+                            <option value="won_material">Won with Material Advance</option>
                             <option value="dropped">Dropped</option>
+                            <option value="on_hold">On Hold/Archive</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Source</label>
-                        <select class="input" id="leadSource">
+                        <label>Source*</label>
+                        <select class="input" id="leadSource" onchange="toggleLeadSourceOther()">
                             <option value="">Select source...</option>
                             <option value="website">Website</option>
                             <option value="referral">Referral</option>
@@ -1391,6 +1405,17 @@
                             <option value="exhibition">Exhibition</option>
                             <option value="email_campaign">Email Campaign</option>
                             <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="leadSourceOtherContainer" style="display: none;">
+                        <label>Source (Other)</label>
+                        <input type="text" class="input" id="leadSourceOther" placeholder="Specify other source...">
+                    </div>
+                    <div class="form-group">
+                        <label>Lead Owner</label>
+                        <select class="input" id="leadOwner">
+                            <option value="">Select owner...</option>
+                            <!-- Will be populated with users -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -1405,6 +1430,10 @@
                             <option value="high">High</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Scope of Work</label>
+                    <textarea class="input" id="leadScopeOfWork" rows="3" placeholder="Detailed scope of work, deliverables, milestones..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Requirements/Notes</label>
@@ -4471,16 +4500,13 @@ ${email} has been completely removed from the system.`);
         // ========================================
 
         const leadStages = [
-            { id: 'new', label: 'New', color: 'stage-new' },
-            { id: 'site_survey', label: 'Site Survey Scheduled', color: 'stage-site_survey' },
-            { id: 'initial_quote', label: 'Initial Quote Shared', color: 'stage-initial_quote' },
+            { id: 'contacted', label: 'Contacted', color: 'stage-contacted' },
+            { id: 'proposal_shared', label: 'Proposal Shared', color: 'stage-proposal_shared' },
             { id: 'negotiation', label: 'Negotiation', color: 'stage-negotiation' },
-            { id: 'final_quote', label: 'Final Quote Shared', color: 'stage-final_quote' },
-            { id: 'mockup', label: 'Mockup', color: 'stage-mockup' },
-            { id: 'won', label: 'Won with Token Advance', color: 'stage-won' },
-            { id: 'loi', label: 'LOI Received', color: 'stage-loi' },
-            { id: 'on_hold', label: 'On Hold', color: 'stage-on_hold' },
-            { id: 'dropped', label: 'Dropped', color: 'stage-dropped' }
+            { id: 'won_token', label: 'Won with Token', color: 'stage-won_token' },
+            { id: 'won_material', label: 'Won with Material Advance', color: 'stage-won_material' },
+            { id: 'dropped', label: 'Dropped', color: 'stage-dropped' },
+            { id: 'on_hold', label: 'On Hold/Archive', color: 'stage-on_hold' }
         ];
 
         function renderLeadPipeline() {
@@ -4574,6 +4600,24 @@ ${email} has been completely removed from the system.`);
                                 <div>📞 ${selectedLead.phone}</div>
                             </div>
                         ` : ''}
+                        ${selectedLead.leadGenDate ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Lead Gen Date</div>
+                                <div>📅 ${new Date(selectedLead.leadGenDate).toLocaleDateString()}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.propertyType ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Property Type</div>
+                                <div>🏢 ${selectedLead.propertyType.charAt(0).toUpperCase() + selectedLead.propertyType.slice(1).replace('_', ' ')}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.location ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Location</div>
+                                <div>📍 ${selectedLead.location}</div>
+                            </div>
+                        ` : ''}
                         ${selectedLead.projectType ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Project Type</div>
@@ -4589,7 +4633,13 @@ ${email} has been completely removed from the system.`);
                         ${selectedLead.source ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Source</div>
-                                <div>📍 ${selectedLead.source}</div>
+                                <div>🎯 ${selectedLead.source === 'other' && selectedLead.sourceOther ? selectedLead.sourceOther : selectedLead.source.replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</div>
+                            </div>
+                        ` : ''}
+                        ${selectedLead.leadOwner ? `
+                            <div>
+                                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Lead Owner</div>
+                                <div>👤 ${allUsers.find(u => u.uid === selectedLead.leadOwner)?.displayName || allUsers.find(u => u.uid === selectedLead.leadOwner)?.email || 'Not assigned'}</div>
                             </div>
                         ` : ''}
                         ${selectedLead.priority ? `
@@ -4599,6 +4649,13 @@ ${email} has been completely removed from the system.`);
                             </div>
                         ` : ''}
                     </div>
+
+                    ${selectedLead.scopeOfWork ? `
+                        <div>
+                            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Scope of Work</div>
+                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${selectedLead.scopeOfWork}</div>
+                        </div>
+                    ` : ''}
 
                     ${selectedLead.notes ? `
                         <div>
@@ -4654,7 +4711,7 @@ ${email} has been completely removed from the system.`);
                             </select>
                             <button class="btn btn-primary" onclick="showEditLeadModal()">✏️ Edit</button>
                             <button class="btn btn-secondary" onclick="showAddActivityModal()">+ Add Activity</button>
-                            ${selectedLead.stage === 'won' ? `
+                            ${(selectedLead.stage === 'won_token' || selectedLead.stage === 'won_material') ? `
                                 <button class="btn btn-success" onclick="convertLeadToCustomer()">Convert to Customer</button>
                             ` : ''}
                             <button class="btn btn-danger" onclick="deleteLead('${selectedLead.id}')">🗑️ Delete</button>
@@ -4832,13 +4889,22 @@ ${email} has been completely removed from the system.`);
             document.getElementById('leadCompany').value = '';
             document.getElementById('leadEmail').value = '';
             document.getElementById('leadPhone').value = '';
+            document.getElementById('leadGenDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('leadPropertyType').value = '';
+            document.getElementById('leadLocation').value = '';
             document.getElementById('leadProjectType').value = '';
             document.getElementById('leadValue').value = '';
-            document.getElementById('leadStage').value = 'new';
+            document.getElementById('leadStage').value = 'contacted';
             document.getElementById('leadSource').value = '';
+            document.getElementById('leadSourceOther').value = '';
+            document.getElementById('leadSourceOtherContainer').style.display = 'none';
             document.getElementById('leadCloseDate').value = '';
             document.getElementById('leadPriority').value = 'medium';
+            document.getElementById('leadScopeOfWork').value = '';
             document.getElementById('leadNotes').value = '';
+
+            // Populate lead owner dropdown
+            populateLeadOwners();
 
             // Clear files
             selectedBOQFiles = [];
@@ -4847,6 +4913,32 @@ ${email} has been completely removed from the system.`);
             displayLeadDesignFiles();
 
             document.getElementById('leadModal').classList.add('show');
+        }
+
+        function populateLeadOwners() {
+            const ownerSelect = document.getElementById('leadOwner');
+            if (!ownerSelect) return;
+            
+            // Get all users
+            const users = allUsers || [];
+            ownerSelect.innerHTML = '<option value="">Select owner...</option>' +
+                users.map(u => `<option value="${u.uid}">${u.displayName || u.email}</option>`).join('');
+            
+            // Set current user as default
+            if (currentUser) {
+                ownerSelect.value = currentUser.uid;
+            }
+        }
+
+        function toggleLeadSourceOther() {
+            const source = document.getElementById('leadSource').value;
+            const otherContainer = document.getElementById('leadSourceOtherContainer');
+            if (source === 'other') {
+                otherContainer.style.display = 'block';
+            } else {
+                otherContainer.style.display = 'none';
+                document.getElementById('leadSourceOther').value = '';
+            }
         }
 
         function showEditLeadModal() {
@@ -4861,12 +4953,29 @@ ${email} has been completely removed from the system.`);
             document.getElementById('leadCompany').value = selectedLead.company || '';
             document.getElementById('leadEmail').value = selectedLead.email || '';
             document.getElementById('leadPhone').value = selectedLead.phone || '';
+            document.getElementById('leadGenDate').value = selectedLead.leadGenDate || '';
+            document.getElementById('leadPropertyType').value = selectedLead.propertyType || '';
+            document.getElementById('leadLocation').value = selectedLead.location || '';
             document.getElementById('leadProjectType').value = selectedLead.projectType || '';
             document.getElementById('leadValue').value = selectedLead.value || '';
-            document.getElementById('leadStage').value = selectedLead.stage || 'new';
+            document.getElementById('leadStage').value = selectedLead.stage || 'contacted';
             document.getElementById('leadSource').value = selectedLead.source || '';
+            document.getElementById('leadSourceOther').value = selectedLead.sourceOther || '';
+            
+            // Show/hide source other field
+            if (selectedLead.source === 'other') {
+                document.getElementById('leadSourceOtherContainer').style.display = 'block';
+            } else {
+                document.getElementById('leadSourceOtherContainer').style.display = 'none';
+            }
+            
+            // Populate and set lead owner
+            populateLeadOwners();
+            document.getElementById('leadOwner').value = selectedLead.leadOwner || '';
+            
             document.getElementById('leadCloseDate').value = selectedLead.expectedCloseDate || '';
             document.getElementById('leadPriority').value = selectedLead.priority || 'medium';
+            document.getElementById('leadScopeOfWork').value = selectedLead.scopeOfWork || '';
             document.getElementById('leadNotes').value = selectedLead.notes || '';
 
             // Load existing files
@@ -4885,12 +4994,18 @@ ${email} has been completely removed from the system.`);
             const company = document.getElementById('leadCompany').value.trim();
             const email = document.getElementById('leadEmail').value.trim();
             const phone = document.getElementById('leadPhone').value.trim();
+            const leadGenDate = document.getElementById('leadGenDate').value;
+            const propertyType = document.getElementById('leadPropertyType').value;
+            const location = document.getElementById('leadLocation').value.trim();
             const projectType = document.getElementById('leadProjectType').value.trim();
             const value = parseFloat(document.getElementById('leadValue').value) || 0;
             const stage = document.getElementById('leadStage').value;
             const source = document.getElementById('leadSource').value;
+            const sourceOther = document.getElementById('leadSourceOther').value.trim();
+            const leadOwner = document.getElementById('leadOwner').value;
             const expectedCloseDate = document.getElementById('leadCloseDate').value;
             const priority = document.getElementById('leadPriority').value;
+            const scopeOfWork = document.getElementById('leadScopeOfWork').value.trim();
             const notes = document.getElementById('leadNotes').value.trim();
 
             if (!contactPerson) {
@@ -4908,17 +5023,33 @@ ${email} has been completely removed from the system.`);
                 return;
             }
 
+            if (!leadGenDate) {
+                alert('Please enter lead generation date');
+                return;
+            }
+
+            if (!source) {
+                alert('Please select lead source');
+                return;
+            }
+
             const lead = {
                 contactPerson,
                 company,
                 email,
                 phone,
+                leadGenDate,
+                propertyType,
+                location,
                 projectType,
                 value,
                 stage,
                 source,
+                sourceOther: source === 'other' ? sourceOther : '',
+                leadOwner,
                 expectedCloseDate,
                 priority,
+                scopeOfWork,
                 notes,
                 boqFiles: selectedBOQFiles,
                 designFiles: selectedDesignFiles,
@@ -5214,6 +5345,7 @@ ${email} has been completely removed from the system.`);
         window.handleLeadDesignFiles = handleLeadDesignFiles;
         window.removeLeadBOQFile = removeLeadBOQFile;
         window.removeLeadDesignFile = removeLeadDesignFile;
+        window.toggleLeadSourceOther = toggleLeadSourceOther;
         window.addMaterialItemRow = addMaterialItemRow;
         window.updateMaterialItem = updateMaterialItem;
         window.removeMaterialItem = removeMaterialItem;
