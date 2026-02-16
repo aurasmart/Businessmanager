@@ -1476,6 +1476,8 @@
         let selectedFiles = [];
         let selectedBOQFiles = [];
         let selectedDesignFiles = [];
+        let tempMaterialItems = []; // Temporary storage for material items before saving
+        let editingMaterialId = null; // Track which material is being edited
         let currentTab = 'customers';
         let projectStageFilter = 'all';
         let leadStageFilter = 'all';
@@ -2592,7 +2594,23 @@ ${email} has been completely removed from the system.`);
         // Calculate totals
         function calculateTotals(customer) {
             const totalPaid = (customer.payments || []).reduce((sum, p) => sum + p.amount, 0);
-            const totalMaterials = (customer.materials || []).reduce((sum, m) => sum + m.cost, 0);
+            
+            // Calculate total materials cost - handle both old and new formats
+            const totalMaterials = (customer.materials || []).reduce((sum, m) => {
+                if (m.items && m.items.length > 0) {
+                    // New format - sum all items
+                    const itemsTotal = m.items.reduce((itemSum, item) => itemSum + (parseFloat(item.cost) || 0), 0);
+                    return sum + itemsTotal;
+                } else if (m.totalCost) {
+                    // New format with pre-calculated total
+                    return sum + (parseFloat(m.totalCost) || 0);
+                } else if (m.cost) {
+                    // Old format - single item
+                    return sum + (parseFloat(m.cost) || 0);
+                }
+                return sum;
+            }, 0);
+            
             return {
                 totalPaid,
                 totalMaterials,
@@ -3176,8 +3194,17 @@ ${email} has been completely removed from the system.`);
 
         function selectProject(id) {
             selectedProject = projects.find(p => p.id === id);
+            tempMaterialItems = []; // Clear temp items
+            selectedFiles = []; // Clear selected files
+            editingMaterialId = null; // Clear editing state
             renderProjectList();
             renderProjectDetails();
+            // Initialize material items container after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                if (document.getElementById('materialItemsContainer')) {
+                    renderMaterialItemsContainer();
+                }
+            }, 100);
         }
 
         function filterProjects() {
@@ -3247,7 +3274,23 @@ ${email} has been completely removed from the system.`);
             const payments = selectedProject.payments || [];
             const materials = selectedProject.materials || [];
             const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-            const totalMaterials = materials.reduce((sum, m) => sum + m.cost, 0);
+            
+            // Calculate total materials cost - handle both old and new formats
+            const totalMaterials = materials.reduce((sum, m) => {
+                if (m.items && m.items.length > 0) {
+                    // New format - sum all items
+                    const itemsTotal = m.items.reduce((itemSum, item) => itemSum + (parseFloat(item.cost) || 0), 0);
+                    return sum + itemsTotal;
+                } else if (m.totalCost) {
+                    // New format with pre-calculated total
+                    return sum + (parseFloat(m.totalCost) || 0);
+                } else if (m.cost) {
+                    // Old format - single item
+                    return sum + (parseFloat(m.cost) || 0);
+                }
+                return sum;
+            }, 0);
+            
             const balance = totalPaid - totalMaterials;
             const balanceColor = balance >= 0 ? 'blue' : 'red';
             const balanceLabel = balance >= 0 ? 'Balance' : 'Outstanding';
@@ -3267,12 +3310,54 @@ ${email} has been completely removed from the system.`);
 
             const materialsHtml = materials.length === 0 ?
                 '<div class="empty-state">No materials yet</div>' :
-                materials.map(m => `
+                materials.map(m => {
+                    // Calculate total cost properly
+                    let totalCost = 0;
+                    if (m.items && m.items.length > 0) {
+                        totalCost = m.items.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+                    } else if (m.cost) {
+                        totalCost = parseFloat(m.cost) || 0;
+                    } else if (m.totalCost) {
+                        totalCost = parseFloat(m.totalCost) || 0;
+                    }
+                    
+                    return `
                     <div class="list-item">
                         <div class="item-info">
-                            <div class="item-title">${m.name}${m.quantity ? ` (${m.quantity})` : ''}</div>
-                            <div class="item-detail">${formatCurrency(m.cost)}</div>
-                            <div class="item-date">Procured: ${m.procurementDate ? new Date(m.procurementDate).toLocaleDateString() : formatDate(m.date)}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <div>
+                                    <div class="item-title">🏪 ${m.supplierName || 'Supplier'}</div>
+                                    <div class="item-date">📅 Procured: ${m.procurementDate ? new Date(m.procurementDate).toLocaleDateString() : formatDate(m.date || m.createdAt)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="item-detail" style="font-size: 1.125rem; font-weight: 700;">Total: ${formatCurrency(totalCost)}</div>
+                                    ${(m.paymentAmount || 0) > 0 ? `
+                                        <div style="font-size: 0.875rem; color: #10b981; margin-top: 0.25rem;">
+                                            ✅ Paid: ${formatCurrency(m.paymentAmount)}
+                                            ${m.paymentDate ? `<br><span style="font-size: 0.75rem; color: #6b7280;">on ${new Date(m.paymentDate).toLocaleDateString()}</span>` : ''}
+                                        </div>
+                                    ` : '<div style="font-size: 0.875rem; color: #ef4444;">⏳ Payment Pending</div>'}
+                                </div>
+                            </div>
+                            
+                            ${m.items && m.items.length > 0 ? `
+                                <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                                    <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">📦 Items (${m.items.length}):</div>
+                                    ${m.items.map(item => `
+                                        <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
+                                            <span>${item.name}${item.quantity ? ` (${item.quantity})` : ''}</span>
+                                            <span style="font-weight: 600;">${formatCurrency(item.cost || 0)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : m.name ? `
+                                <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                                    <div style="font-size: 0.875rem;">
+                                        ${m.name}${m.quantity ? ` (${m.quantity})` : ''} - ${formatCurrency(m.cost || 0)}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
                             ${m.files && m.files.length > 0 ? `
                                 <div class="files-grid">
                                     ${m.files.map(f => `
@@ -3288,9 +3373,14 @@ ${email} has been completely removed from the system.`);
                                 </div>
                             ` : ''}
                         </div>
-                        ${isAdmin() ? `<button class="btn btn-danger" onclick="deleteProjectMaterial('${m.id}')">Delete</button>` : ''}
+                        ${isAdmin() ? `
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-primary" onclick="editProjectMaterial('${m.id}')">✏️ Edit</button>
+                                <button class="btn btn-danger" onclick="deleteProjectMaterial('${m.id}')">Delete</button>
+                            </div>
+                        ` : ''}
                     </div>
-                `).join('');
+                `}).join('');
 
             // Delivery Challans HTML
             const deliveryChallans = selectedProject.deliveryChallans || [];
@@ -3464,19 +3554,47 @@ ${email} has been completely removed from the system.`);
                         <div class="card-header">📦 Materials Procured</div>
                         ${isAdmin() ? `
                             <div class="card-body">
-                                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
-                                    <input type="text" class="input" id="projectMaterialName" placeholder="Material name">
-                                    <input type="number" class="input" id="projectMaterialCost" placeholder="Cost">
-                                    <input type="text" class="input" id="projectMaterialQuantity" placeholder="Quantity">
-                                    <input type="date" class="input" id="projectMaterialDate">
-                                    <button class="btn btn-warning" onclick="addProjectMaterial()">Add Material</button>
+                                <!-- Supplier and Payment Info -->
+                                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                    <div>
+                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Supplier Name*</label>
+                                        <input type="text" class="input" id="projectSupplierName" placeholder="Enter supplier name">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Payment Made (₹)</label>
+                                        <input type="number" class="input" id="projectPaymentAmount" placeholder="Amount paid to supplier">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Payment Date</label>
+                                        <input type="date" class="input" id="projectPaymentDate">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Procurement Date*</label>
+                                        <input type="date" class="input" id="projectProcurementDate">
+                                    </div>
                                 </div>
+
+                                <!-- Material Items -->
+                                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                        <label style="font-size: 0.875rem; font-weight: 600;">Material Items*</label>
+                                        <button class="btn btn-secondary" onclick="addMaterialItemRow()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">+ Add Item</button>
+                                    </div>
+                                    <div id="materialItemsContainer">
+                                        <!-- Material items will be added here -->
+                                    </div>
+                                </div>
+
+                                <!-- File Upload -->
                                 <div class="file-upload" onclick="document.getElementById('projectFileInput').click()">
                                     <div>📎 Click to upload files to OneDrive</div>
-                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Any file type, any size</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Invoices, receipts, photos • Any file type, any size</div>
                                 </div>
                                 <input type="file" id="projectFileInput" multiple style="display: none" onchange="handleProjectFiles(this.files)">
                                 <div class="selected-files" id="projectSelectedFiles"></div>
+
+                                <!-- Save Button -->
+                                <button class="btn btn-primary" onclick="saveProjectMaterials()" style="width: 100%; margin-top: 1rem;">💾 Save Materials Procurement</button>
                             </div>
                         ` : ''}
                         <div>${materialsHtml}</div>
@@ -3702,52 +3820,203 @@ ${email} has been completely removed from the system.`);
             document.getElementById('projectSelectedFiles').innerHTML = html;
         }
 
-        async function addProjectMaterial() {
-            if (!checkPermission('write')) return;
-            
-            const name = document.getElementById('projectMaterialName').value.trim();
-            const cost = parseFloat(document.getElementById('projectMaterialCost').value);
-            const quantity = document.getElementById('projectMaterialQuantity').value.trim();
-            const date = document.getElementById('projectMaterialDate').value;
+        // ========================================
+        // MATERIALS PROCUREMENT - MULTI-ITEM
+        // ========================================
 
-            if (!name || !cost || cost <= 0) {
-                alert('Please enter valid material details');
+        function addMaterialItemRow() {
+            const itemId = Date.now().toString() + Math.random();
+            const row = {
+                id: itemId,
+                name: '',
+                cost: 0,
+                quantity: ''
+            };
+            
+            tempMaterialItems.push(row);
+            renderMaterialItemsContainer();
+        }
+
+        function renderMaterialItemsContainer() {
+            const container = document.getElementById('materialItemsContainer');
+            if (!container) return;
+
+            if (tempMaterialItems.length === 0) {
+                // Add first row by default
+                addMaterialItemRow();
                 return;
             }
 
-            const material = {
-                id: Date.now().toString(),
-                name: name,
-                cost: cost,
-                quantity: quantity,
-                procurementDate: date || new Date().toISOString(),
+            container.innerHTML = tempMaterialItems.map((item, index) => `
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+                    <input type="text" class="input" placeholder="Material name*" value="${item.name}" 
+                           onchange="updateMaterialItem('${item.id}', 'name', this.value)" style="margin: 0;">
+                    <input type="number" class="input" placeholder="Cost*" value="${item.cost || ''}" 
+                           onchange="updateMaterialItem('${item.id}', 'cost', this.value)" style="margin: 0;">
+                    <input type="text" class="input" placeholder="Quantity" value="${item.quantity}" 
+                           onchange="updateMaterialItem('${item.id}', 'quantity', this.value)" style="margin: 0;">
+                    <button class="btn btn-danger" onclick="removeMaterialItem('${item.id}')" style="padding: 0.5rem; margin: 0;">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateMaterialItem(id, field, value) {
+            const item = tempMaterialItems.find(i => i.id === id);
+            if (item) {
+                if (field === 'cost') {
+                    item[field] = parseFloat(value) || 0;
+                } else {
+                    item[field] = value;
+                }
+            }
+        }
+
+        function removeMaterialItem(id) {
+            tempMaterialItems = tempMaterialItems.filter(i => i.id !== id);
+            if (tempMaterialItems.length === 0) {
+                addMaterialItemRow();
+            } else {
+                renderMaterialItemsContainer();
+            }
+        }
+
+        async function saveProjectMaterials() {
+            if (!checkPermission('write')) return;
+            
+            const supplierName = document.getElementById('projectSupplierName').value.trim();
+            const paymentAmount = parseFloat(document.getElementById('projectPaymentAmount').value) || 0;
+            const paymentDate = document.getElementById('projectPaymentDate').value;
+            const procurementDate = document.getElementById('projectProcurementDate').value;
+
+            if (!supplierName) {
+                alert('Please enter supplier name');
+                return;
+            }
+
+            if (!procurementDate) {
+                alert('Please enter procurement date');
+                return;
+            }
+
+            // Validate material items
+            const validItems = tempMaterialItems.filter(item => item.name && item.cost > 0);
+            if (validItems.length === 0) {
+                alert('Please add at least one material item with name and cost');
+                return;
+            }
+
+            // Create/update procurement record
+            const procurement = {
+                id: editingMaterialId || Date.now().toString(),
+                supplierName: supplierName,
+                paymentAmount: paymentAmount,
+                paymentDate: paymentDate || null,
+                procurementDate: procurementDate,
+                items: validItems.map(item => ({
+                    name: item.name,
+                    cost: item.cost,
+                    quantity: item.quantity || ''
+                })),
+                totalCost: validItems.reduce((sum, item) => sum + item.cost, 0),
                 files: [...selectedFiles],
-                date: new Date().toISOString()
+                createdAt: editingMaterialId ? (selectedProject.materials.find(m => m.id === editingMaterialId)?.createdAt) : new Date().toISOString(),
+                createdBy: currentUser?.uid
             };
 
             try {
                 if (db) {
-                    const materials = [...(selectedProject.materials || []), material];
+                    let materials;
+                    if (editingMaterialId) {
+                        // Update existing
+                        materials = selectedProject.materials.map(m => m.id === editingMaterialId ? procurement : m);
+                    } else {
+                        // Add new
+                        materials = [...(selectedProject.materials || []), procurement];
+                    }
                     await db.collection('projects').doc(selectedProject.id).update({ materials });
                 } else {
-                    selectedProject.materials = [...(selectedProject.materials || []), material];
+                    if (editingMaterialId) {
+                        selectedProject.materials = selectedProject.materials.map(m => m.id === editingMaterialId ? procurement : m);
+                    } else {
+                        selectedProject.materials = [...(selectedProject.materials || []), procurement];
+                    }
                     saveToLocalStorage();
                     renderProjectDetails();
                 }
 
-                document.getElementById('projectMaterialName').value = '';
-                document.getElementById('projectMaterialCost').value = '';
-                document.getElementById('projectMaterialQuantity').value = '';
-                document.getElementById('projectMaterialDate').value = '';
+                // Clear form
+                document.getElementById('projectSupplierName').value = '';
+                document.getElementById('projectPaymentAmount').value = '';
+                document.getElementById('projectPaymentDate').value = '';
+                document.getElementById('projectProcurementDate').value = '';
+                tempMaterialItems = [];
                 selectedFiles = [];
+                editingMaterialId = null;
+                renderMaterialItemsContainer();
+                document.getElementById('projectSelectedFiles').innerHTML = '';
+                
+                // Update button text back
+                const saveBtn = document.querySelector('#projectDetailsPanel button[onclick="saveProjectMaterials()"]');
+                if (saveBtn) saveBtn.textContent = '💾 Save Materials Procurement';
+                
+                alert(editingMaterialId ? '✅ Materials updated successfully!' : '✅ Materials procurement saved successfully!');
             } catch (error) {
-                console.error('Error adding material:', error);
-                alert('Failed to add material');
+                console.error('Error saving materials:', error);
+                alert('Failed to save materials');
             }
+        }
+
+        function editProjectMaterial(id) {
+            if (!checkPermission('write')) return;
+            
+            const material = selectedProject.materials.find(m => m.id === id);
+            if (!material) return;
+            
+            editingMaterialId = id;
+            
+            // Fill form with existing data
+            document.getElementById('projectSupplierName').value = material.supplierName || '';
+            document.getElementById('projectPaymentAmount').value = material.paymentAmount || '';
+            document.getElementById('projectPaymentDate').value = material.paymentDate || '';
+            document.getElementById('projectProcurementDate').value = material.procurementDate || material.date || '';
+            
+            // Load items
+            if (material.items && material.items.length > 0) {
+                tempMaterialItems = material.items.map(item => ({
+                    id: Date.now().toString() + Math.random(),
+                    name: item.name,
+                    cost: parseFloat(item.cost) || 0,
+                    quantity: item.quantity || ''
+                }));
+            } else if (material.name) {
+                // Old format - single item
+                tempMaterialItems = [{
+                    id: Date.now().toString(),
+                    name: material.name,
+                    cost: parseFloat(material.cost) || 0,
+                    quantity: material.quantity || ''
+                }];
+            }
+            
+            // Load files
+            selectedFiles = material.files || [];
+            
+            // Update UI
+            renderMaterialItemsContainer();
+            renderProjectSelectedFiles();
+            
+            // Update button text
+            const saveBtn = document.querySelector('#projectDetailsPanel button[onclick="saveProjectMaterials()"]');
+            if (saveBtn) saveBtn.textContent = '💾 Update Materials Procurement';
+            
+            // Scroll to form
+            document.querySelector('.card-header:has(+ .card-body)').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         async function deleteProjectMaterial(id) {
             if (!checkPermission('write')) return;
+            
+            if (!confirm('Delete this procurement record?')) return;
             
             try {
                 if (db) {
@@ -3777,13 +4046,46 @@ ${email} has been completely removed from the system.`);
                 return;
             }
 
-            // Populate material checkboxes
+            // Populate material checkboxes - handle both old and new formats
             const checkboxContainer = document.getElementById('materialCheckboxes');
-            checkboxContainer.innerHTML = materials.map(m => `
+            
+            // Flatten all items from all materials
+            const allItems = [];
+            materials.forEach(m => {
+                if (m.items && m.items.length > 0) {
+                    // New format - multiple items
+                    m.items.forEach((item, index) => {
+                        allItems.push({
+                            id: `${m.id}_${index}`,
+                            name: item.name,
+                            quantity: item.quantity || '',
+                            supplierId: m.id,
+                            supplier: m.supplierName || 'Supplier'
+                        });
+                    });
+                } else if (m.name) {
+                    // Old format - single item
+                    allItems.push({
+                        id: m.id,
+                        name: m.name,
+                        quantity: m.quantity || '',
+                        supplierId: m.id,
+                        supplier: m.supplierName || 'Supplier'
+                    });
+                }
+            });
+
+            if (allItems.length === 0) {
+                alert('No material items available to create delivery challan');
+                return;
+            }
+
+            checkboxContainer.innerHTML = allItems.map(item => `
                 <div style="padding: 0.5rem; border-bottom: 1px solid #f3f4f6;">
                     <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="checkbox" value="${m.id}" data-name="${m.name}" data-quantity="${m.quantity || ''}" style="margin-right: 0.5rem;">
-                        <span>${m.name}${m.quantity ? ` (${m.quantity})` : ''}</span>
+                        <input type="checkbox" value="${item.id}" data-name="${item.name}" data-quantity="${item.quantity}" style="margin-right: 0.5rem;">
+                        <span>${item.name}${item.quantity ? ` (${item.quantity})` : ''}</span>
+                        <span style="font-size: 0.75rem; color: #6b7280; margin-left: auto;">from ${item.supplier}</span>
                     </label>
                 </div>
             `).join('');
@@ -4912,6 +5214,11 @@ ${email} has been completely removed from the system.`);
         window.handleLeadDesignFiles = handleLeadDesignFiles;
         window.removeLeadBOQFile = removeLeadBOQFile;
         window.removeLeadDesignFile = removeLeadDesignFile;
+        window.addMaterialItemRow = addMaterialItemRow;
+        window.updateMaterialItem = updateMaterialItem;
+        window.removeMaterialItem = removeMaterialItem;
+        window.saveProjectMaterials = saveProjectMaterials;
+        window.editProjectMaterial = editProjectMaterial;
     </script>
 </body>
 </html>
