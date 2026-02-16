@@ -1440,6 +1440,9 @@
         </div>
     </div>
 
+    <!-- Microsoft Authentication Library (MSAL) for OneDrive -->
+    <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -1487,6 +1490,168 @@
         
         // Backend API URL - Update this to your deployed backend URL
         const BACKEND_API_URL = 'https://business-manager-backend-production-8034.up.railway.app/api';  // Change to your production URL when deployed
+
+        // ========================================
+        // ONEDRIVE CONFIGURATION
+        // ========================================
+        const ONEDRIVE_CLIENT_ID = 'e17cddb9-60f6-44c5-b26f-e8d87534d112';
+        const ONEDRIVE_REDIRECT_URI = 'https://aurasmart.github.io/Businessmanager/';
+        const ONEDRIVE_SCOPES = ['Files.ReadWrite', 'Files.ReadWrite.All', 'User.Read', 'offline_access'];
+        
+        let msalInstance = null;
+        let oneDriveAccessToken = null;
+
+        // Initialize MSAL (called lazily when needed)
+        function initializeOneDrive() {
+            if (msalInstance) return; // Already initialized
+            
+            const msalConfig = {
+                auth: {
+                    clientId: ONEDRIVE_CLIENT_ID,
+                    authority: 'https://login.microsoftonline.com/common',
+                    redirectUri: ONEDRIVE_REDIRECT_URI
+                },
+                cache: {
+                    cacheLocation: 'localStorage',
+                    storeAuthStateInCookie: false
+                }
+            };
+
+            msalInstance = new msal.PublicClientApplication(msalConfig);
+            
+            // Handle redirect response
+            msalInstance.handleRedirectPromise().then(response => {
+                if (response) {
+                    oneDriveAccessToken = response.accessToken;
+                    console.log('✅ OneDrive authenticated');
+                    localStorage.setItem('onedrive_connected', 'true');
+                }
+            }).catch(error => {
+                console.error('OneDrive auth error:', error);
+            });
+
+            // Check if already authenticated
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                acquireOneDriveToken();
+            }
+        }
+
+        async function connectOneDrive() {
+            try {
+                const loginRequest = {
+                    scopes: ONEDRIVE_SCOPES
+                };
+
+                const response = await msalInstance.loginPopup(loginRequest);
+                oneDriveAccessToken = response.accessToken;
+                localStorage.setItem('onedrive_connected', 'true');
+                alert('✅ OneDrive connected successfully!');
+                return true;
+            } catch (error) {
+                console.error('OneDrive connection error:', error);
+                alert('Failed to connect OneDrive: ' + error.message);
+                return false;
+            }
+        }
+
+        async function acquireOneDriveToken() {
+            try {
+                const accounts = msalInstance.getAllAccounts();
+                if (accounts.length === 0) {
+                    return await connectOneDrive();
+                }
+
+                const silentRequest = {
+                    scopes: ONEDRIVE_SCOPES,
+                    account: accounts[0]
+                };
+
+                const response = await msalInstance.acquireTokenSilent(silentRequest);
+                oneDriveAccessToken = response.accessToken;
+                return true;
+            } catch (error) {
+                console.error('Token acquisition error:', error);
+                return await connectOneDrive();
+            }
+        }
+
+        async function uploadToOneDrive(file, folder) {
+            // Ensure we have a token
+            if (!oneDriveAccessToken) {
+                const connected = await acquireOneDriveToken();
+                if (!connected) {
+                    throw new Error('OneDrive not connected');
+                }
+            }
+
+            // Create unique filename
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substr(2, 9);
+            const fileName = `lead_${timestamp}_${randomId}_${file.name}`;
+            const folderPath = folder === 'boq' ? 'Business Manager Files/BOQ Files' : 'Business Manager Files/Design Files';
+
+            try {
+                // Upload file to OneDrive
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${folderPath}/${fileName}:/content`;
+                
+                // Convert base64 to blob
+                const base64Data = file.data.split(',')[1];
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: file.type });
+
+                const response = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${oneDriveAccessToken}`,
+                        'Content-Type': file.type
+                    },
+                    body: blob
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                // Create sharing link
+                const shareUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${result.id}/createLink`;
+                const shareResponse = await fetch(shareUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${oneDriveAccessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'view',
+                        scope: 'anonymous'
+                    })
+                });
+
+                const shareResult = await shareResponse.json();
+
+                return {
+                    id: result.id,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    oneDriveId: result.id,
+                    webUrl: result.webUrl,
+                    downloadUrl: result['@microsoft.graph.downloadUrl'],
+                    shareLink: shareResult.link.webUrl,
+                    uploadedAt: new Date().toISOString()
+                };
+            } catch (error) {
+                console.error('OneDrive upload error:', error);
+                throw error;
+            }
+        }
 
         // ========================================
         // AUTHENTICATION
@@ -4076,7 +4241,7 @@ ${email} has been completely removed from the system.`);
                                             <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
                                             <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                         </div>
-                                        <button class="download-btn" onclick='downloadFile(${JSON.stringify(f)})' title="Download">⬇️</button>
+                                        <a href="${f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
                                     </div>
                                 `).join('')}
                             </div>
@@ -4090,15 +4255,12 @@ ${email} has been completely removed from the system.`);
                             <div class="files-grid">
                                 ${selectedLead.designFiles.map(f => `
                                     <div class="attached-file">
-                                        ${f.type.startsWith('image/') ? 
-                                            `<img src="${f.data}" class="file-thumbnail" alt="${f.name}">` :
-                                            `<div class="file-icon">${getFileIcon(f.type)}</div>`
-                                        }
+                                        <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                                         <div style="flex: 1; min-width: 0; overflow: hidden;">
                                             <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
                                             <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                         </div>
-                                        <button class="download-btn" onclick='downloadFile(${JSON.stringify(f)})' title="Download">⬇️</button>
+                                        <a href="${f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
                                     </div>
                                 `).join('')}
                             </div>
@@ -4143,36 +4305,96 @@ ${email} has been completely removed from the system.`);
         // LEAD FILE HANDLING
         // ========================================
 
-        function handleLeadBOQFiles(files) {
-            Array.from(files).forEach(file => {
+        async function handleLeadBOQFiles(files) {
+            for (const file of Array.from(files)) {
+                // Initialize OneDrive if not already done
+                if (!msalInstance) {
+                    initializeOneDrive();
+                }
+                
+                // Check OneDrive connection
+                if (!oneDriveAccessToken) {
+                    const connected = await connectOneDrive();
+                    if (!connected) {
+                        alert('Please connect OneDrive to upload files');
+                        return;
+                    }
+                }
+
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    selectedBOQFiles.push({
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        data: e.target.result
-                    });
-                    displayLeadBOQFiles();
+                reader.onload = async (e) => {
+                    try {
+                        const fileData = {
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            data: e.target.result
+                        };
+
+                        // Show upload progress
+                        document.getElementById('syncStatus').textContent = `Uploading ${file.name} to OneDrive...`;
+
+                        // Upload to OneDrive
+                        const oneDriveFile = await uploadToOneDrive(fileData, 'boq');
+                        
+                        selectedBOQFiles.push(oneDriveFile);
+                        displayLeadBOQFiles();
+
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        alert(`Failed to upload ${file.name}: ${error.message}`);
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    }
                 };
                 reader.readAsDataURL(file);
-            });
+            }
         }
 
-        function handleLeadDesignFiles(files) {
-            Array.from(files).forEach(file => {
+        async function handleLeadDesignFiles(files) {
+            for (const file of Array.from(files)) {
+                // Initialize OneDrive if not already done
+                if (!msalInstance) {
+                    initializeOneDrive();
+                }
+                
+                // Check OneDrive connection
+                if (!oneDriveAccessToken) {
+                    const connected = await connectOneDrive();
+                    if (!connected) {
+                        alert('Please connect OneDrive to upload files');
+                        return;
+                    }
+                }
+
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    selectedDesignFiles.push({
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        data: e.target.result
-                    });
-                    displayLeadDesignFiles();
+                reader.onload = async (e) => {
+                    try {
+                        const fileData = {
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            data: e.target.result
+                        };
+
+                        // Show upload progress
+                        document.getElementById('syncStatus').textContent = `Uploading ${file.name} to OneDrive...`;
+
+                        // Upload to OneDrive
+                        const oneDriveFile = await uploadToOneDrive(fileData, 'design');
+                        
+                        selectedDesignFiles.push(oneDriveFile);
+                        displayLeadDesignFiles();
+
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        alert(`Failed to upload ${file.name}: ${error.message}`);
+                        document.getElementById('syncStatus').textContent = '☁️ Cloud Sync Active';
+                    }
                 };
                 reader.readAsDataURL(file);
-            });
+            }
         }
 
         function displayLeadBOQFiles() {
