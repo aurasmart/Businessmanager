@@ -3478,76 +3478,130 @@ ${email} has been completely removed from the system.`);
             const materialsHtml = materials.length === 0 ?
                 '<div class="empty-state">No materials yet</div>' :
                 materials.map(m => {
-                    // Calculate total cost properly
+                    // Calculate total cost
                     let totalCost = 0;
                     if (m.items && m.items.length > 0) {
-                        totalCost = m.items.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
-                    } else if (m.cost) {
-                        totalCost = parseFloat(m.cost) || 0;
+                        totalCost = m.items.reduce((sum, item) => {
+                            if (item.totalAmount) return sum + parseFloat(item.totalAmount);
+                            const base = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitRate) || parseFloat(item.cost) || 0);
+                            const gst = base * ((parseFloat(item.gstRate) || 0) / 100);
+                            return sum + base + gst;
+                        }, 0);
                     } else if (m.totalCost) {
                         totalCost = parseFloat(m.totalCost) || 0;
+                    } else if (m.cost) {
+                        totalCost = parseFloat(m.cost) || 0;
                     }
-                    
-                    return `
+
+                    const supplierPayments = m.supplierPayments || [];
+                    const totalPaidToSupplier = supplierPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+                    const dueAmount = totalCost - totalPaidToSupplier;
+
+                    // Build items table
+                    let itemsTableHtml = '';
+                    if (m.items && m.items.length > 0) {
+                        const hasGst = m.items.some(i => (parseFloat(i.gstRate) || 0) > 0);
+                        itemsTableHtml = \`
+                            <div style="background: #f9fafb; border-radius: 0.5rem; margin-bottom: 0.75rem; overflow: auto;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                                    <thead>
+                                        <tr style="background: #e5e7eb;">
+                                            <th style="padding: 0.4rem 0.6rem; text-align: left; font-weight: 600; color: #374151;">#</th>
+                                            <th style="padding: 0.4rem 0.6rem; text-align: left; font-weight: 600; color: #374151;">Item</th>
+                                            <th style="padding: 0.4rem 0.6rem; text-align: right; font-weight: 600; color: #374151;">Qty</th>
+                                            <th style="padding: 0.4rem 0.6rem; text-align: right; font-weight: 600; color: #374151;">Unit Rate</th>
+                                            \${hasGst ? '<th style="padding: 0.4rem 0.6rem; text-align: right; font-weight: 600; color: #374151;">GST %</th>' : ''}
+                                            <th style="padding: 0.4rem 0.6rem; text-align: right; font-weight: 600; color: #374151;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        \${m.items.map((item, idx) => {
+                                            const unitRate = parseFloat(item.unitRate) || parseFloat(item.cost) || 0;
+                                            const qty = parseFloat(item.quantity) || 0;
+                                            const gstRate = parseFloat(item.gstRate) || 0;
+                                            const base = qty * unitRate;
+                                            const gst = base * (gstRate / 100);
+                                            const total = item.totalAmount ? parseFloat(item.totalAmount) : (base + gst);
+                                            return \`
+                                            <tr style="border-bottom: 1px solid #e5e7eb;">
+                                                <td style="padding: 0.35rem 0.6rem; color: #6b7280;">\${idx + 1}</td>
+                                                <td style="padding: 0.35rem 0.6rem; font-weight: 500;">\${item.name}</td>
+                                                <td style="padding: 0.35rem 0.6rem; text-align: right;">\${item.quantity || '—'}</td>
+                                                <td style="padding: 0.35rem 0.6rem; text-align: right;">₹\${unitRate.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                                \${hasGst ? \`<td style="padding: 0.35rem 0.6rem; text-align: right;">\${gstRate > 0 ? gstRate + '%' : '—'}</td>\` : ''}
+                                                <td style="padding: 0.35rem 0.6rem; text-align: right; font-weight: 600;">₹\${total.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                            </tr>\`;
+                                        }).join('')}
+                                        <tr style="background: #e5e7eb; font-weight: 700;">
+                                            <td colspan="\${hasGst ? 5 : 4}" style="padding: 0.4rem 0.6rem; text-align: right;">Grand Total</td>
+                                            <td style="padding: 0.4rem 0.6rem; text-align: right;">₹\${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>\`;
+                    } else if (m.name) {
+                        itemsTableHtml = \`<div style="background: #f9fafb; padding: 0.6rem; border-radius: 0.375rem; font-size: 0.875rem; margin-bottom: 0.75rem;">
+                            \${m.name}\${m.quantity ? \` (\${m.quantity})\` : ''} — ₹\${(parseFloat(m.cost) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                        </div>\`;
+                    }
+
+                    // Build supplier payments history
+                    let paymentsHtml2 = '';
+                    if (supplierPayments.length > 0) {
+                        paymentsHtml2 = \`
+                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.8rem; font-weight: 600; color: #15803d; margin-bottom: 0.5rem;">💳 Payment History</div>
+                                \${supplierPayments.map(p => \`
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.2rem 0; border-bottom: 1px solid #dcfce7;">
+                                        <span style="color: #374151;">\${p.date ? new Date(p.date).toLocaleDateString('en-IN') : ''}\${p.note ? \` — \${p.note}\` : ''}</span>
+                                        <span style="font-weight: 600; color: #15803d;">₹\${parseFloat(p.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                                    </div>\`).join('')}
+                            </div>\`;
+                    }
+
+                    return \`
                     <div class="list-item">
                         <div class="item-info">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                 <div>
-                                    <div class="item-title">🏪 ${m.supplierName || 'Supplier'}</div>
-                                    <div class="item-date">📅 Procured: ${m.procurementDate ? new Date(m.procurementDate).toLocaleDateString() : formatDate(m.date || m.createdAt)}</div>
+                                    <div class="item-title">🏪 \${m.supplierName || 'Supplier'}</div>
+                                    <div class="item-date">📅 Procured: \${m.procurementDate ? new Date(m.procurementDate).toLocaleDateString('en-IN') : formatDate(m.date || m.createdAt)}</div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div class="item-detail" style="font-size: 1.125rem; font-weight: 700;">Total: ${formatCurrency(totalCost)}</div>
-                                    ${(m.paymentAmount || 0) > 0 ? `
-                                        <div style="font-size: 0.875rem; color: #10b981; margin-top: 0.25rem;">
-                                            ✅ Paid: ${formatCurrency(m.paymentAmount)}
-                                            ${m.paymentDate ? `<br><span style="font-size: 0.75rem; color: #6b7280;">on ${new Date(m.paymentDate).toLocaleDateString()}</span>` : ''}
-                                        </div>
-                                    ` : '<div style="font-size: 0.875rem; color: #ef4444;">⏳ Payment Pending</div>'}
-                                </div>
-                            </div>
-                            
-                            ${m.items && m.items.length > 0 ? `
-                                <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
-                                    <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">📦 Items (${m.items.length}):</div>
-                                    ${m.items.map(item => `
-                                        <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
-                                            <span>${item.name}${item.quantity ? ` (${item.quantity})` : ''}</span>
-                                            <span style="font-weight: 600;">${formatCurrency(item.cost || 0)}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : m.name ? `
-                                <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
-                                    <div style="font-size: 0.875rem;">
-                                        ${m.name}${m.quantity ? ` (${m.quantity})` : ''} - ${formatCurrency(m.cost || 0)}
+                                    <div class="item-detail" style="font-size: 1rem; font-weight: 700;">Total: ₹\${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                                    <div style="font-size: 0.8rem; color: #15803d;">Paid: ₹\${totalPaidToSupplier.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                                    <div style="font-size: 0.875rem; font-weight: 600; color: \${dueAmount <= 0 ? '#15803d' : '#b91c1c'};">
+                                        \${dueAmount <= 0 ? '✅ Fully Paid' : '⏳ Due: ₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                                     </div>
                                 </div>
-                            ` : ''}
-                            
-                            ${m.files && m.files.length > 0 ? `
-                                <div class="files-grid">
-                                    ${m.files.map(f => `
-                                        <div class="attached-file">
-                                            <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
-                                            <div style="flex: 1; min-width: 0; overflow: hidden;">
-                                                <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
-                                                <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
-                                            </div>
-                                            <a href="${f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                        ${isAdmin() ? `
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-primary" onclick="editProjectMaterial('${m.id}')">✏️ Edit</button>
-                                <button class="btn btn-danger" onclick="deleteProjectMaterial('${m.id}')">Delete</button>
                             </div>
-                        ` : ''}
+
+                            \${itemsTableHtml}
+                            \${paymentsHtml2}
+
+                            \${m.files && m.files.length > 0 ? \`
+                                <div class="files-grid">
+                                    \${m.files.map(f => \`
+                                        <div class="attached-file">
+                                            <div class="file-icon">\${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
+                                            <div style="flex: 1; min-width: 0; overflow: hidden;">
+                                                <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">\${f.name}</div>
+                                                <div style="font-size: 0.7rem; color: #6b7280;">\${formatFileSize(f.size)}</div>
+                                            </div>
+                                            <a href="\${f.downloadUrl || f.data}" download="\${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
+                                        </div>
+                                    \`).join('')}
+                                </div>
+                            \` : ''}
+                        </div>
+                        \${isAdmin() ? \`
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-primary" onclick="editProjectMaterial('\${m.id}')">✏️ Edit</button>
+                                <button class="btn btn-danger" onclick="deleteProjectMaterial('\${m.id}')">Delete</button>
+                            </div>
+                        \` : ''}
                     </div>
-                `}).join('');
+                \`}).join('');
 
             // Delivery Challans HTML
             const deliveryChallans = selectedProject.deliveryChallans || [];
@@ -3751,19 +3805,11 @@ ${email} has been completely removed from the system.`);
                         <div class="card-header">📦 Materials Procured</div>
                         ${isAdmin() ? `
                             <div class="card-body">
-                                <!-- Supplier and Payment Info -->
+                                <!-- Supplier and Procurement Info -->
                                 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                                     <div>
                                         <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Supplier Name*</label>
                                         <input type="text" class="input" id="projectSupplierName" placeholder="Enter supplier name">
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Payment Made (₹)</label>
-                                        <input type="number" class="input" id="projectPaymentAmount" placeholder="Amount paid to supplier">
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Payment Date</label>
-                                        <input type="date" class="input" id="projectPaymentDate">
                                     </div>
                                     <div>
                                         <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Procurement Date*</label>
@@ -3771,7 +3817,7 @@ ${email} has been completely removed from the system.`);
                                     </div>
                                 </div>
 
-                                <!-- Material Items -->
+                                <!-- Material Items Table -->
                                 <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                         <label style="font-size: 0.875rem; font-weight: 600;">Material Items*</label>
@@ -3780,6 +3826,28 @@ ${email} has been completely removed from the system.`);
                                     <div id="materialItemsContainer">
                                         <!-- Material items will be added here -->
                                     </div>
+                                </div>
+
+                                <!-- Supplier Partial Payments (shown during edit) -->
+                                <div id="supplierPaymentsPanel" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                                    <div style="font-size: 0.875rem; font-weight: 600; color: #1e40af; margin-bottom: 0.75rem;">💳 Supplier Payments</div>
+                                    <div id="supplierPaymentsList" style="margin-bottom: 0.75rem;"></div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; align-items: end;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; display: block;">Amount (₹)*</label>
+                                            <input type="number" class="input" id="supplierPayAmt" placeholder="0.00" min="0" step="0.01" style="margin: 0;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; display: block;">Date*</label>
+                                            <input type="date" class="input" id="supplierPayDate" style="margin: 0;">
+                                        </div>
+                                        <button class="btn btn-success" onclick="addSupplierPaymentEntry()" style="white-space: nowrap;">+ Add Payment</button>
+                                    </div>
+                                    <div style="margin-top: 0.5rem;">
+                                        <label style="font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; display: block;">Note (optional)</label>
+                                        <input type="text" class="input" id="supplierPayNote" placeholder="e.g. advance, final payment..." style="margin: 0;">
+                                    </div>
+                                    <div id="supplierDueSummary" style="margin-top: 0.75rem; font-size: 0.875rem; font-weight: 600;"></div>
                                 </div>
 
                                 <!-- File Upload -->
@@ -4039,12 +4107,20 @@ ${email} has been completely removed from the system.`);
             const row = {
                 id: itemId,
                 name: '',
-                cost: 0,
-                quantity: ''
+                quantity: '',
+                unitRate: 0,
+                gstRate: 0,
+                totalAmount: 0
             };
-            
+
             tempMaterialItems.push(row);
             renderMaterialItemsContainer();
+        }
+
+        function calcItemTotal(item) {
+            const base = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitRate) || 0);
+            const gst = base * ((parseFloat(item.gstRate) || 0) / 100);
+            return base + gst;
         }
 
         function renderMaterialItemsContainer() {
@@ -4052,31 +4128,66 @@ ${email} has been completely removed from the system.`);
             if (!container) return;
 
             if (tempMaterialItems.length === 0) {
-                // Add first row by default
                 addMaterialItemRow();
                 return;
             }
 
-            container.innerHTML = tempMaterialItems.map((item, index) => `
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
-                    <input type="text" class="input" placeholder="Material name*" value="${item.name}" 
-                           onchange="updateMaterialItem('${item.id}', 'name', this.value)" style="margin: 0;">
-                    <input type="number" class="input" placeholder="Cost*" value="${item.cost || ''}" 
-                           onchange="updateMaterialItem('${item.id}', 'cost', this.value)" style="margin: 0;">
-                    <input type="text" class="input" placeholder="Quantity" value="${item.quantity}" 
-                           onchange="updateMaterialItem('${item.id}', 'quantity', this.value)" style="margin: 0;">
-                    <button class="btn btn-danger" onclick="removeMaterialItem('${item.id}')" style="padding: 0.5rem; margin: 0;">×</button>
-                </div>
-            `).join('');
+            // Header row
+            const header = `
+                <div style="display: grid; grid-template-columns: 2.5fr 1fr 1.2fr 0.8fr 1.2fr auto; gap: 0.4rem; margin-bottom: 0.35rem; padding: 0 0.25rem;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Item Name*</div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Qty*</div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Unit Rate (₹)*</div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">GST %</div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Total (₹)</div>
+                    <div></div>
+                </div>`;
+
+            const rows = tempMaterialItems.map((item) => {
+                const total = calcItemTotal(item);
+                return `
+                <div style="display: grid; grid-template-columns: 2.5fr 1fr 1.2fr 0.8fr 1.2fr auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
+                    <input type="text" class="input" placeholder="Material name" value="${item.name}"
+                           oninput="updateMaterialItem('${item.id}', 'name', this.value)" style="margin: 0;">
+                    <input type="number" class="input" placeholder="0" value="${item.quantity || ''}" min="0"
+                           oninput="updateMaterialItem('${item.id}', 'quantity', this.value)" style="margin: 0;">
+                    <input type="number" class="input" placeholder="0.00" value="${item.unitRate || ''}" min="0" step="0.01"
+                           oninput="updateMaterialItem('${item.id}', 'unitRate', this.value)" style="margin: 0;">
+                    <input type="number" class="input" placeholder="0" value="${item.gstRate || ''}" min="0" max="100"
+                           oninput="updateMaterialItem('${item.id}', 'gstRate', this.value)" style="margin: 0;">
+                    <input type="text" class="input" readonly value="${total.toFixed(2)}"
+                           id="itemTotal_${item.id}" style="margin: 0; background: #f3f4f6; font-weight: 600; color: #111827;">
+                    <button class="btn btn-danger" onclick="removeMaterialItem('${item.id}')" style="padding: 0.5rem; margin: 0; min-width: 2rem;">×</button>
+                </div>`;
+            }).join('');
+
+            const grandTotal = tempMaterialItems.reduce((sum, item) => sum + calcItemTotal(item), 0);
+            const footer = `
+                <div style="display: flex; justify-content: flex-end; align-items: center; padding: 0.5rem 0.25rem; border-top: 2px solid #e5e7eb; margin-top: 0.25rem;">
+                    <span style="font-size: 0.875rem; font-weight: 700; color: #111827;">Grand Total: ₹${grandTotal.toFixed(2)}</span>
+                </div>`;
+
+            container.innerHTML = header + rows + footer;
         }
 
         function updateMaterialItem(id, field, value) {
             const item = tempMaterialItems.find(i => i.id === id);
             if (item) {
-                if (field === 'cost') {
+                if (['quantity', 'unitRate', 'gstRate'].includes(field)) {
                     item[field] = parseFloat(value) || 0;
                 } else {
                     item[field] = value;
+                }
+                item.totalAmount = calcItemTotal(item);
+                // Update total field inline without full re-render
+                const totalEl = document.getElementById('itemTotal_' + id);
+                if (totalEl) totalEl.value = item.totalAmount.toFixed(2);
+                // Update grand total
+                const grandTotal = tempMaterialItems.reduce((sum, i) => sum + calcItemTotal(i), 0);
+                const container = document.getElementById('materialItemsContainer');
+                if (container) {
+                    const footer = container.querySelector('div[style*="border-top"]');
+                    if (footer) footer.querySelector('span').textContent = 'Grand Total: ₹' + grandTotal.toFixed(2);
                 }
             }
         }
@@ -4092,10 +4203,8 @@ ${email} has been completely removed from the system.`);
 
         async function saveProjectMaterials() {
             if (!checkPermission('write')) return;
-            
+
             const supplierName = document.getElementById('projectSupplierName').value.trim();
-            const paymentAmount = parseFloat(document.getElementById('projectPaymentAmount').value) || 0;
-            const paymentDate = document.getElementById('projectPaymentDate').value;
             const procurementDate = document.getElementById('projectProcurementDate').value;
 
             if (!supplierName) {
@@ -4109,29 +4218,37 @@ ${email} has been completely removed from the system.`);
             }
 
             // Validate material items
-            const validItems = tempMaterialItems.filter(item => item.name && item.cost > 0);
+            const validItems = tempMaterialItems.filter(item => item.name && (parseFloat(item.unitRate) > 0 || parseFloat(item.quantity) > 0));
             if (validItems.length === 0) {
-                alert('Please add at least one material item with name and cost');
+                alert('Please add at least one material item with name, quantity and unit rate');
                 return;
             }
+
+            const existingMaterial = editingMaterialId ? (selectedProject.materials || []).find(m => m.id === editingMaterialId) : null;
 
             // Create/update procurement record
             const procurement = {
                 id: editingMaterialId || Date.now().toString(),
                 supplierName: supplierName,
-                paymentAmount: paymentAmount,
-                paymentDate: paymentDate || null,
                 procurementDate: procurementDate,
                 items: validItems.map(item => ({
                     name: item.name,
-                    cost: item.cost,
-                    quantity: item.quantity || ''
+                    quantity: item.quantity || '',
+                    unitRate: parseFloat(item.unitRate) || 0,
+                    gstRate: parseFloat(item.gstRate) || 0,
+                    totalAmount: calcItemTotal(item)
                 })),
-                totalCost: validItems.reduce((sum, item) => sum + item.cost, 0),
+                totalCost: validItems.reduce((sum, item) => sum + calcItemTotal(item), 0),
+                // Preserve existing supplier payments or start fresh
+                supplierPayments: existingMaterial ? (existingMaterial.supplierPayments || []) : [],
                 files: [...selectedFiles],
-                createdAt: editingMaterialId ? (selectedProject.materials.find(m => m.id === editingMaterialId)?.createdAt) : new Date().toISOString(),
+                createdAt: existingMaterial ? existingMaterial.createdAt : new Date().toISOString(),
                 createdBy: currentUser?.uid
             };
+
+            // Recalculate due amount
+            const totalPaidToSupplier = procurement.supplierPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+            procurement.dueAmount = procurement.totalCost - totalPaidToSupplier;
 
             try {
                 if (db) {
@@ -4156,20 +4273,23 @@ ${email} has been completely removed from the system.`);
 
                 // Clear form
                 document.getElementById('projectSupplierName').value = '';
-                document.getElementById('projectPaymentAmount').value = '';
-                document.getElementById('projectPaymentDate').value = '';
                 document.getElementById('projectProcurementDate').value = '';
                 tempMaterialItems = [];
                 selectedFiles = [];
+                const wasEditing = !!editingMaterialId;
                 editingMaterialId = null;
                 renderMaterialItemsContainer();
                 document.getElementById('projectSelectedFiles').innerHTML = '';
-                
+
+                // Hide supplier payments panel if open
+                const spPanel = document.getElementById('supplierPaymentsPanel');
+                if (spPanel) spPanel.style.display = 'none';
+
                 // Update button text back
                 const saveBtn = document.querySelector('#projectDetailsPanel button[onclick="saveProjectMaterials()"]');
                 if (saveBtn) saveBtn.textContent = '💾 Save Materials Procurement';
-                
-                alert(editingMaterialId ? '✅ Materials updated successfully!' : '✅ Materials procurement saved successfully!');
+
+                alert(wasEditing ? '✅ Materials updated successfully!' : '✅ Materials procurement saved successfully!');
             } catch (error) {
                 console.error('Error saving materials:', error);
                 alert('Failed to save materials');
@@ -4178,49 +4298,157 @@ ${email} has been completely removed from the system.`);
 
         function editProjectMaterial(id) {
             if (!checkPermission('write')) return;
-            
+
             const material = selectedProject.materials.find(m => m.id === id);
             if (!material) return;
-            
+
             editingMaterialId = id;
-            
+
             // Fill form with existing data
             document.getElementById('projectSupplierName').value = material.supplierName || '';
-            document.getElementById('projectPaymentAmount').value = material.paymentAmount || '';
-            document.getElementById('projectPaymentDate').value = material.paymentDate || '';
             document.getElementById('projectProcurementDate').value = material.procurementDate || material.date || '';
-            
-            // Load items
+
+            // Load items - support old and new format
             if (material.items && material.items.length > 0) {
                 tempMaterialItems = material.items.map(item => ({
                     id: Date.now().toString() + Math.random(),
-                    name: item.name,
-                    cost: parseFloat(item.cost) || 0,
-                    quantity: item.quantity || ''
+                    name: item.name || '',
+                    quantity: item.quantity || '',
+                    unitRate: parseFloat(item.unitRate) || (parseFloat(item.cost) || 0),
+                    gstRate: parseFloat(item.gstRate) || 0,
+                    totalAmount: parseFloat(item.totalAmount) || calcItemTotal(item)
                 }));
             } else if (material.name) {
                 // Old format - single item
                 tempMaterialItems = [{
                     id: Date.now().toString(),
                     name: material.name,
-                    cost: parseFloat(material.cost) || 0,
-                    quantity: material.quantity || ''
+                    quantity: material.quantity || '',
+                    unitRate: parseFloat(material.cost) || 0,
+                    gstRate: 0,
+                    totalAmount: parseFloat(material.cost) || 0
                 }];
+            } else {
+                tempMaterialItems = [];
             }
-            
+
             // Load files
             selectedFiles = material.files || [];
-            
+
             // Update UI
             renderMaterialItemsContainer();
             renderProjectSelectedFiles();
-            
+
+            // Show supplier payments panel
+            const spPanel = document.getElementById('supplierPaymentsPanel');
+            if (spPanel) {
+                spPanel.style.display = 'block';
+                renderSupplierPaymentsList(material);
+            }
+
             // Update button text
             const saveBtn = document.querySelector('#projectDetailsPanel button[onclick="saveProjectMaterials()"]');
             if (saveBtn) saveBtn.textContent = '💾 Update Materials Procurement';
-            
+
             // Scroll to form
-            document.querySelector('.card-header:has(+ .card-body)').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const materialsCard = document.querySelector('#projectDetailsPanel .card-header');
+            if (materialsCard) materialsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderSupplierPaymentsList(material) {
+            const list = document.getElementById('supplierPaymentsList');
+            const dueSummary = document.getElementById('supplierDueSummary');
+            if (!list || !material) return;
+
+            const payments = material.supplierPayments || [];
+            const totalCost = parseFloat(material.totalCost) || 0;
+            const totalPaid = payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+            const due = totalCost - totalPaid;
+
+            if (payments.length === 0) {
+                list.innerHTML = '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.5rem;">No payments recorded yet.</div>';
+            } else {
+                list.innerHTML = payments.map((p, idx) => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.5rem; background: #fff; border-radius: 0.375rem; margin-bottom: 0.35rem; border: 1px solid #dbeafe;">
+                        <div>
+                            <span style="font-size: 0.875rem; font-weight: 600; color: #15803d;">₹${parseFloat(p.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                            <span style="font-size: 0.75rem; color: #6b7280; margin-left: 0.5rem;">${p.date ? new Date(p.date).toLocaleDateString('en-IN') : ''}</span>
+                            ${p.note ? `<span style="font-size: 0.75rem; color: #374151; margin-left: 0.5rem;">— ${p.note}</span>` : ''}
+                        </div>
+                        <button class="btn btn-danger" onclick="removeSupplierPaymentEntry(${idx})" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">×</button>
+                    </div>
+                `).join('');
+            }
+
+            const dueColor = due <= 0 ? '#15803d' : '#b91c1c';
+            dueSummary.innerHTML = `
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <span>Total: <strong>₹${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></span>
+                    <span style="color: #15803d;">Paid: <strong>₹${totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></span>
+                    <span style="color: ${dueColor};">Due: <strong>₹${Math.abs(due).toLocaleString('en-IN', {minimumFractionDigits: 2})}${due < 0 ? ' (overpaid)' : ''}</strong></span>
+                </div>
+            `;
+        }
+
+        function addSupplierPaymentEntry() {
+            if (!editingMaterialId) { alert('Please open a procurement record for editing first.'); return; }
+            const amt = parseFloat(document.getElementById('supplierPayAmt').value);
+            const date = document.getElementById('supplierPayDate').value;
+            const note = document.getElementById('supplierPayNote').value.trim();
+
+            if (!amt || amt <= 0) { alert('Please enter a valid payment amount'); return; }
+            if (!date) { alert('Please select a payment date'); return; }
+
+            const material = (selectedProject.materials || []).find(m => m.id === editingMaterialId);
+            if (!material) return;
+
+            if (!material.supplierPayments) material.supplierPayments = [];
+            material.supplierPayments.push({ amount: amt, date: date, note: note });
+
+            const totalPaid = material.supplierPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+            material.dueAmount = (parseFloat(material.totalCost) || 0) - totalPaid;
+
+            // Persist
+            const saveToDB = async () => {
+                try {
+                    if (db) {
+                        await db.collection('projects').doc(selectedProject.id).update({ materials: selectedProject.materials });
+                    } else {
+                        saveToLocalStorage();
+                    }
+                } catch(e) { console.error(e); }
+            };
+            saveToDB();
+
+            // Clear inputs
+            document.getElementById('supplierPayAmt').value = '';
+            document.getElementById('supplierPayDate').value = '';
+            document.getElementById('supplierPayNote').value = '';
+
+            renderSupplierPaymentsList(material);
+        }
+
+        function removeSupplierPaymentEntry(idx) {
+            if (!editingMaterialId) return;
+            const material = (selectedProject.materials || []).find(m => m.id === editingMaterialId);
+            if (!material || !material.supplierPayments) return;
+
+            if (!confirm('Remove this payment entry?')) return;
+            material.supplierPayments.splice(idx, 1);
+            const totalPaid = material.supplierPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+            material.dueAmount = (parseFloat(material.totalCost) || 0) - totalPaid;
+
+            const saveToDB = async () => {
+                try {
+                    if (db) {
+                        await db.collection('projects').doc(selectedProject.id).update({ materials: selectedProject.materials });
+                    } else {
+                        saveToLocalStorage();
+                    }
+                } catch(e) { console.error(e); }
+            };
+            saveToDB();
+            renderSupplierPaymentsList(material);
         }
 
         async function deleteProjectMaterial(id) {
