@@ -842,6 +842,8 @@
         .stage-dropped { background: #ef4444; }
         .stage-on_hold { background: #64748b; }
     </style>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -1325,6 +1327,142 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('installationModal')" style="flex: 1">Cancel</button>
                 <button class="btn btn-success" onclick="saveInstallation()" style="flex: 1">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Invoice Modal -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="invoiceModalTitle">Generate Tax Invoice</h2>
+                <span class="close" onclick="closeModal('invoiceModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Invoice Details -->
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Invoice Number*</label>
+                        <input type="text" class="input" id="invoiceNumber" placeholder="INV-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date*</label>
+                        <input type="date" class="input" id="invoiceDate">
+                    </div>
+                </div>
+
+                <!-- Company GST Details -->
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.75rem;">🏢 Company GST Details</div>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Company Name*</label>
+                            <input type="text" class="input" id="companyName" placeholder="Your Company Pvt Ltd">
+                        </div>
+                        <div class="form-group">
+                            <label>GSTIN*</label>
+                            <input type="text" class="input" id="companyGSTIN" placeholder="22AAAAA0000A1Z5" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>State*</label>
+                            <input type="text" class="input" id="companyState" placeholder="Maharashtra">
+                        </div>
+                        <div class="form-group">
+                            <label>State Code*</label>
+                            <input type="text" class="input" id="companyStateCode" placeholder="27">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address*</label>
+                        <textarea class="input" id="companyAddress" rows="2" placeholder="Complete address..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Customer GST Details -->
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.75rem;">👤 Customer GST Details</div>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Customer Name*</label>
+                            <input type="text" class="input" id="customerName" placeholder="Customer Name">
+                        </div>
+                        <div class="form-group">
+                            <label>GSTIN</label>
+                            <input type="text" class="input" id="customerGSTIN" placeholder="Optional - 22BBBBB0000B1Z5" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>State*</label>
+                            <input type="text" class="input" id="customerState" placeholder="Maharashtra">
+                        </div>
+                        <div class="form-group">
+                            <label>State Code*</label>
+                            <input type="text" class="input" id="customerStateCode" placeholder="27">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address*</label>
+                        <textarea class="input" id="customerAddress" rows="2" placeholder="Complete address..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Invoice Items -->
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div style="font-weight: 600;">📦 Invoice Items</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="showLoadFromChallanModal()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">📋 Load from Challan</button>
+                            <button class="btn btn-secondary" onclick="addInvoiceItemRow()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">+ Add Item</button>
+                        </div>
+                    </div>
+                    <div id="invoiceItemsContainer">
+                        <!-- Items will be added here -->
+                    </div>
+                </div>
+
+                <!-- Discount -->
+                <div class="form-group">
+                    <label>Discount</label>
+                    <input type="number" class="input" id="invoiceDiscount" placeholder="0" value="0" onchange="calculateInvoiceTotal()">
+                </div>
+
+                <!-- Invoice Summary -->
+                <div style="background: #e0f2fe; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">Invoice Summary</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                        <div>Subtotal:</div><div style="text-align: right;" id="invoiceSubtotal">₹0.00</div>
+                        <div>Discount:</div><div style="text-align: right;" id="invoiceDiscountDisplay">₹0.00</div>
+                        <div>CGST:</div><div style="text-align: right;" id="invoiceCGST">₹0.00</div>
+                        <div>SGST:</div><div style="text-align: right;" id="invoiceSGST">₹0.00</div>
+                        <div>IGST:</div><div style="text-align: right;" id="invoiceIGST">₹0.00</div>
+                        <div style="font-weight: 700; font-size: 1rem; border-top: 2px solid #0284c7; padding-top: 0.5rem;">Grand Total:</div>
+                        <div style="font-weight: 700; font-size: 1rem; text-align: right; border-top: 2px solid #0284c7; padding-top: 0.5rem;" id="invoiceGrandTotal">₹0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('invoiceModal')" style="flex: 1">Cancel</button>
+                <button class="btn btn-primary" id="saveInvoiceBtn" onclick="saveInvoice()" style="flex: 1">Generate Invoice</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load from Delivery Challan Modal -->
+    <div class="modal" id="loadChallanModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>📋 Load Items from Delivery Challan</h2>
+                <span class="close" onclick="closeModal('loadChallanModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <p style="color: #64748b; font-size: 0.875rem;">Select a delivery challan to import all materials as invoice items</p>
+                </div>
+                <div id="challanListForInvoice" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Challan list will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('loadChallanModal')">Cancel</button>
             </div>
         </div>
     </div>
@@ -3483,6 +3621,36 @@ ${email} has been completely removed from the system.`);
                     </div>
                 `}).join('');
 
+            // Invoices HTML
+            const invoices = selectedProject.invoices || [];
+            const invoicesHtml = invoices.length === 0 ?
+                '<div class="empty-state">No invoices generated yet</div>' :
+                invoices.map(inv => `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="item-title">Invoice #${inv.invoiceNumber}</div>
+                            <div class="item-detail">
+                                📅 Date: ${new Date(inv.invoiceDate).toLocaleDateString()} | 
+                                💰 Total: ${formatCurrency(inv.grandTotal)} | 
+                                🏢 GSTIN: ${inv.companyGSTIN || 'N/A'}
+                            </div>
+                            <div class="item-date">
+                                <strong>Items:</strong> ${inv.items.length} | 
+                                Subtotal: ${formatCurrency(inv.subtotal)} | 
+                                GST: ${formatCurrency(inv.totalGST)}
+                                ${inv.discount > 0 ? ` | Discount: ${formatCurrency(inv.discount)}` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary" onclick="downloadInvoice('${inv.id}')">📄 Download</button>
+                            ${isAdmin() ? `
+                                <button class="btn btn-secondary" onclick="editInvoice('${inv.id}')">✏️ Edit</button>
+                                <button class="btn btn-danger" onclick="deleteInvoice('${inv.id}')">Delete</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
             document.getElementById('projectDetailsPanel').innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <!-- Project Header -->
@@ -3653,6 +3821,19 @@ ${email} has been completely removed from the system.`);
                             </div>
                         </div>
                         <div>${installationsHtml}</div>
+                    </div>
+
+                    <!-- Invoices Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>🧾 Tax Invoices</span>
+                                ${isAdmin() ? `
+                                    <button class="btn btn-primary" onclick="showGenerateInvoiceModal()">+ Generate Invoice</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div>${invoicesHtml}</div>
                     </div>
                 </div>
             `;
@@ -4493,6 +4674,764 @@ ${email} has been completely removed from the system.`);
                 console.error('Error deleting installation:', error);
                 alert('Failed to delete installation record');
             }
+        }
+
+        // ========================================
+        // INVOICE MANAGEMENT
+        // ========================================
+
+        let tempInvoiceItems = [];
+        let editingInvoiceId = null;
+
+        function showGenerateInvoiceModal() {
+            if (!checkPermission('write')) return;
+
+            editingInvoiceId = null;
+            document.getElementById('invoiceModalTitle').textContent = 'Generate Tax Invoice';
+            document.getElementById('saveInvoiceBtn').textContent = 'Generate Invoice';
+
+            // Set invoice number
+            const invoiceCount = (selectedProject.invoices || []).length + 1;
+            document.getElementById('invoiceNumber').value = `INV-${String(invoiceCount).padStart(4, '0')}`;
+            
+            // Set today's date
+            document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+
+            // Pre-fill company details (Latigid Engineering - editable)
+            document.getElementById('companyName').value = 'Aura Smart (Latigid Engineering Pvt Ltd)';
+            document.getElementById('companyGSTIN').value = '29AADCL3532A1ZX';
+            document.getElementById('companyState').value = 'Karnataka';
+            document.getElementById('companyStateCode').value = '29';
+            document.getElementById('companyAddress').value = 'First Floor Building No./Flat No.: 151 Name Of Premises/Building: Swasti Road/Street: 1st Main Road Nearby Landmark: opposite Someshwara Temple, Locality/Sub Locality: Koramangala 7th Block, Bengaluru Karnataka 560095, India';
+
+            // Pre-fill customer details from project
+            document.getElementById('customerName').value = selectedProject.customerName || '';
+            document.getElementById('customerGSTIN').value = selectedCustomer?.gstin || '';
+            document.getElementById('customerState').value = selectedCustomer?.state || '';
+            document.getElementById('customerStateCode').value = selectedCustomer?.stateCode || '';
+            document.getElementById('customerAddress').value = selectedCustomer?.address || '';
+
+            // Clear items and discounts
+            tempInvoiceItems = [];
+            document.getElementById('invoiceDiscount').value = 0;
+
+            renderInvoiceItemsContainer();
+            calculateInvoiceTotal();
+
+            document.getElementById('invoiceModal').classList.add('show');
+        }
+
+        function showLoadFromChallanModal() {
+            if (!selectedProject || !selectedProject.challans || selectedProject.challans.length === 0) {
+                alert('No delivery challans found for this project');
+                return;
+            }
+
+            const challanList = selectedProject.challans.map(challan => {
+                const challanDate = new Date(challan.createdAt).toLocaleDateString();
+                const materialCount = challan.materials ? challan.materials.length : 0;
+                
+                return `
+                    <div class="list-item" onclick="loadItemsFromChallan('${challan.id}')" style="cursor: pointer; margin-bottom: 0.5rem;">
+                        <div class="item-info">
+                            <div class="item-title">Challan #${challan.challanNumber || challan.id.slice(-6)}</div>
+                            <div class="item-detail">
+                                📅 ${challanDate} | 📦 ${materialCount} materials
+                            </div>
+                            <div class="item-date" style="font-size: 0.75rem; color: #64748b;">
+                                ${challan.deliveryLocation || 'No location specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" style="padding: 0.5rem 1rem;">Load Items</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('challanListForInvoice').innerHTML = challanList || '<div class="empty-state">No delivery challans found</div>';
+            document.getElementById('loadChallanModal').classList.add('show');
+        }
+
+        function loadItemsFromChallan(challanId) {
+            const challan = selectedProject.challans.find(c => c.id === challanId);
+            if (!challan || !challan.materials) {
+                alert('No materials found in this challan');
+                return;
+            }
+
+            // Clear existing items
+            tempInvoiceItems = [];
+
+            // Load all materials from challan
+            challan.materials.forEach(material => {
+                // Handle both old single-item format and new multi-item format
+                if (material.items && material.items.length > 0) {
+                    // New multi-item format
+                    material.items.forEach(item => {
+                        const itemId = Date.now().toString() + Math.random();
+                        tempInvoiceItems.push({
+                            id: itemId,
+                            description: item.name || 'Material',
+                            hsnCode: '',
+                            quantity: parseFloat(item.quantity) || 1,
+                            unit: 'Nos',
+                            rate: parseFloat(item.cost) / parseFloat(item.quantity) || 0,
+                            gstRate: 18
+                        });
+                    });
+                } else if (material.name) {
+                    // Old single-item format
+                    const itemId = Date.now().toString() + Math.random();
+                    const quantity = parseFloat(material.quantity) || 1;
+                    const cost = parseFloat(material.cost) || parseFloat(material.totalCost) || 0;
+                    tempInvoiceItems.push({
+                        id: itemId,
+                        description: material.name || 'Material',
+                        hsnCode: '',
+                        quantity: quantity,
+                        unit: 'Nos',
+                        rate: cost / quantity || 0,
+                        gstRate: 18
+                    });
+                }
+            });
+
+            // Close modal and refresh items
+            closeModal('loadChallanModal');
+            renderInvoiceItemsContainer();
+            calculateInvoiceTotal();
+            
+            alert(`Loaded ${tempInvoiceItems.length} items from delivery challan`);
+        }
+
+        function addInvoiceItemRow() {
+            const itemId = Date.now().toString() + Math.random();
+            const row = {
+                id: itemId,
+                description: '',
+                hsnCode: '',
+                quantity: 1,
+                unit: 'Nos',
+                rate: 0,
+                gstRate: 18
+            };
+            
+            tempInvoiceItems.push(row);
+            renderInvoiceItemsContainer();
+        }
+
+        function renderInvoiceItemsContainer() {
+            const container = document.getElementById('invoiceItemsContainer');
+            if (!container) return;
+
+            if (tempInvoiceItems.length === 0) {
+                addInvoiceItemRow();
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                        <thead>
+                            <tr style="background: #e5e7eb;">
+                                <th style="padding: 0.5rem; text-align: left;">Description*</th>
+                                <th style="padding: 0.5rem; text-align: left;">HSN Code*</th>
+                                <th style="padding: 0.5rem; text-align: right;">Qty*</th>
+                                <th style="padding: 0.5rem; text-align: left;">Unit</th>
+                                <th style="padding: 0.5rem; text-align: right;">Rate*</th>
+                                <th style="padding: 0.5rem; text-align: right;">GST%*</th>
+                                <th style="padding: 0.5rem; text-align: right;">Amount</th>
+                                <th style="padding: 0.5rem;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tempInvoiceItems.map((item, index) => {
+                                const amount = (item.quantity || 0) * (item.rate || 0);
+                                return `
+                                <tr>
+                                    <td style="padding: 0.5rem;">
+                                        <input type="text" class="input" placeholder="Item description" value="${item.description}" 
+                                               onchange="updateInvoiceItem('${item.id}', 'description', this.value)" style="margin: 0; min-width: 200px;">
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <input type="text" class="input" placeholder="HSN" value="${item.hsnCode}" 
+                                               onchange="updateInvoiceItem('${item.id}', 'hsnCode', this.value)" style="margin: 0; width: 100px;">
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <input type="number" class="input" value="${item.quantity}" 
+                                               onchange="updateInvoiceItem('${item.id}', 'quantity', this.value)" style="margin: 0; width: 60px; text-align: right;">
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <select class="input" onchange="updateInvoiceItem('${item.id}', 'unit', this.value)" style="margin: 0; width: 80px;">
+                                            <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
+                                            <option value="Pcs" ${item.unit === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                            <option value="Kgs" ${item.unit === 'Kgs' ? 'selected' : ''}>Kgs</option>
+                                            <option value="Mtr" ${item.unit === 'Mtr' ? 'selected' : ''}>Mtr</option>
+                                            <option value="Sq Ft" ${item.unit === 'Sq Ft' ? 'selected' : ''}>Sq Ft</option>
+                                            <option value="Hours" ${item.unit === 'Hours' ? 'selected' : ''}>Hours</option>
+                                            <option value="Set" ${item.unit === 'Set' ? 'selected' : ''}>Set</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <input type="number" class="input" value="${item.rate}" 
+                                               onchange="updateInvoiceItem('${item.id}', 'rate', this.value)" style="margin: 0; width: 100px; text-align: right;">
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <select class="input" onchange="updateInvoiceItem('${item.id}', 'gstRate', this.value)" style="margin: 0; width: 80px;">
+                                            <option value="0" ${item.gstRate === 0 ? 'selected' : ''}>0%</option>
+                                            <option value="5" ${item.gstRate === 5 ? 'selected' : ''}>5%</option>
+                                            <option value="12" ${item.gstRate === 12 ? 'selected' : ''}>12%</option>
+                                            <option value="18" ${item.gstRate === 18 ? 'selected' : ''}>18%</option>
+                                            <option value="28" ${item.gstRate === 28 ? 'selected' : ''}>28%</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 0.5rem; text-align: right; font-weight: 600;">
+                                        ₹${formatCurrency(amount)}
+                                    </td>
+                                    <td style="padding: 0.5rem;">
+                                        <button class="btn btn-danger" onclick="removeInvoiceItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×</button>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function updateInvoiceItem(id, field, value) {
+            const item = tempInvoiceItems.find(i => i.id === id);
+            if (item) {
+                if (field === 'quantity' || field === 'rate' || field === 'gstRate') {
+                    item[field] = parseFloat(value) || 0;
+                } else {
+                    item[field] = value;
+                }
+                renderInvoiceItemsContainer();
+                calculateInvoiceTotal();
+            }
+        }
+
+        function removeInvoiceItem(id) {
+            tempInvoiceItems = tempInvoiceItems.filter(i => i.id !== id);
+            if (tempInvoiceItems.length === 0) {
+                addInvoiceItemRow();
+            } else {
+                renderInvoiceItemsContainer();
+                calculateInvoiceTotal();
+            }
+        }
+
+        function calculateInvoiceTotal() {
+            // Calculate subtotal
+            const subtotal = tempInvoiceItems.reduce((sum, item) => {
+                return sum + ((item.quantity || 0) * (item.rate || 0));
+            }, 0);
+
+            // Get discount (applied BEFORE GST)
+            const discount = parseFloat(document.getElementById('invoiceDiscount')?.value) || 0;
+            
+            // Amount after discount (this is what GST is calculated on)
+            const amountAfterDiscount = subtotal - discount;
+
+            // Get company and customer states to determine GST type
+            const companyStateCode = document.getElementById('companyStateCode')?.value;
+            const customerStateCode = document.getElementById('customerStateCode')?.value;
+            const isIntraState = companyStateCode === customerStateCode;
+
+            // Calculate GST on discounted amount
+            let totalCGST = 0;
+            let totalSGST = 0;
+            let totalIGST = 0;
+
+            tempInvoiceItems.forEach(item => {
+                const itemTotal = (item.quantity || 0) * (item.rate || 0);
+                // Apply proportional discount to each item
+                const itemDiscountedTotal = amountAfterDiscount > 0 ? (itemTotal / subtotal) * amountAfterDiscount : 0;
+                const gstAmount = (itemDiscountedTotal * (item.gstRate || 0)) / 100;
+                
+                if (isIntraState) {
+                    totalCGST += gstAmount / 2;
+                    totalSGST += gstAmount / 2;
+                } else {
+                    totalIGST += gstAmount;
+                }
+            });
+
+            const totalGST = totalCGST + totalSGST + totalIGST;
+
+            // Calculate grand total
+            const grandTotal = amountAfterDiscount + totalGST;
+
+            // Update summary
+            document.getElementById('invoiceSubtotal').textContent = '₹' + formatCurrency(subtotal);
+            document.getElementById('invoiceDiscountDisplay').textContent = '₹' + formatCurrency(discount);
+            document.getElementById('invoiceCGST').textContent = '₹' + formatCurrency(totalCGST);
+            document.getElementById('invoiceSGST').textContent = '₹' + formatCurrency(totalSGST);
+            document.getElementById('invoiceIGST').textContent = '₹' + formatCurrency(totalIGST);
+            document.getElementById('invoiceGrandTotal').textContent = '₹' + formatCurrency(grandTotal);
+        }
+
+        async function saveInvoice() {
+            if (!checkPermission('write')) return;
+
+            // Validate required fields
+            const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+            const invoiceDate = document.getElementById('invoiceDate').value;
+            const companyName = document.getElementById('companyName').value.trim();
+            const companyGSTIN = document.getElementById('companyGSTIN').value.trim();
+            const companyState = document.getElementById('companyState').value.trim();
+            const companyStateCode = document.getElementById('companyStateCode').value.trim();
+            const companyAddress = document.getElementById('companyAddress').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerState = document.getElementById('customerState').value.trim();
+            const customerStateCode = document.getElementById('customerStateCode').value.trim();
+            const customerAddress = document.getElementById('customerAddress').value.trim();
+
+            if (!invoiceNumber || !invoiceDate) {
+                alert('Please enter invoice number and date');
+                return;
+            }
+
+            if (!companyName || !companyGSTIN || !companyState || !companyStateCode || !companyAddress) {
+                alert('Please complete all company GST details');
+                return;
+            }
+
+            if (!customerName || !customerState || !customerStateCode || !customerAddress) {
+                alert('Please complete all customer details');
+                return;
+            }
+
+            // Validate items
+            const validItems = tempInvoiceItems.filter(item => item.description && item.hsnCode && item.rate > 0);
+            if (validItems.length === 0) {
+                alert('Please add at least one item with description, HSN code, and rate');
+                return;
+            }
+
+            // Calculate totals
+            const subtotal = validItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+            const discount = parseFloat(document.getElementById('invoiceDiscount').value) || 0;
+            
+            // Amount after discount (GST calculated on this)
+            const amountAfterDiscount = subtotal - discount;
+
+            const isIntraState = companyStateCode === customerStateCode;
+            let totalCGST = 0, totalSGST = 0, totalIGST = 0;
+
+            validItems.forEach(item => {
+                const itemTotal = item.quantity * item.rate;
+                // Apply proportional discount to each item
+                const itemDiscountedTotal = amountAfterDiscount > 0 ? (itemTotal / subtotal) * amountAfterDiscount : 0;
+                const gstAmount = (itemDiscountedTotal * item.gstRate) / 100;
+                if (isIntraState) {
+                    totalCGST += gstAmount / 2;
+                    totalSGST += gstAmount / 2;
+                } else {
+                    totalIGST += gstAmount;
+                }
+            });
+
+            const totalGST = totalCGST + totalSGST + totalIGST;
+            const grandTotal = amountAfterDiscount + totalGST;
+
+            const invoice = {
+                id: editingInvoiceId || Date.now().toString(),
+                invoiceNumber,
+                invoiceDate,
+                companyName,
+                companyGSTIN,
+                companyState,
+                companyStateCode,
+                companyAddress,
+                customerName,
+                customerGSTIN: document.getElementById('customerGSTIN').value.trim(),
+                customerState,
+                customerStateCode,
+                customerAddress,
+                items: validItems,
+                subtotal,
+                discount,
+                cgst: totalCGST,
+                sgst: totalSGST,
+                igst: totalIGST,
+                totalGST,
+                grandTotal,
+                createdAt: editingInvoiceId ? (selectedProject.invoices.find(inv => inv.id === editingInvoiceId)?.createdAt) : new Date().toISOString(),
+                createdBy: currentUser?.uid
+            };
+
+            try {
+                if (db) {
+                    let invoices;
+                    if (editingInvoiceId) {
+                        invoices = (selectedProject.invoices || []).map(inv => inv.id === editingInvoiceId ? invoice : inv);
+                    } else {
+                        invoices = [...(selectedProject.invoices || []), invoice];
+                    }
+                    await db.collection('projects').doc(selectedProject.id).update({ invoices });
+                } else {
+                    if (editingInvoiceId) {
+                        selectedProject.invoices = (selectedProject.invoices || []).map(inv => inv.id === editingInvoiceId ? invoice : inv);
+                    } else {
+                        selectedProject.invoices = [...(selectedProject.invoices || []), invoice];
+                    }
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+
+                closeModal('invoiceModal');
+                alert('✅ Invoice saved successfully!');
+            } catch (error) {
+                console.error('Error saving invoice:', error);
+                alert('Failed to save invoice');
+            }
+        }
+
+        async function deleteInvoice(id) {
+            if (!checkPermission('write')) return;
+            if (!confirm('Delete this invoice?')) return;
+
+            try {
+                if (db) {
+                    const invoices = (selectedProject.invoices || []).filter(inv => inv.id !== id);
+                    await db.collection('projects').doc(selectedProject.id).update({ invoices });
+                } else {
+                    selectedProject.invoices = (selectedProject.invoices || []).filter(inv => inv.id !== id);
+                    saveToLocalStorage();
+                    renderProjectDetails();
+                }
+            } catch (error) {
+                console.error('Error deleting invoice:', error);
+                alert('Failed to delete invoice');
+            }
+        }
+
+        function downloadInvoice(id) {
+            const invoice = (selectedProject.invoices || []).find(inv => inv.id === id);
+            if (!invoice) {
+                alert('Invoice not found');
+                return;
+            }
+
+            // Initialize jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let yPos = 20;
+            const leftMargin = 15;
+            const rightMargin = 195;
+            const pageWidth = 210;
+            const pageHeight = 297;
+
+            // Helper function to add new page if needed
+            const checkPageBreak = (requiredSpace) => {
+                if (yPos + requiredSpace > pageHeight - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                    return true;
+                }
+                return false;
+            };
+
+            // Helper to format currency without rupee symbol
+            // Helper to format amount as plain number (no currency symbol)
+            const formatAmount = (amount) => {
+                return amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+
+            // HEADER - TAX INVOICE (right side)
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('TAX INVOICE', rightMargin, yPos, { align: 'right' });
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`# ${invoice.invoiceNumber}`, rightMargin, yPos + 8, { align: 'right' });
+            
+            // Balance Due (right side, below invoice number)
+            doc.setFontSize(9);
+            doc.text('Balance Due', rightMargin, yPos + 16, { align: 'right' });
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Rs. ${formatAmount(invoice.grandTotal)}`, rightMargin, yPos + 22, { align: 'right' });
+            
+            // Reset yPos for left side content
+            doc.setFont('helvetica', 'normal');
+
+            // Company Details (left side, starts from top)
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(invoice.companyName, leftMargin, yPos);
+            yPos += 6;
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            const companyAddressLines = doc.splitTextToSize(invoice.companyAddress, 100);
+            doc.text(companyAddressLines, leftMargin, yPos);
+            yPos += (companyAddressLines.length * 4);
+            
+            doc.text(`GSTIN ${invoice.companyGSTIN}`, leftMargin, yPos);
+            yPos += 10;
+
+            // Invoice Date and Terms (right side)
+            const dateYPos = yPos;
+            doc.setFontSize(9);
+            doc.text(`Invoice Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}`, rightMargin, dateYPos, { align: 'right' });
+            doc.text('Terms: Due on Receipt', rightMargin, dateYPos + 5, { align: 'right' });
+            doc.text(`Due Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}`, rightMargin, dateYPos + 10, { align: 'right' });
+            
+            yPos += 15;
+
+            // Bill To Section
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Bill To', leftMargin, yPos);
+            yPos += 5;
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text(invoice.customerName, leftMargin, yPos);
+            yPos += 5;
+            
+            doc.setFont('helvetica', 'normal');
+            const custAddressLines = doc.splitTextToSize(invoice.customerAddress, 100);
+            doc.text(custAddressLines, leftMargin, yPos);
+            yPos += (custAddressLines.length * 4);
+            
+            if (invoice.customerGSTIN) {
+                doc.text(`GSTIN ${invoice.customerGSTIN}`, leftMargin, yPos);
+                yPos += 5;
+            }
+            
+            doc.text(`Place Of Supply: ${invoice.customerState} (${invoice.customerStateCode})`, leftMargin, yPos);
+            yPos += 10;
+
+            // Determine if this is IGST or CGST/SGST invoice
+            const isIGST = invoice.igst > 0;
+
+            // Items Table Header - Custom spacing per requirements
+            // Description: 50px | HSN-Qty: 10mm | Qty-Rate: as before | Rate-CGST: 25mm | CGST-SGST: 22mm | SGST-Amount: 58mm
+            doc.setFillColor(240, 240, 240);
+            doc.rect(leftMargin, yPos, rightMargin - leftMargin, 7, 'F');
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('#', leftMargin + 2, yPos + 5);
+            doc.text('Item & Description', leftMargin + 8, yPos + 5);
+            doc.text('HSN/SAC', leftMargin + 60, yPos + 5);   // After 50px description
+            doc.text('Qty', leftMargin + 88, yPos + 5);        // 10mm (28px) gap from HSN
+            doc.text('Rate', leftMargin + 104, yPos + 5);      // Same as before
+            
+            if (isIGST) {
+                // Only IGST column - same as before
+                doc.text('IGST', leftMargin + 130, yPos + 5);
+            } else {
+                // CGST and SGST columns with exact spacing
+                doc.text('CGST', leftMargin + 104 + 25, yPos + 5);  // 25mm gap from Rate = 129
+                doc.text('SGST', leftMargin + 104 + 25 + 22, yPos + 5);  // 22mm gap from CGST = 151
+            }
+            
+            doc.text('Amount', rightMargin - 2, yPos + 5, { align: 'right' });
+            
+            yPos += 9;
+
+            // Items
+            doc.setFont('helvetica', 'normal');
+            invoice.items.forEach((item, index) => {
+                checkPageBreak(15);
+                
+                const amount = item.quantity * item.rate;
+                const gstAmount = (amount * item.gstRate) / 100;
+                const cgst = invoice.cgst > 0 ? gstAmount / 2 : 0;
+                const sgst = invoice.sgst > 0 ? gstAmount / 2 : 0;
+                const igst = invoice.igst > 0 ? gstAmount : 0;
+                
+                // Item row
+                doc.setFontSize(8);
+                doc.text(String(index + 1), leftMargin + 2, yPos);
+                
+                const descLines = doc.splitTextToSize(item.description, 50);  // Exactly 50px
+                doc.text(descLines, leftMargin + 8, yPos);
+                
+                doc.text(item.hsnCode, leftMargin + 60, yPos);
+                doc.text(item.quantity.toFixed(2), leftMargin + 88, yPos);
+                doc.text('Rs. ' + formatAmount(item.rate), leftMargin + 104, yPos);
+                
+                if (isIGST) {
+                    // Show IGST - same as before
+                    doc.text('Rs. ' + formatAmount(igst), leftMargin + 130, yPos);
+                    doc.setFontSize(6);
+                    doc.text(`${item.gstRate}%`, leftMargin + 133, yPos + 3);
+                    doc.setFontSize(8);
+                } else {
+                    // Show CGST and SGST with exact spacing
+                    if (cgst > 0) {
+                        doc.text('Rs. ' + formatAmount(cgst), leftMargin + 129, yPos);  // 25mm from Rate
+                        doc.setFontSize(6);
+                        doc.text(`${item.gstRate/2}%`, leftMargin + 132, yPos + 3);
+                        doc.setFontSize(8);
+                    }
+                    
+                    if (sgst > 0) {
+                        doc.text('Rs. ' + formatAmount(sgst), leftMargin + 151, yPos);  // 22mm from CGST
+                        doc.setFontSize(6);
+                        doc.text(`${item.gstRate/2}%`, leftMargin + 154, yPos + 3);
+                        doc.setFontSize(8);
+                    }
+                }
+                
+                doc.text('Rs. ' + formatAmount(amount), rightMargin - 2, yPos, { align: 'right' });
+                
+                yPos += Math.max(descLines.length * 4, 8);
+                
+                // Line separator
+                doc.setDrawColor(220, 220, 220);
+                doc.line(leftMargin, yPos, rightMargin, yPos);
+                yPos += 3;
+            });
+
+            yPos += 5;
+
+            // Summary
+            checkPageBreak(40);
+            
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            
+            doc.text('Sub Total', rightMargin - 55, yPos);
+            doc.text('Rs. ' + formatAmount(invoice.subtotal), rightMargin - 5, yPos, { align: 'right' });
+            yPos += 5;
+
+            if (invoice.cgst > 0) {
+                doc.text(`CGST (${invoice.items[0]?.gstRate/2}%)`, rightMargin - 55, yPos);
+                doc.text('Rs. ' + formatAmount(invoice.cgst), rightMargin - 5, yPos, { align: 'right' });
+                yPos += 5;
+            }
+
+            if (invoice.sgst > 0) {
+                doc.text(`SGST (${invoice.items[0]?.gstRate/2}%)`, rightMargin - 55, yPos);
+                doc.text('Rs. ' + formatAmount(invoice.sgst), rightMargin - 5, yPos, { align: 'right' });
+                yPos += 5;
+            }
+
+            if (invoice.igst > 0) {
+                doc.text(`IGST (${invoice.items[0]?.gstRate}%)`, rightMargin - 55, yPos);
+                doc.text('Rs. ' + formatAmount(invoice.igst), rightMargin - 5, yPos, { align: 'right' });
+                yPos += 5;
+            }
+
+            if (invoice.discount > 0) {
+                doc.text('Discount', rightMargin - 55, yPos);
+                doc.text('-Rs. ' + formatAmount(invoice.discount), rightMargin - 5, yPos, { align: 'right' });
+                yPos += 5;
+            }
+
+            yPos += 2;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text('Total', rightMargin - 55, yPos);
+            doc.text('Rs. ' + formatAmount(invoice.grandTotal), rightMargin - 5, yPos, { align: 'right' });
+            yPos += 6;
+            
+            doc.text('Balance Due', rightMargin - 55, yPos);
+            doc.text('Rs. ' + formatAmount(invoice.grandTotal), rightMargin - 5, yPos, { align: 'right' });
+            yPos += 10;
+
+            // Amount in words
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            const amountInWords = numberToWords(invoice.grandTotal);
+            doc.text(`Total In Words: ${amountInWords}`, leftMargin, yPos);
+            yPos += 10;
+
+            // Notes
+            doc.setFont('helvetica', 'bold');
+            doc.text('Notes', leftMargin, yPos);
+            yPos += 5;
+            doc.setFont('helvetica', 'normal');
+            doc.text('Thanks for your business.', leftMargin, yPos);
+
+            // Save PDF
+            doc.save(`${invoice.invoiceNumber}.pdf`);
+        }
+
+        // Helper function to convert number to words (Indian format)
+        function numberToWords(amount) {
+            const crores = Math.floor(amount / 10000000);
+            const lakhs = Math.floor((amount % 10000000) / 100000);
+            const thousands = Math.floor((amount % 100000) / 1000);
+            const hundreds = Math.floor((amount % 1000) / 100);
+            const remainder = Math.floor(amount % 100);
+            const paise = Math.round((amount - Math.floor(amount)) * 100);
+
+            const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+            const convertTwoDigits = (n) => {
+                if (n < 10) return ones[n];
+                if (n < 20) return teens[n - 10];
+                return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+            };
+
+            let words = 'Indian Rupee ';
+            
+            if (crores > 0) words += convertTwoDigits(crores) + ' Crore ';
+            if (lakhs > 0) words += convertTwoDigits(lakhs) + ' Lakh ';
+            if (thousands > 0) words += convertTwoDigits(thousands) + ' Thousand ';
+            if (hundreds > 0) words += ones[hundreds] + ' Hundred ';
+            if (remainder > 0) words += convertTwoDigits(remainder) + ' ';
+            
+            if (paise > 0) {
+                words += 'and ' + convertTwoDigits(paise) + ' Paise ';
+            }
+            
+            return words.trim() + ' Only';
+        }
+
+        function editInvoice(id) {
+            const invoice = (selectedProject.invoices || []).find(inv => inv.id === id);
+            if (!invoice) {
+                alert('Invoice not found');
+                return;
+            }
+
+            editingInvoiceId = id;
+            document.getElementById('invoiceModalTitle').textContent = 'Edit Tax Invoice';
+            document.getElementById('saveInvoiceBtn').textContent = 'Update Invoice';
+
+            // Fill form with existing data
+            document.getElementById('invoiceNumber').value = invoice.invoiceNumber;
+            document.getElementById('invoiceDate').value = invoice.invoiceDate;
+            document.getElementById('companyName').value = invoice.companyName;
+            document.getElementById('companyGSTIN').value = invoice.companyGSTIN;
+            document.getElementById('companyState').value = invoice.companyState;
+            document.getElementById('companyStateCode').value = invoice.companyStateCode;
+            document.getElementById('companyAddress').value = invoice.companyAddress;
+            document.getElementById('customerName').value = invoice.customerName;
+            document.getElementById('customerGSTIN').value = invoice.customerGSTIN || '';
+            document.getElementById('customerState').value = invoice.customerState;
+            document.getElementById('customerStateCode').value = invoice.customerStateCode;
+            document.getElementById('customerAddress').value = invoice.customerAddress;
+            document.getElementById('invoiceDiscount').value = invoice.discount || 0;
+
+            // Load items
+            tempInvoiceItems = invoice.items.map(item => ({
+                id: Date.now().toString() + Math.random(),
+                description: item.description,
+                hsnCode: item.hsnCode,
+                quantity: item.quantity,
+                unit: item.unit,
+                rate: item.rate,
+                gstRate: item.gstRate
+            }));
+
+            renderInvoiceItemsContainer();
+            calculateInvoiceTotal();
+
+            document.getElementById('invoiceModal').classList.add('show');
         }
 
         // ========================================
@@ -5346,6 +6285,15 @@ ${email} has been completely removed from the system.`);
         window.removeLeadBOQFile = removeLeadBOQFile;
         window.removeLeadDesignFile = removeLeadDesignFile;
         window.toggleLeadSourceOther = toggleLeadSourceOther;
+        window.showGenerateInvoiceModal = showGenerateInvoiceModal;
+        window.addInvoiceItemRow = addInvoiceItemRow;
+        window.updateInvoiceItem = updateInvoiceItem;
+        window.removeInvoiceItem = removeInvoiceItem;
+        window.calculateInvoiceTotal = calculateInvoiceTotal;
+        window.saveInvoice = saveInvoice;
+        window.deleteInvoice = deleteInvoice;
+        window.downloadInvoice = downloadInvoice;
+        window.editInvoice = editInvoice;
         window.addMaterialItemRow = addMaterialItemRow;
         window.updateMaterialItem = updateMaterialItem;
         window.removeMaterialItem = removeMaterialItem;
