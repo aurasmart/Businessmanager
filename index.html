@@ -2077,7 +2077,7 @@
             <div id="leadsTab" style="display: none;">
                 <div class="grid">
                     <!-- Lead Pipeline -->
-                    <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card" style="grid-column: 1 / -1;" id="leadListCard">
                         <div class="card-header">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
@@ -2117,10 +2117,11 @@
                     </div>
 
                     <!-- Lead Details Panel -->
-                    <div class="card" style="grid-column: 1 / -1;" id="leadDetailsPanelCard" style="display: none;">
+                    <div class="card" style="grid-column: 1 / -1; display: none;" id="leadDetailsPanelCard">
                         <div class="card-header">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <h3>Lead Details</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                                <button class="btn btn-secondary" onclick="closeLeadDetails()">← Back to Leads</button>
+                                <h3 style="flex: 1; margin: 0;">Lead Details</h3>
                                 <button class="btn btn-secondary" onclick="closeLeadDetails()">✕ Close</button>
                             </div>
                         </div>
@@ -3787,6 +3788,26 @@
         </div>
     </div>
 
+    <!-- Lead BOQ Modal (quick view/upload from lead details) -->
+    <div class="modal" id="leadBOQModal">
+        <div class="modal-content" style="max-width: 560px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>📊 BOQ (Bill of Quantities)</h2>
+                <span class="close" onclick="closeModal('leadBOQModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="file-upload" onclick="document.getElementById('leadBOQModalInput').click()">
+                    <div>📎 Click to upload BOQ files</div>
+                    <input type="file" id="leadBOQModalInput" multiple style="display:none;" onchange="uploadLeadBOQFromDetails(this.files)">
+                </div>
+                <div id="leadBOQModalList" style="margin-top: 1rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('leadBOQModal')" style="flex: 1">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Microsoft Authentication Library (MSAL) for OneDrive -->
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
 
@@ -4596,7 +4617,7 @@
                             <div class="user-card-header">
                                 <div>
                                     <div class="user-card-name">${user.name || 'Unnamed User'}</div>
-                                    <div class="user-card-email">${user.email}</div>
+                                    <div class="user-card-email">${esc(user.email)}</div>
                                 </div>
                                 <span class="status-badge ${roleBadgeClass}">${roleLabel}</span>
                             </div>
@@ -4606,9 +4627,9 @@
                             </div>
                             ${user.uid !== currentUser.uid ? `
                                 <div class="user-actions">
-                                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showChangeRoleModal('${user.uid}', '${user.email}', '${user.role}')">✏️ Edit Role &amp; Territory</button>
-                                    <button class="btn btn-warning" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showResetPasswordModal('${user.uid}', '${user.email}')">Reset Password</button>
-                                    <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="deleteUser('${user.uid}', '${user.email}')">Delete</button>
+                                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showChangeRoleModal('${user.uid}', '${esc(user.email)}', '${user.role}')">✏️ Edit Role &amp; Territory</button>
+                                    <button class="btn btn-warning" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="showResetPasswordModal('${user.uid}', '${esc(user.email)}')">Reset Password</button>
+                                    <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;" onclick="deleteUser('${user.uid}', '${esc(user.email)}')">Delete</button>
                                 </div>
                             ` : '<div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem; font-style: italic;">This is your account</div>'}
                         </div>
@@ -5386,7 +5407,7 @@ ${email} has been completely removed from the system.`);
                     
                     return `
                         <div class="customer-item ${isActive ? 'active' : ''}" onclick="selectCustomer('${c.id}')">
-                            <div class="customer-name">${c.name}</div>
+                            <div class="customer-name">${esc(c.name)}</div>
                             ${c.contact ? `<div class="customer-contact">${c.contact}</div>` : ''}
                             <div class="balance positive">
                                 ${projectCount} project${projectCount !== 1 ? 's' : ''}
@@ -5435,12 +5456,13 @@ ${email} has been completely removed from the system.`);
 
         // Format currency
         function formatCurrency(amount) {
-            return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '₹' + (parseFloat(amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         // Format date
         function formatDate(dateString) {
             const date = new Date(dateString);
+            if (!dateString || isNaN(date)) return '—';
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
@@ -5488,7 +5510,7 @@ ${email} has been completely removed from the system.`);
                         <div class="list-item" style="cursor: pointer;" onclick="switchToProject('${p.id}')">
                             <div class="item-info" style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                    <div class="item-title">${p.name}</div>
+                                    <div class="item-title">${esc(p.name)}</div>
                                     <span class="status-badge ${stageClass}">${stageLabel}</span>
                                 </div>
                                 ${p.value ? `<div class="item-detail">💰 Project Value: ${formatCurrency(p.value)}</div>` : ''}
@@ -5509,7 +5531,7 @@ ${email} has been completely removed from the system.`);
                     <!-- Customer Info -->
                     <div class="card">
                         <div class="card-header">
-                            <h2>${selectedCustomer.name}</h2>
+                            <h2>${esc(selectedCustomer.name)}</h2>
                         </div>
                         <div class="card-body">
                             ${selectedCustomer.contact ? `
@@ -5648,11 +5670,11 @@ ${email} has been completely removed from the system.`);
                     ${selectedFiles.map(f => `
                         <div class="file-item">
                             ${f.type.startsWith('image/') ?
-                                `<img src="${f.data}" class="file-thumbnail" alt="${f.name}">` :
+                                `<img src="${f.data}" class="file-thumbnail" alt="${esc(f.name)}">` :
                                 `<div class="file-icon">${getFileIcon(f.type)}</div>`
                             }
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.name}</div>
+                                <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(f.name)}</div>
                                 <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                             </div>
                             <button class="btn btn-danger" onclick="removeFile('${f.id}')">×</button>
@@ -6595,8 +6617,8 @@ ${email} has been completely removed from the system.`);
                 return `<div onclick="_selectExpEditProject('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${(p.customerName||'').replace(/'/g,"\\'")}','${stage}')"
                              style="padding:0.55rem 0.875rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;"
                              onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
-                    <span style="flex:1;font-weight:500;">${p.name}</span>
-                    ${p.customerName ? `<span style="font-size:0.75rem;color:#6b7280;">${p.customerName}</span>` : ''}
+                    <span style="flex:1;font-weight:500;">${esc(p.name)}</span>
+                    ${p.customerName ? `<span style="font-size:0.75rem;color:#6b7280;">${esc(p.customerName)}</span>` : ''}
                     <span style="font-size:0.7rem;font-weight:600;color:${sc};background:${sc}18;padding:0.15rem 0.4rem;border-radius:0.25rem;">${stage.replace('_',' ')}</span>
                 </div>`;
             }).join('');
@@ -6897,7 +6919,7 @@ ${email} has been completely removed from the system.`);
                     }
                 })
                 .catch(e => {
-                    document.getElementById('reimbMapDiv').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ Failed to load GPS data: ${e.message}</div>`;
+                    document.getElementById('reimbMapDiv').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ Failed to load GPS data: ${esc(e.message)}</div>`;
                 });
         }
 
@@ -7127,7 +7149,7 @@ ${email} has been completely removed from the system.`);
                     }
                 }, err => {
                     document.getElementById('reimbLiveMapDiv').innerHTML =
-                        `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ ${err.message}</div>`;
+                        `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ ${esc(err.message)}</div>`;
                 });
 
             // Tick label every 10 s
@@ -7463,7 +7485,7 @@ ${email} has been completely removed from the system.`);
                         `<span style="display:inline-block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;
                             border-radius:0.375rem;font-size:0.7rem;font-weight:600;padding:0.15rem 0.45rem;
                             white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;"
-                            title="${p.name}">${p.name}</span>`).join(' ')
+                            title="${esc(p.name)}">${esc(p.name)}</span>`).join(' ')
                     : '<span style="color:#9ca3af;font-size:0.75rem;">—</span>';
 
                 const assignBtn = s.status !== 'active'
@@ -7650,7 +7672,7 @@ ${email} has been completely removed from the system.`);
                 renderWtStopsFromData(stops);
             } catch (e) {
                 document.getElementById('wtMapDiv').innerHTML =
-                    `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ Failed to load GPS data: ${e.message}</div>`;
+                    `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ Failed to load GPS data: ${esc(e.message)}</div>`;
             }
         }
 
@@ -7959,9 +7981,9 @@ ${email} has been completely removed from the system.`);
                         style="width:16px;height:16px;accent-color:#1d4ed8;flex-shrink:0;cursor:pointer;">
                     <div style="flex:1;min-width:0;">
                         <div style="font-weight:${checked ? '600' : '400'};font-size:0.875rem;color:#111827;
-                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.name}">${p.name}</div>
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${esc(p.name)}">${esc(p.name)}</div>
                         ${p.customerName ? `<div style="font-size:0.75rem;color:#6b7280;
-                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.customerName}</div>` : ''}
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.customerName)}</div>` : ''}
                     </div>
                     <span style="background:${sc.bg};color:${sc.color};font-size:0.68rem;font-weight:700;
                         padding:0.15rem 0.45rem;border-radius:4px;flex-shrink:0;">${stageLabel}</span>
@@ -8125,7 +8147,7 @@ ${email} has been completely removed from the system.`);
                     }
                 }, err => {
                     document.getElementById('wtLiveMapDiv').innerHTML =
-                        `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ ${err.message}</div>`;
+                        `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;">⚠️ ${esc(err.message)}</div>`;
                 });
 
             wtLiveTickId = setInterval(() => {
@@ -8958,7 +8980,7 @@ ${email} has been completely removed from the system.`);
                                         <div style="font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.name)}</div>
                                         <div style="font-size:0.7rem;color:#6b7280;">${formatFileSize(f.size)}</div>
                                     </div>
-                                    <a href="${f.shareLink||f.webUrl||f.downloadUrl||''}" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
+                                    <a href="${safeUrl(f.shareLink||f.webUrl||f.downloadUrl||'')}" rel="noopener noreferrer" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
                                 </div>`).join('')}
                         </div>` : ''}
                         <div style="display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
@@ -9041,7 +9063,7 @@ ${email} has been completely removed from the system.`);
                                 <div style="font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.name)}</div>
                                 <div style="font-size:0.7rem;color:#6b7280;">${formatFileSize(f.size)}</div>
                             </div>
-                            <a href="${f.shareLink||f.webUrl||f.downloadUrl||''}" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
+                            <a href="${safeUrl(f.shareLink||f.webUrl||f.downloadUrl||'')}" rel="noopener noreferrer" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
                         </div>`).join('')}
                 </div>` : ''}
                 <div style="display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
@@ -9567,7 +9589,7 @@ ${email} has been completely removed from the system.`);
                             <div style="font-size:0.8rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.name)}</div>
                             <div style="font-size:0.72rem;color:#6b7280;">${formatFileSize(f.size)} · OneDrive</div>
                         </div>
-                        ${f.shareLink ? `<a href="${f.shareLink}" target="_blank" class="download-btn" title="Open">⬇️</a>` : ''}
+                        ${f.shareLink ? `<a href="${safeUrl(f.shareLink)}" rel="noopener noreferrer" target="_blank" class="download-btn" title="Open">⬇️</a>` : ''}
                         <button onclick="removeSpurchFile('${f.id}')"
                                 style="background:#fee2e2;border:none;border-radius:0.375rem;cursor:pointer;padding:0.2rem 0.45rem;color:#ef4444;font-weight:700;">×</button>
                     </div>`).join('')}
@@ -9589,8 +9611,8 @@ ${email} has been completely removed from the system.`);
                 `<div onclick="_selectSpurchProject('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${(p.customerName||'').replace(/'/g,"\\'")}')"
                       style="padding:0.5rem 0.875rem;cursor:pointer;font-size:0.875rem;"
                       onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
-                    <span style="font-weight:500;">${p.name}</span>
-                    ${p.customerName ? `<span style="font-size:0.75rem;color:#6b7280;margin-left:0.4rem;">${p.customerName}</span>` : ''}
+                    <span style="font-weight:500;">${esc(p.name)}</span>
+                    ${p.customerName ? `<span style="font-size:0.75rem;color:#6b7280;margin-left:0.4rem;">${esc(p.customerName)}</span>` : ''}
                 </div>`
             ).join('');
             dd.style.display = 'block';
@@ -9925,8 +9947,8 @@ ${email} has been completely removed from the system.`);
                 `<div onclick="_selectMatSupplier('${s.id}','${(s.name||'').replace(/'/g,"\\'")}','${_supplierCatIcon(s.category)}')"
                       style="padding:0.5rem 0.875rem;cursor:pointer;font-size:0.875rem;"
                       onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
-                    <span style="font-weight:500;">${_supplierCatIcon(s.category)} ${s.name}</span>
-                    ${s.contactPerson ? `<span style="font-size:0.72rem;color:#6b7280;margin-left:0.4rem;">${s.contactPerson}</span>` : ''}
+                    <span style="font-weight:500;">${_supplierCatIcon(s.category)} ${esc(s.name)}</span>
+                    ${s.contactPerson ? `<span style="font-size:0.72rem;color:#6b7280;margin-left:0.4rem;">${esc(s.contactPerson)}</span>` : ''}
                 </div>`
             ).join('');
             dd.style.display = 'block';
@@ -9998,10 +10020,10 @@ ${email} has been completely removed from the system.`);
                     return `
                         <div class="customer-item ${isActive ? 'active' : ''}" onclick="selectProject('${p.id}')">
                             <div class="project-header">
-                                <div class="customer-name">${p.name}</div>
+                                <div class="customer-name">${esc(p.name)}</div>
                                 <span class="status-badge ${stageClass}">${stageLabel}</span>
                             </div>
-                            ${p.customerName ? `<div class="customer-contact">👤 ${p.customerName}</div>` : ''}
+                            ${p.customerName ? `<div class="customer-contact">👤 ${esc(p.customerName)}</div>` : ''}
                             ${p.value ? `<div class="customer-contact">💰 ${formatCurrency(p.value)}</div>` : ''}
                         </div>
                     `;
@@ -10074,7 +10096,7 @@ ${email} has been completely removed from the system.`);
                     <div class="list-item">
                         <div class="item-info">
                             <div class="item-title">${formatCurrency(p.amount)}</div>
-                            ${p.note ? `<div class="item-detail">${p.note}</div>` : ''}
+                            ${p.note ? `<div class="item-detail">${esc(p.note)}</div>` : ''}
                             <div class="item-date">Received: ${p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : formatDate(p.date)}${p.paymentMode ? ' · ' + p.paymentMode : ''}${p.refNumber ? ' · Ref ' + p.refNumber : ''}</div>
                             ${p.receipt?.receiptNo ? `<div style="font-size:0.7rem;color:#166534;margin-top:0.15rem;">\u2713 Receipt ${p.receipt.receiptNo} generated</div>` : ''}
                         </div>
@@ -10105,7 +10127,7 @@ ${email} has been completely removed from the system.`);
                                 <div>
                                     <div class="item-title">🏪 ${m.supplierName || 'Supplier'}${m.supplierId ? ' <span style="font-size:0.7rem;background:#eff6ff;color:#1d4ed8;padding:0.1rem 0.4rem;border-radius:0.25rem;font-weight:600;vertical-align:middle;">🔗 Linked</span>' : ''}</div>
                                     <div class="item-date">📅 Procured: ${m.procurementDate ? new Date(m.procurementDate).toLocaleDateString() : formatDate(m.date || m.createdAt)}</div>
-                                    ${m.note ? `<div class="item-date" style="color:#374151;margin-top:0.15rem;">📝 ${m.note}</div>` : ''}
+                                    ${m.note ? `<div class="item-date" style="color:#374151;margin-top:0.15rem;">📝 ${esc(m.note)}</div>` : ''}
                                 </div>
                                 <div style="text-align: right;">
                                     <div class="item-detail" style="font-size: 1.125rem; font-weight: 700;">Grand Total: ${formatCurrency(totalCost)}</div>
@@ -10136,7 +10158,7 @@ ${email} has been completely removed from the system.`);
                                         const total = cost + gstAmt;
                                         return `
                                         <div style="display: grid; grid-template-columns: 2fr 60px 70px 80px 70px 80px 90px; gap: 0.25rem; padding: 0.25rem 0; font-size: 0.875rem; border-bottom: 1px solid #e5e7eb;">
-                                            <span>${item.name}</span>
+                                            <span>${esc(item.name)}</span>
                                             <span>${item.unit || 'Nos'}</span>
                                             <span>${qty}</span>
                                             <span>${formatCurrency(rate)}</span>
@@ -10189,10 +10211,10 @@ ${email} has been completely removed from the system.`);
                                         <div class="attached-file">
                                             <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                                             <div style="flex: 1; min-width: 0; overflow: hidden;">
-                                                <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                                <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(f.name)}</div>
                                                 <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                             </div>
-                                            <a href="${f.shareLink || f.webUrl || f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download">⬇️</a>
+                                            <a href="${safeUrl(f.shareLink || f.webUrl || f.downloadUrl || f.data)}" rel="noopener noreferrer" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
                                             ${isAdmin() ? `<button onclick="deleteProjectMaterialFile('${m.id}','${f.id || f.name}')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:1rem;padding:0 4px;" title="Delete file">🗑️</button>` : ''}
                                         </div>
                                     `).join('')}
@@ -10222,10 +10244,10 @@ ${email} has been completely removed from the system.`);
                                     ${dc.vehicleNumber ? ` | 🚛 Vehicle: ${dc.vehicleNumber}` : ''}
                                 </div>
                                 <div class="item-date">
-                                    <strong>Items:</strong> ${dc.items.map(item => `${item.name} (${item.quantity})`).join(', ')}
+                                    <strong>Items:</strong> ${dc.items.map(item => `${esc(item.name)} (${item.quantity})`).join(', ')}
                                 </div>
                                 ${dc.receivedBy ? `<div class="item-date">Received by: ${dc.receivedBy}</div>` : ''}
-                                ${dc.remarks ? `<div class="item-date">Remarks: ${dc.remarks}</div>` : ''}
+                                ${dc.remarks ? `<div class="item-date">Remarks: ${esc(dc.remarks)}</div>` : ''}
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end;">
                                 <button class="btn btn-primary" onclick="downloadChallan('${dc.id}')">📄 Download PDF</button>
@@ -10251,7 +10273,7 @@ ${email} has been completely removed from the system.`);
                                         <div style="display:flex;flex-direction:column;gap:0.4rem;">
                                             ${signedCopies.map((file, index) => `
                                                 <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-                                                    <a href="${file.shareLink || file.webUrl || file.downloadUrl || file.data}" target="_blank" download="${file.name}"
+                                                    <a href="${safeUrl(file.shareLink || file.webUrl || file.downloadUrl || file.data)}" rel="noopener noreferrer" target="_blank" download="${esc(file.name)}"
                                                        class="btn btn-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;">⬇️ ${file.name || `Signed Copy ${index + 1}`}</a>
                                                     ${isAdmin() ? `<button class="btn btn-danger" onclick="removeSignedCopy('${dc.id}', ${index})" style="padding:0.2rem 0.6rem; font-size:0.75rem;">Remove</button>` : ''}
                                                 </div>
@@ -10309,8 +10331,8 @@ ${email} has been completely removed from the system.`);
                             ${inst.quantity ? `<div class="item-date">Quantity: ${inst.quantity}</div>` : ''}
                             ${inst.installedBy ? `<div class="item-date">Installed by: ${inst.installedBy}</div>` : ''}
                             ${inst.handedOverTo ? `<div class="item-date">Handed over to: ${inst.handedOverTo}</div>` : ''}
-                            ${inst.location ? `<div class="item-date">Location: ${inst.location}</div>` : ''}
-                            ${inst.remarks ? `<div class="item-date">Remarks: ${inst.remarks}</div>` : ''}
+                            ${inst.location ? `<div class="item-date">Location: ${esc(inst.location)}</div>` : ''}
+                            ${inst.remarks ? `<div class="item-date">Remarks: ${esc(inst.remarks)}</div>` : ''}
                         </div>
                         <div style="display: flex; gap: 0.5rem;">
                             ${isAdmin() ? `
@@ -10430,7 +10452,7 @@ ${email} has been completely removed from the system.`);
                                 <span>📅 ${entry.date ? new Date(entry.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-'}</span>
                                 ${entry.addedBy ? `<span>👤 ${entry.addedBy}</span>` : ''}
                             </div>
-                            ${(entry.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${entry.files.map(f=>`<a href="${f.shareLink||f.downloadUrl||f.data||'#'}" target="_blank" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;">📎 ${f.name}</a>`).join('')}</div>` : ''}
+                            ${(entry.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${entry.files.map(f=>`<a href="${safeUrl(f.shareLink||f.downloadUrl||f.data||'#')}" rel="noopener noreferrer" target="_blank" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;">📎 ${esc(f.name)}</a>`).join('')}</div>` : ''}
                         </div>
                         ${isAdmin() ? `<button class="btn btn-danger" onclick="deletePettyCashEntry('${entry.id}')" style="align-self:center;">🗑️</button>` : ''}
                     </div>
@@ -10455,7 +10477,7 @@ ${email} has been completely removed from the system.`);
                                     ${cred.wifiSSID ? `<div style="font-size:0.8rem;"><span style="color:#6b7280;">SSID:</span> <code style="background:#f3f4f6;padding:0.1rem 0.3rem;border-radius:0.25rem;">${cred.wifiSSID}</code></div>` : ''}
                                     ${cred.wifiPassword ? `<div style="font-size:0.8rem;"><span style="color:#6b7280;">Wi-Fi Pass:</span> <code style="background:#fef3c7;padding:0.1rem 0.3rem;border-radius:0.25rem;" id="wifiPass_${cred.id}">••••••••</code> <button onclick="toggleWifiPassword('${cred.id}')" style="border:none;background:none;cursor:pointer;font-size:0.7rem;color:#6b7280;">👁️</button></div>` : ''}
                                     ${cred.port ? `<div style="font-size:0.8rem;"><span style="color:#6b7280;">Port:</span> <code style="background:#f3f4f6;padding:0.1rem 0.3rem;border-radius:0.25rem;">${cred.port}</code></div>` : ''}
-                                    ${cred.notes ? `<div style="font-size:0.8rem;color:#374151;margin-top:0.2rem;grid-column:1/-1;">📝 ${cred.notes}</div>` : ''}
+                                    ${cred.notes ? `<div style="font-size:0.8rem;color:#374151;margin-top:0.2rem;grid-column:1/-1;">📝 ${esc(cred.notes)}</div>` : ''}
                                 </div>
                             </div>
                             ${isAdmin() ? `<div style="display:flex;gap:0.35rem;flex-shrink:0;">
@@ -10493,8 +10515,8 @@ ${email} has been completely removed from the system.`);
                                     Grand Total: ${fmt(q.grandTotal)}
                                 </div>
                                 ${q.scopeOfWork ? `<div class="item-date" style="margin-top:0.25rem;">📝 ${q.scopeOfWork}</div>` : ''}
-                                ${q.notes ? `<div class="item-date" style="background:#f9fafb;padding:0.25rem 0.5rem;border-radius:0.25rem;margin-top:0.25rem;">💬 ${q.notes}</div>` : ''}
-                                ${(q.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${(q.files||[]).map(f=>`<a href="${f.shareLink||f.downloadUrl||f.data||'#'}" target="_blank" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;display:inline-flex;align-items:center;gap:0.2rem;">📎 ${f.name}</a>`).join('')}</div>` : ''}
+                                ${q.notes ? `<div class="item-date" style="background:#f9fafb;padding:0.25rem 0.5rem;border-radius:0.25rem;margin-top:0.25rem;">💬 ${esc(q.notes)}</div>` : ''}
+                                ${(q.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${(q.files||[]).map(f=>`<a href="${safeUrl(f.shareLink||f.downloadUrl||f.data||'#')}" rel="noopener noreferrer" target="_blank" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;display:inline-flex;align-items:center;gap:0.2rem;">📎 ${esc(f.name)}</a>`).join('')}</div>` : ''}
                             </div>
                             <div style="display:flex;flex-direction:column;gap:0.35rem;flex-shrink:0;">
                                 <button class="btn btn-primary" onclick="downloadProjectQuote('${q.id}')" style="padding:0.25rem 0.6rem;font-size:0.75rem;">📄 Download</button>
@@ -10534,7 +10556,7 @@ ${email} has been completely removed from the system.`);
                     <div class="card">
                         <div class="card-header">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <h2>${selectedProject.name}</h2>
+                                <h2>${esc(selectedProject.name)}</h2>
                                 <span class="status-badge ${stageClass}">${stageLabel}</span>
                             </div>
                         </div>
@@ -10543,7 +10565,7 @@ ${email} has been completely removed from the system.`);
                                 ${selectedProject.customerName ? `
                                     <div>
                                         <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem;">Customer</div>
-                                        <div style="font-weight: 600;">👤 ${selectedProject.customerName}</div>
+                                        <div style="font-weight: 600;">👤 ${esc(selectedProject.customerName)}</div>
                                     </div>
                                 ` : ''}
                                 
@@ -10577,7 +10599,7 @@ ${email} has been completely removed from the system.`);
                                 ${selectedProject.description ? `
                                     <div>
                                         <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Description</div>
-                                        <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${selectedProject.description}</div>
+                                        <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${esc(selectedProject.description)}</div>
                                     </div>
                                 ` : ''}
 
@@ -10890,13 +10912,39 @@ ${email} has been completely removed from the system.`);
                 header.dataset.secToggle = '1';
                 header.title = 'Click to expand / collapse';
 
+                // Sections with no details (only a "No ... yet" message) don't expand.
+                // Re-checked whenever the body changes (some sections load async).
+                const norm = t => (t || '').replace(/\s+/g, ' ').trim();
+                const isEmptyBody = () => {
+                    const t = norm(body.textContent);
+                    if (!t) return true;
+                    if (body.querySelector('table, .list-item, .attached-file, img, input, select, textarea')) return false;
+                    return /^no\b[^]{0,120}\b(yet|found|available|recorded)\.?$/i.test(t);
+                };
+                const syncEmpty = () => {
+                    const empty = isEmptyBody();
+                    header.dataset.secEmpty = empty ? '1' : '';
+                    chevron.style.visibility = empty ? 'hidden' : '';
+                    header.style.cursor = empty ? 'default' : 'pointer';
+                    header.title = empty ? '' : 'Click to expand / collapse';
+                    if (empty) {
+                        body.style.display = 'none';
+                    } else if (body.style.display === 'none' && projSectionOpenState[key] !== false) {
+                        body.style.display = '';
+                        chevron.classList.remove('collapsed');
+                    }
+                };
+                new MutationObserver(syncEmpty).observe(body, { childList: true, subtree: true, characterData: true });
+
                 const isOpen = projSectionOpenState[key] !== false; // default open
                 body.style.display = isOpen ? '' : 'none';
                 chevron.classList.toggle('collapsed', !isOpen);
+                syncEmpty();
 
                 header.addEventListener('click', (e) => {
                     // Never swallow clicks meant for controls inside the header
                     if (e.target.closest('button, a, input, select, textarea, label')) return;
+                    if (header.dataset.secEmpty === '1') return;
                     const nowOpen = body.style.display === 'none';
                     body.style.display = nowOpen ? '' : 'none';
                     chevron.classList.toggle('collapsed', !nowOpen);
@@ -11119,7 +11167,7 @@ ${email} has been completely removed from the system.`);
                         <div class="file-item">
                             <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.name}</div>
+                                <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(f.name)}</div>
                                 <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(f.size)} • OneDrive</div>
                             </div>
                             <button class="btn btn-danger" onclick="removeFile('${f.id || f.oneDriveId}')">×</button>
@@ -11176,7 +11224,7 @@ ${email} has been completely removed from the system.`);
                     const total = cost + gstAmt;
                     return `
                     <div style="display: grid; grid-template-columns: 2fr 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
-                        <input type="text" class="input" placeholder="Material name*" value="${item.name}" 
+                        <input type="text" class="input" placeholder="Material name*" value="${esc(item.name)}" 
                                onchange="updateMaterialItem('${item.id}', 'name', this.value)" style="margin: 0;">
                         <select class="input" onchange="updateMaterialItem('${item.id}', 'unit', this.value)" style="margin: 0; padding: 0.4rem;">
                             <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
@@ -11280,7 +11328,7 @@ ${email} has been completely removed from the system.`);
                     <div style="display: grid; grid-template-columns: 120px 2fr 120px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
                         <input type="date" class="input" value="${payment.date}" 
                                onchange="updateSupplierPayment('${payment.id}', 'date', this.value)" style="margin: 0;">
-                        <input type="text" class="input" placeholder="Payment note (optional)" value="${payment.note}" 
+                        <input type="text" class="input" placeholder="Payment note (optional)" value="${esc(payment.note)}" 
                                onchange="updateSupplierPayment('${payment.id}', 'note', this.value)" style="margin: 0;">
                         <input type="number" class="input" placeholder="Amount" value="${payment.amount || ''}" min="0" step="0.01"
                                onchange="updateSupplierPayment('${payment.id}', 'amount', this.value)" style="margin: 0;">
@@ -11662,8 +11710,8 @@ ${email} has been completely removed from the system.`);
             checkboxContainer.innerHTML = allItems.map(item => `
                 <div style="padding: 0.5rem; border-bottom: 1px solid #f3f4f6;">
                     <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="checkbox" value="${item.id}" data-name="${item.name}" data-quantity="${item.quantity}" style="margin-right: 0.5rem;">
-                        <span>${item.name}${item.quantity ? ` (${item.quantity})` : ''}</span>
+                        <input type="checkbox" value="${item.id}" data-name="${esc(item.name)}" data-quantity="${item.quantity}" style="margin-right: 0.5rem;">
+                        <span>${esc(item.name)}${item.quantity ? ` (${item.quantity})` : ''}</span>
                         <span style="font-size: 0.75rem; color: #6b7280; margin-left: auto;">from ${item.supplier}</span>
                     </label>
                 </div>
@@ -11963,7 +12011,7 @@ ${email} has been completely removed from the system.`);
                         </div>
                         <div class="info-row">
                             <div class="label">Project:</div>
-                            <div>${selectedProject.name}</div>
+                            <div>${esc(selectedProject.name)}</div>
                         </div>
                         <div class="info-row">
                             <div class="label">Customer:</div>
@@ -11989,7 +12037,7 @@ ${email} has been completely removed from the system.`);
                             ${challan.items.map((item, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${item.name}</td>
+                                    <td>${esc(item.name)}</td>
                                     <td>${item.quantity || '-'}</td>
                                 </tr>
                             `).join('')}
@@ -11999,7 +12047,7 @@ ${email} has been completely removed from the system.`);
                     ${challan.remarks ? `
                     <div class="info-section">
                         <div class="label">Remarks:</div>
-                        <div>${challan.remarks}</div>
+                        <div>${esc(challan.remarks)}</div>
                     </div>
                     ` : ''}
 
@@ -12052,7 +12100,7 @@ ${email} has been completely removed from the system.`);
 
             itemSelect.innerHTML = '<option value="">-- Select Item --</option>' +
                 allItems.map((item, index) => 
-                    `<option value="${index}" data-name="${item.name}" data-quantity="${item.quantity}">${item.name}${item.quantity ? ` (${item.quantity})` : ''}</option>`
+                    `<option value="${index}" data-name="${esc(item.name)}" data-quantity="${item.quantity}">${esc(item.name)}${item.quantity ? ` (${item.quantity})` : ''}</option>`
                 ).join('');
 
             // Auto-fill item name when selected
@@ -13265,7 +13313,7 @@ ${email} has been completely removed from the system.`);
                                             onmousedown="document.getElementById('invRow_${index}').draggable=true">≡</span>
                                     </td>
                                     <td style="padding: 0.5rem;">
-                                        <input type="text" class="input" placeholder="Item description" value="${item.description}" 
+                                        <input type="text" class="input" placeholder="Item description" value="${esc(item.description)}" 
                                                onchange="updateInvoiceItem('${item.id}', 'description', this.value)" style="margin: 0; min-width: 200px;">
                                     </td>
                                     <td style="padding: 0.5rem;">
@@ -13301,7 +13349,7 @@ ${email} has been completely removed from the system.`);
                                         </select>
                                     </td>
                                     <td style="padding: 0.5rem; text-align: right; font-weight: 600;">
-                                        ₹${formatCurrency(amount)}
+                                        ${formatCurrency(amount)}
                                     </td>
                                     <td style="padding: 0.5rem;">
                                         <button class="btn btn-danger" onclick="removeInvoiceItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×</button>
@@ -13379,12 +13427,12 @@ ${email} has been completely removed from the system.`);
             const grandTotal = amountAfterDiscount + totalGST;
 
             // Update summary
-            document.getElementById('invoiceSubtotal').textContent = '₹' + formatCurrency(subtotal);
-            document.getElementById('invoiceDiscountDisplay').textContent = '₹' + formatCurrency(discount);
-            document.getElementById('invoiceCGST').textContent = '₹' + formatCurrency(totalCGST);
-            document.getElementById('invoiceSGST').textContent = '₹' + formatCurrency(totalSGST);
-            document.getElementById('invoiceIGST').textContent = '₹' + formatCurrency(totalIGST);
-            document.getElementById('invoiceGrandTotal').textContent = '₹' + formatCurrency(grandTotal);
+            document.getElementById('invoiceSubtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('invoiceDiscountDisplay').textContent = formatCurrency(discount);
+            document.getElementById('invoiceCGST').textContent = formatCurrency(totalCGST);
+            document.getElementById('invoiceSGST').textContent = formatCurrency(totalSGST);
+            document.getElementById('invoiceIGST').textContent = formatCurrency(totalIGST);
+            document.getElementById('invoiceGrandTotal').textContent = formatCurrency(grandTotal);
         }
 
         async function saveInvoice() {
@@ -14377,7 +14425,7 @@ ${email} has been completely removed from the system.`);
                                 return `
                                 <tr>
                                     <td style="padding: 0.5rem;">
-                                        <input type="text" class="input" placeholder="Item description" value="${item.description}"
+                                        <input type="text" class="input" placeholder="Item description" value="${esc(item.description)}"
                                                onchange="updateCreditNoteItem('${item.id}', 'description', this.value)" style="margin: 0; min-width: 200px;">
                                     </td>
                                     <td style="padding: 0.5rem;">
@@ -14413,7 +14461,7 @@ ${email} has been completely removed from the system.`);
                                         </select>
                                     </td>
                                     <td style="padding: 0.5rem; text-align: right; font-weight: 600;">
-                                        ₹${formatCurrency(amount)}
+                                        ${formatCurrency(amount)}
                                     </td>
                                     <td style="padding: 0.5rem;">
                                         <button class="btn btn-danger" onclick="removeCreditNoteItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×</button>
@@ -14473,12 +14521,12 @@ ${email} has been completely removed from the system.`);
             const totalGST = totalCGST + totalSGST + totalIGST;
             const grandTotal = amountAfterDiscount + totalGST;
 
-            document.getElementById('cnSubtotal').textContent = '₹' + formatCurrency(subtotal);
-            document.getElementById('cnDiscountDisplay').textContent = '₹' + formatCurrency(discount);
-            document.getElementById('cnCGST').textContent = '₹' + formatCurrency(totalCGST);
-            document.getElementById('cnSGST').textContent = '₹' + formatCurrency(totalSGST);
-            document.getElementById('cnIGST').textContent = '₹' + formatCurrency(totalIGST);
-            document.getElementById('cnGrandTotal').textContent = '₹' + formatCurrency(grandTotal);
+            document.getElementById('cnSubtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('cnDiscountDisplay').textContent = formatCurrency(discount);
+            document.getElementById('cnCGST').textContent = formatCurrency(totalCGST);
+            document.getElementById('cnSGST').textContent = formatCurrency(totalSGST);
+            document.getElementById('cnIGST').textContent = formatCurrency(totalIGST);
+            document.getElementById('cnGrandTotal').textContent = formatCurrency(grandTotal);
         }
 
         async function saveCreditNote() {
@@ -14898,19 +14946,19 @@ ${email} has been completely removed from the system.`);
                 return `
                     <div class="lead-column">
                         <div class="lead-column-header ${stage.color}">
-                            ${stage.label}
+                            ${esc(stage.label)}
                             <span class="lead-column-count">(${stageLeads.length})</span>
                         </div>
                         ${stageLeads.length === 0 ?
                             '<div style="text-align:center;color:#9ca3af;font-size:0.875rem;padding:1rem;">No leads</div>' :
                             stageLeads.map(lead => `
-                                <div class="lead-card" onclick="selectLead('${lead.id}')">
+                                <div class="lead-card" onclick="selectLead('${esc(lead.id)}')">
                                     <div class="lead-card-title">${esc(lead.projectName || lead.contactPerson || '')}</div>
                                     ${lead.projectName ? `<div class="lead-card-company">👤 ${esc(lead.contactPerson || '')}</div>` : ''}
                                     ${lead.company ? `<div class="lead-card-company">🏢 ${esc(lead.company)}</div>` : ''}
                                     ${lead.projectType ? `<div class="lead-card-company">📋 ${esc(lead.projectType)}</div>` : ''}
                                     ${lead.leadOwner ? `<div class="lead-card-company" style="color:#6366f1;">🧑‍💼 ${esc(lead.leadOwner)}</div>` : ''}
-                                    ${lead.value ? `<div class="lead-card-value">₹${formatCurrency(lead.value)}</div>` : ''}
+                                    ${lead.value ? `<div class="lead-card-value">${formatCurrency(lead.value)}</div>` : ''}
                                     <div class="lead-card-date">Created: ${formatDate(lead.createdAt)}</div>
                                 </div>
                             `).join('')
@@ -14926,14 +14974,34 @@ ${email} has been completely removed from the system.`);
 
             const card = document.getElementById('leadDetailsPanelCard');
             card.style.display = 'block';
+            // Show details as a separate page: hide the pipeline/list
+            const listCard = document.getElementById('leadListCard');
+            if (listCard) listCard.style.display = 'none';
 
             renderLeadDetails();
+            window.scrollTo(0, 0);
+            if (location.hash !== '#lead/' + id) {
+                history.pushState({ leadId: id }, '', '#lead/' + id);
+            }
         }
 
-        function closeLeadDetails() {
+        function closeLeadDetails(fromHistory) {
             selectedLead = null;
             document.getElementById('leadDetailsPanelCard').style.display = 'none';
+            const listCard = document.getElementById('leadListCard');
+            if (listCard) listCard.style.display = '';
+            if (!fromHistory && location.hash.startsWith('#lead/')) history.back();
         }
+
+        // Browser Back/Forward support for the lead details page
+        window.addEventListener('popstate', () => {
+            const m = location.hash.match(/^#lead\/(.+)$/);
+            if (m) {
+                if (!selectedLead || selectedLead.id !== m[1]) selectLead(decodeURIComponent(m[1]));
+            } else if (selectedLead) {
+                closeLeadDetails(true);
+            }
+        });
 
         function renderLeadDetails() {
             if (!selectedLead) return;
@@ -14954,7 +15022,8 @@ ${email} has been completely removed from the system.`);
                                 ${selectedLead.projectName ? `<p style="margin:0 0 0.25rem;font-weight:600;color:#374151;">👤 ${esc(selectedLead.contactPerson || '')}</p>` : ''}
                                 ${selectedLead.company ? `<p style="margin: 0; color: #6b7280;">🏢 ${esc(selectedLead.company)}</p>` : ''}
                             </div>
-                        <span class="status-badge ${stageClass}" style="font-size: 0.875rem;">${stageLabel}</span>
+                        <span class="status-badge ${esc(stageClass)}" style="font-size: 0.875rem;">${esc(stageLabel)}</span>
+                    </div>
                     </div>
 
                     <!-- Customer Contacts -->
@@ -14982,7 +15051,7 @@ ${email} has been completely removed from the system.`);
                         ${selectedLead.leadGenDate ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Lead Gen Date</div>
-                                <div>📅 ${new Date(selectedLead.leadGenDate).toLocaleDateString()}</div>
+                                <div>📅 ${safeDate(selectedLead.leadGenDate)}</div>
                             </div>
                         ` : ''}
                         ${selectedLead.location ? `
@@ -15000,7 +15069,7 @@ ${email} has been completely removed from the system.`);
                         ${selectedLead.value ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Estimated Value</div>
-                                <div style="font-weight: 600; color: #16a34a;">₹${formatCurrency(selectedLead.value)}</div>
+                                <div style="font-weight: 600; color: #16a34a;">${formatCurrency(selectedLead.value)}</div>
                             </div>
                         ` : ''}
                         ${selectedLead.leadOwner ? `
@@ -15012,13 +15081,13 @@ ${email} has been completely removed from the system.`);
                         ${selectedLead.priority ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Priority</div>
-                                <div>${selectedLead.priority === 'high' ? '🔴' : selectedLead.priority === 'medium' ? '🟡' : '🟢'} ${selectedLead.priority.charAt(0).toUpperCase() + selectedLead.priority.slice(1)}</div>
+                                <div>${selectedLead.priority === 'high' ? '🔴' : selectedLead.priority === 'medium' ? '🟡' : '🟢'} ${esc(String(selectedLead.priority).charAt(0).toUpperCase() + String(selectedLead.priority).slice(1))}</div>
                             </div>
                         ` : ''}
                         ${selectedLead.expectedCloseDate ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Expected Close</div>
-                                <div>🗓 ${new Date(selectedLead.expectedCloseDate).toLocaleDateString()}</div>
+                                <div>🗓 ${safeDate(selectedLead.expectedCloseDate)}</div>
                             </div>
                         ` : ''}
                     </div>
@@ -15026,14 +15095,14 @@ ${email} has been completely removed from the system.`);
                     ${selectedLead.scopeOfWork ? `
                         <div>
                             <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Scope of Work</div>
-                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${selectedLead.scopeOfWork}</div>
+                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${esc(selectedLead.scopeOfWork)}</div>
                         </div>
                     ` : ''}
 
                     ${selectedLead.notes ? `
                         <div>
                             <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Requirements/Notes</div>
-                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${selectedLead.notes}</div>
+                            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${esc(selectedLead.notes)}</div>
                         </div>
                     ` : ''}
 
@@ -15046,10 +15115,10 @@ ${email} has been completely removed from the system.`);
                                     <div class="attached-file">
                                         <div class="file-icon">${getFileIcon(f.type)}</div>
                                         <div style="flex: 1; min-width: 0; overflow: hidden;">
-                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(f.name)}</div>
                                             <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                         </div>
-                                        <a href="${f.shareLink || f.webUrl || f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
+                                        <a href="${safeUrl(f.shareLink || f.webUrl || f.downloadUrl || f.data)}" rel="noopener noreferrer" download="${esc(f.name)}" rel="noopener noreferrer" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
                                     </div>
                                 `).join('')}
                             </div>
@@ -15065,10 +15134,10 @@ ${email} has been completely removed from the system.`);
                                     <div class="attached-file">
                                         <div class="file-icon">${f.type && f.type.startsWith('image/') ? '🖼️' : getFileIcon(f.type)}</div>
                                         <div style="flex: 1; min-width: 0; overflow: hidden;">
-                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
+                                            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(f.name)}</div>
                                             <div style="font-size: 0.7rem; color: #6b7280;">${formatFileSize(f.size)}</div>
                                         </div>
-                                        <a href="${f.shareLink || f.webUrl || f.downloadUrl || f.data}" download="${f.name}" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
+                                        <a href="${safeUrl(f.shareLink || f.webUrl || f.downloadUrl || f.data)}" rel="noopener noreferrer" download="${esc(f.name)}" rel="noopener noreferrer" target="_blank" class="download-btn" title="Download from OneDrive">⬇️</a>
                                     </div>
                                 `).join('')}
                             </div>
@@ -15079,15 +15148,16 @@ ${email} has been completely removed from the system.`);
                         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                             <select class="input" style="flex: 1; min-width: 200px;" onchange="updateLeadStage(this.value)">
                                 ${leadStages.map(s => `
-                                    <option value="${s.id}" ${selectedLead.stage === s.id ? 'selected' : ''}>${s.label}</option>
+                                    <option value="${esc(s.id)}" ${selectedLead.stage === s.id ? 'selected' : ''}>${esc(s.label)}</option>
                                 `).join('')}
                             </select>
                             <button class="btn btn-primary" onclick="showEditLeadModal()">✏️ Edit</button>
+                            <button class="btn btn-secondary" onclick="showLeadBOQModal()">📊 BOQ${(selectedLead.boqFiles && selectedLead.boqFiles.length) ? ' (' + selectedLead.boqFiles.length + ')' : ''}</button>
                             <button class="btn btn-secondary" onclick="showAddActivityModal()">+ Add Activity</button>
                             ${(selectedLead.stage === 'won_token' || selectedLead.stage === 'won_material') ? `
                                 <button class="btn btn-success" onclick="convertLeadToCustomer()">📋 Create Final Quote</button>
                             ` : ''}
-                            <button class="btn btn-danger" onclick="deleteLead('${selectedLead.id}')">🗑️ Delete</button>
+                            <button class="btn btn-danger" onclick="deleteLead('${esc(selectedLead.id)}')">🗑️ Delete</button>
                         </div>
                     ` : ''}
 
@@ -15098,7 +15168,7 @@ ${email} has been completely removed from the system.`);
                             ${selectedLead.leadActions.map(action => {
                                 const _today = new Date(); _today.setHours(0,0,0,0);
                                 const _due = new Date(action.dueDate); _due.setHours(0,0,0,0);
-                                const _diff = Math.round((_due - _today) / (1000*60*60*24));
+                                const _diff = isNaN(_due) ? 0 : Math.round((_due - _today) / (1000*60*60*24));
                                 const _overdue = action.status !== 'completed' && _diff < 0;
                                 const _dueToday = action.status !== 'completed' && _diff === 0;
                                 let _dayLabel = '';
@@ -15113,23 +15183,23 @@ ${email} has been completely removed from the system.`);
                                 <div style="background: ${_bg}; border-left: 3px solid ${_border}; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 0.5rem;">
                                     <div style="display: flex; justify-content: space-between; align-items: start;">
                                         <div style="flex: 1;">
-                                            <div style="font-size: 0.875rem; font-weight: 600; color: ${_overdue ? '#b91c1c' : 'inherit'};">${action.actionType}</div>
+                                            <div style="font-size: 0.875rem; font-weight: 600; color: ${_overdue ? '#b91c1c' : 'inherit'};">${esc(action.actionType)}</div>
                                             <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
-                                                📅 Due: ${new Date(action.dueDate).toLocaleDateString()}
+                                                📅 Due: ${safeDate(action.dueDate)}
                                                 ${action.status === 'completed' ? ' • ✓ Completed' : ' • ⏳ Pending'}
                                                 ${_dayLabel}
                                             </div>
-                                            ${action.notes ? `<div style="font-size: 0.8rem; margin-top: 0.25rem; color:#374151;">${action.notes}</div>` : ''}
+                                            ${action.notes ? `<div style="font-size: 0.8rem; margin-top: 0.25rem; color:#374151;">${esc(action.notes)}</div>` : ''}
                                             ${action.status === 'completed' ? `
                                                 <div style="margin-top:0.4rem;display:flex;flex-direction:column;gap:0.2rem;">
                                                     ${action.completionRemarks
-                                                        ? `<div style="background:#dcfce7;border:1px solid #86efac;border-radius:0.4rem;padding:0.3rem 0.55rem;font-size:0.78rem;color:#166534;"><span style="font-weight:600;">Remarks:</span> ${action.completionRemarks}</div>`
+                                                        ? `<div style="background:#dcfce7;border:1px solid #86efac;border-radius:0.4rem;padding:0.3rem 0.55rem;font-size:0.78rem;color:#166534;"><span style="font-weight:600;">Remarks:</span> ${esc(action.completionRemarks)}</div>`
                                                         : `<div style="font-size:0.75rem;color:#9ca3af;font-style:italic;">No remarks recorded.</div>`}
                                                     ${action.completedAt ? `<div style="font-size:0.72rem;color:#6b7280;">✅ Completed on ${new Date(action.completedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
                                                 </div>` : ''}
                                         </div>
                                         ${canManageLeads() && action.status !== 'completed' ? `
-                                            <button class="btn btn-success" onclick="markActionComplete('${action.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Mark Done</button>
+                                            <button class="btn btn-success" onclick="markActionComplete('${esc(action.id)}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Mark Done</button>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -15142,22 +15212,22 @@ ${email} has been completely removed from the system.`);
                     <div>
                         <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">📋 Quotes / Proposals</div>
                         ${selectedLead.finalQuotes.map(q => {
-                            const fmt = v => '₹' + (v||0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                            const fmt = v => '₹' + (parseFloat(v)||0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
                             const dStr = q.date ? new Date(q.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
                             return `<div style="background:#f0f9ff;border-left:3px solid #0284c7;border-radius:0.375rem;padding:0.75rem;margin-bottom:0.5rem;">
                                 <div style="display:flex;justify-content:space-between;align-items:start;gap:0.5rem;flex-wrap:wrap;">
                                     <div>
-                                        <div style="font-weight:700;font-size:0.9rem;">📋 ${q.quoteNo || 'Quote'}</div>
-                                        <div style="font-size:0.75rem;color:#6b7280;margin-top:0.15rem;">${dStr}${q.validDays ? ` · Valid ${q.validDays} days` : ''}</div>
+                                        <div style="font-weight:700;font-size:0.9rem;">📋 ${esc(q.quoteNo || 'Quote')}</div>
+                                        <div style="font-size:0.75rem;color:#6b7280;margin-top:0.15rem;">${dStr}${q.validDays ? ` · Valid ${esc(q.validDays)} days` : ''}</div>
                                         <div style="font-size:0.8rem;margin-top:0.25rem;">
                                             Subtotal: ${fmt(q.subtotal)} · GST: ${fmt(q.totalGST)} · Discount: ${fmt(q.discount)}
                                         </div>
                                         <div style="font-weight:700;color:#0369a1;font-size:0.95rem;margin-top:0.2rem;">Grand Total: ${fmt(q.grandTotal)}</div>
-                                        ${(q.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${q.files.map(f=>`<a href="${f.shareLink||f.downloadUrl||f.data||'#'}" target="_blank" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;">📎 ${f.name}</a>`).join('')}</div>` : ''}
+                                        ${(q.files||[]).length > 0 ? `<div style="margin-top:0.3rem;">${q.files.map(f=>`<a href="${safeUrl(f.shareLink||f.downloadUrl||f.data)}" rel="noopener noreferrer" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:#0369a1;margin-right:0.5rem;">📎 ${esc(f.name)}</a>`).join('')}</div>` : ''}
                                     </div>
                                     ${isAdmin() ? `<div style="display:flex;gap:0.4rem;flex-shrink:0;">
-                                        <button class="btn btn-secondary" onclick="editLeadQuote('${q.id}')" style="padding:0.25rem 0.5rem;font-size:0.75rem;">✏️ Edit</button>
-                                        <button class="btn btn-danger" onclick="deleteLeadQuote('${q.id}')" style="padding:0.25rem 0.5rem;font-size:0.75rem;">🗑️</button>
+                                        <button class="btn btn-secondary" onclick="editLeadQuote('${esc(q.id)}')" style="padding:0.25rem 0.5rem;font-size:0.75rem;">✏️ Edit</button>
+                                        <button class="btn btn-danger" onclick="deleteLeadQuote('${esc(q.id)}')" style="padding:0.25rem 0.5rem;font-size:0.75rem;">🗑️</button>
                                     </div>` : ''}
                                 </div>
                             </div>`;
@@ -15173,22 +15243,22 @@ ${email} has been completely removed from the system.`);
                             [...activities].reverse().map(activity => {
                                 // Resolve display name from allUsers if possible
                                 const byEmail = activity.by || '';
-                                const byUser = allUsers.find(u => u.email === byEmail || u.name === byEmail);
+                                const byUser = (allUsers || []).find(u => u.email === byEmail || u.name === byEmail);
                                 const byDisplay = byUser ? (byUser.name || byUser.email) : (byEmail ? byEmail.split('@')[0] : '');
                                 const isCompleted = activity.type === 'Action Completed';
                                 const dotColor = isCompleted ? '#059669' : '#6b7280';
                                 return `
                                 <div style="border-left: 2px solid ${isCompleted ? '#bbf7d0' : '#e5e7eb'}; padding-left: 1rem; margin-bottom: 1rem; position: relative;">
                                     <div style="position:absolute;left:-5px;top:4px;width:8px;height:8px;border-radius:50%;background:${dotColor};"></div>
-                                    <div style="font-size: 0.875rem; font-weight: 600; color:${isCompleted ? '#065f46' : '#111827'};">${isCompleted ? '✅ ' : ''}${activity.type}</div>
+                                    <div style="font-size: 0.875rem; font-weight: 600; color:${isCompleted ? '#065f46' : '#111827'};">${isCompleted ? '✅ ' : ''}${esc(activity.type)}</div>
                                     <div style="font-size: 0.72rem; color: #9ca3af; margin-top: 0.1rem; display:flex; gap: 0.75rem; flex-wrap: wrap;">
                                         <span>📅 ${formatDate(activity.date)}</span>
-                                        ${byDisplay ? `<span style="background:#f3f4f6;padding:0.05rem 0.4rem;border-radius:0.75rem;color:#374151;font-weight:600;">👤 ${byDisplay}</span>` : ''}
+                                        ${byDisplay ? `<span style="background:#f3f4f6;padding:0.05rem 0.4rem;border-radius:0.75rem;color:#374151;font-weight:600;">👤 ${esc(byDisplay)}</span>` : ''}
                                     </div>
-                                    <div style="margin-top: 0.25rem; font-size: 0.825rem; color: #374151;">${activity.description}</div>
+                                    <div style="margin-top: 0.25rem; font-size: 0.825rem; color: #374151;">${esc(activity.description)}</div>
                                     ${activity.completionRemarks ? `
                                         <div style="margin-top:0.4rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:0.4rem;padding:0.35rem 0.6rem;font-size:0.8rem;color:#166534;">
-                                            <span style="font-weight:600;">Remarks:</span> ${activity.completionRemarks}
+                                            <span style="font-weight:600;">Remarks:</span> ${esc(activity.completionRemarks)}
                                         </div>` : ''}
                                 </div>
                             `}).join('')
@@ -15302,7 +15372,7 @@ ${email} has been completely removed from the system.`);
                 <div class="attached-file">
                     <div class="file-icon">${getFileIcon(file.type)}</div>
                     <div style="flex: 1; min-width: 0; overflow: hidden;">
-                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(file.name)}</div>
                         <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(file.size)}</div>
                     </div>
                     <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeLeadBOQFile(${index})">✕</button>
@@ -15317,16 +15387,85 @@ ${email} has been completely removed from the system.`);
             container.innerHTML = selectedDesignFiles.map((file, index) => `
                 <div class="attached-file">
                     ${file.type.startsWith('image/') ? 
-                        `<img src="${file.data}" class="file-thumbnail" alt="${file.name}">` :
+                        `<img src="${file.data}" class="file-thumbnail" alt="${esc(file.name)}">` :
                         `<div class="file-icon">${getFileIcon(file.type)}</div>`
                     }
                     <div style="flex: 1; min-width: 0; overflow: hidden;">
-                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(file.name)}</div>
                         <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(file.size)}</div>
                     </div>
                     <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeLeadDesignFile(${index})">✕</button>
                 </div>
             `).join('');
+        }
+
+        // ---- BOQ quick modal (from lead details, next to Edit/Delete) ----
+        function showLeadBOQModal() {
+            if (!selectedLead) return;
+            renderLeadBOQModalList();
+            document.getElementById('leadBOQModal').classList.add('show');
+        }
+
+        function renderLeadBOQModalList() {
+            const box = document.getElementById('leadBOQModalList');
+            if (!box || !selectedLead) return;
+            const files = selectedLead.boqFiles || [];
+            box.innerHTML = files.length ? files.map((f, i) => `
+                <div class="attached-file">
+                    <div class="file-icon">${getFileIcon(f.type)}</div>
+                    <div style="flex: 1; min-width: 0; overflow: hidden;">
+                        <div style="font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(f.name)}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">${formatFileSize(f.size)}</div>
+                    </div>
+                    <a href="${safeUrl(f.shareLink || f.webUrl || f.downloadUrl || f.data)}" rel="noopener noreferrer" download="${esc(f.name)}" target="_blank" class="download-btn" title="Download">⬇️</a>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="removeLeadBOQFromDetails(${i})">✕</button>
+                </div>
+            `).join('') : '<div style="color:#6b7280;font-size:0.875rem;">No BOQ files yet.</div>';
+        }
+
+        async function persistLeadBOQ(files) {
+            const id = selectedLead.id;
+            if (db) {
+                await db.collection('leads').doc(id).update({ boqFiles: files });
+            } else {
+                const idx = leads.findIndex(l => l.id === id);
+                if (idx >= 0) leads[idx].boqFiles = files;
+                selectedLead.boqFiles = files;
+                saveToLocalStorage();
+            }
+            selectedLead.boqFiles = files;
+            renderLeadBOQModalList();
+            renderLeadDetails();
+        }
+
+        async function uploadLeadBOQFromDetails(files) {
+            if (!selectedLead || !files || !files.length) return;
+            // Reuse the existing upload handler, collecting into selectedBOQFiles
+            const prev = selectedBOQFiles;
+            selectedBOQFiles = [];
+            const before = (selectedLead.boqFiles || []).slice();
+            const total = files.length;
+            await handleLeadBOQFiles(files);
+            // handleLeadBOQFiles reads files asynchronously; wait for all to land
+            const started = Date.now();
+            while (selectedBOQFiles.length < total && Date.now() - started < 120000) {
+                await new Promise(r => setTimeout(r, 300));
+            }
+            const added = selectedBOQFiles;
+            selectedBOQFiles = prev;
+            if (added.length) {
+                try { await persistLeadBOQ([...before, ...added]); }
+                catch (e) { console.error(e); alert('Failed to save BOQ files'); }
+            }
+            const input = document.getElementById('leadBOQModalInput');
+            if (input) input.value = '';
+        }
+
+        async function removeLeadBOQFromDetails(index) {
+            if (!selectedLead || !confirm('Remove this BOQ file?')) return;
+            const files = (selectedLead.boqFiles || []).filter((_, i) => i !== index);
+            try { await persistLeadBOQ(files); }
+            catch (e) { console.error(e); alert('Failed to remove BOQ file'); }
         }
 
         function removeLeadBOQFile(index) {
@@ -15930,24 +16069,24 @@ ${email} has been completely removed from the system.`);
             const rows = filtered.map(lead => {
                 const stageLbl  = stageMap[lead.stage]?.label || lead.stage || '—';
                 const stageBgC  = stageBg[lead.stage] || '#6b7280';
-                const priority  = lead.priority || 'medium';
+                const priority  = String(lead.priority || 'medium');
                 const dotCls    = priority === 'high' ? 'priority-high' : priority === 'low' ? 'priority-low' : 'priority-medium';
-                const value     = lead.value ? `₹${formatCurrency(lead.value)}` : '—';
+                const value     = lead.value ? `${formatCurrency(lead.value)}` : '—';
                 const owner     = lead.leadOwner || '—';
                 const created   = formatDate(lead.createdAt);
                 const primaryContact = (lead.contacts && lead.contacts[0]) || null;
                 return `
-                <tr onclick="selectLead('${lead.id}')">
+                <tr onclick="selectLead('${esc(lead.id)}')">
                     <td>
                         <strong>${esc(lead.projectName || lead.contactPerson || '')}</strong>
                         ${lead.projectName ? `<div style="font-size:0.78rem;color:#374151;">👤 ${esc(lead.contactPerson||'')}</div>` : ''}
                         ${lead.company ? `<div style="font-size:0.78rem;color:#6b7280;">🏢 ${esc(lead.company)}</div>` : ''}
                         ${primaryContact && primaryContact.phone ? `<div style="font-size:0.75rem;color:#6b7280;">📞 ${esc(primaryContact.phone)}</div>` : ''}
                     </td>
-                    <td><span class="lead-stage-pill" style="background:${stageBgC};">${stageLbl}</span></td>
+                    <td><span class="lead-stage-pill" style="background:${stageBgC};">${esc(stageLbl)}</span></td>
                     <td>${esc(owner)}</td>
                     <td style="color:#16a34a;font-weight:600;">${value}</td>
-                    <td><span class="lead-priority-dot ${dotCls}"></span>${priority.charAt(0).toUpperCase()+priority.slice(1)}</td>
+                    <td><span class="lead-priority-dot ${dotCls}"></span>${esc(priority.charAt(0).toUpperCase()+priority.slice(1))}</td>
                     <td style="font-size:0.8rem;color:#6b7280;">${created}</td>
                 </tr>`;
             }).join('');
@@ -16093,7 +16232,7 @@ ${email} has been completely removed from the system.`);
                             <span>Stage: <span style="background:#dbeafe;color:#1e40af;padding:0.1rem 0.4rem;border-radius:0.75rem;font-size:0.7rem;font-weight:600;">${stageLabel}</span></span>
                             ${completedStr ? `<span>✓ Completed: ${completedStr}</span>` : ''}
                         </div>
-                        ${task.notes ? `<div style="margin-top:0.4rem;font-size:0.8rem;color:#374151;background:rgba(0,0,0,0.03);border-radius:0.375rem;padding:0.3rem 0.6rem;">${task.notes}</div>` : ''}
+                        ${task.notes ? `<div style="margin-top:0.4rem;font-size:0.8rem;color:#374151;background:rgba(0,0,0,0.03);border-radius:0.375rem;padding:0.3rem 0.6rem;">${esc(task.notes)}</div>` : ''}
                         ${isCompleted && task.completionRemarks ? `
                             <div style="margin-top:0.4rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.8rem;color:#166534;">
                                 <span style="font-weight:600;">Remarks:</span> ${task.completionRemarks}
@@ -16149,7 +16288,7 @@ ${email} has been completely removed from the system.`);
                 ${task.notes ? `
                     <div style="margin-bottom:0.75rem;">
                         <div style="color:#6b7280;font-size:0.75rem;font-weight:600;margin-bottom:0.3rem;">TASK NOTES</div>
-                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0.6rem 0.8rem;font-size:0.875rem;color:#374151;">${task.notes}</div>
+                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0.6rem 0.8rem;font-size:0.875rem;color:#374151;">${esc(task.notes)}</div>
                     </div>` : ''}
                 ${isCompleted ? `
                     <div>
@@ -16186,10 +16325,6 @@ ${email} has been completely removed from the system.`);
             document.getElementById('addProjectBtn').style.display = 'none';
             renderLeadPipeline();
             selectLead(leadId);
-            setTimeout(() => {
-                const panel = document.getElementById('leadDetailsPanelCard') || document.getElementById('leadDetailsPanel');
-                if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 200);
         }
 
         function markTaskDoneFromTab(leadId, actionId) {
@@ -16477,8 +16612,8 @@ ${email} has been completely removed from the system.`);
             }
             el.innerHTML = fqUploadedFiles.map((f, idx) => `
                 <div style="display:flex;align-items:center;gap:0.5rem;background:white;border:1px solid #fed7aa;border-radius:0.375rem;padding:0.35rem 0.6rem;margin-bottom:0.3rem;">
-                    <span style="font-size:0.85rem;flex:1;">📄 ${f.name} <span style="color:#6b7280;font-size:0.75rem;">${f.size ? '· ' + (f.size/1024).toFixed(0) + ' KB' : ''}</span></span>
-                    ${f.shareLink || f.downloadUrl ? `<a href="${f.shareLink || f.downloadUrl}" target="_blank" style="font-size:0.75rem;color:#0369a1;">View ↗</a>` : ''}
+                    <span style="font-size:0.85rem;flex:1;">📄 ${esc(f.name)} <span style="color:#6b7280;font-size:0.75rem;">${f.size ? '· ' + (f.size/1024).toFixed(0) + ' KB' : ''}</span></span>
+                    ${f.shareLink || f.downloadUrl ? `<a href="${safeUrl(f.shareLink || f.downloadUrl)}" rel="noopener noreferrer" target="_blank" style="font-size:0.75rem;color:#0369a1;">View ↗</a>` : ''}
                     <button onclick="removeFQFile(${idx})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:0.85rem;padding:0 4px;">✕</button>
                 </div>`).join('');
         }
@@ -17019,6 +17154,9 @@ ${email} has been completely removed from the system.`);
         window.saveNewAction = saveNewAction;
         window.selectLead = selectLead;
         window.closeLeadDetails = closeLeadDetails;
+        window.showLeadBOQModal = showLeadBOQModal;
+        window.uploadLeadBOQFromDetails = uploadLeadBOQFromDetails;
+        window.removeLeadBOQFromDetails = removeLeadBOQFromDetails;
         window.updateLeadStage = updateLeadStage;
         window.deleteLead = deleteLead;
         window.filterLeads = filterLeads;
@@ -17140,8 +17278,8 @@ ${email} has been completely removed from the system.`);
             if (pcUploadedFiles.length === 0) { el.innerHTML = ''; return; }
             el.innerHTML = pcUploadedFiles.map((f, i) => `
                 <div style="display:flex;align-items:center;gap:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:0.375rem;padding:0.3rem 0.6rem;margin-bottom:0.25rem;">
-                    <span style="flex:1;font-size:0.8rem;">📄 ${f.name}</span>
-                    ${f.shareLink || f.downloadUrl ? `<a href="${f.shareLink||f.downloadUrl}" target="_blank" style="font-size:0.72rem;color:#0369a1;">View ↗</a>` : ''}
+                    <span style="flex:1;font-size:0.8rem;">📄 ${esc(f.name)}</span>
+                    ${f.shareLink || f.downloadUrl ? `<a href="${safeUrl(f.shareLink||f.downloadUrl)}" rel="noopener noreferrer" target="_blank" style="font-size:0.72rem;color:#0369a1;">View ↗</a>` : ''}
                     <button onclick="removePCFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:0.85rem;">✕</button>
                 </div>`).join('');
         }
@@ -17725,7 +17863,7 @@ ${email} has been completely removed from the system.`);
                     filterReportRows();
                 } catch(e) {
                     console.error('Report error:', e);
-                    outputEl.innerHTML = `<div style="color:#dc2626;padding:2rem;">❌ Error generating report: ${e.message}</div>`;
+                    outputEl.innerHTML = `<div style="color:#dc2626;padding:2rem;">❌ Error generating report: ${esc(e.message)}</div>`;
                 }
             }, 50);
         }
@@ -17988,7 +18126,11 @@ ${email} has been completely removed from the system.`);
             }
         }
 
-        function esc(str) { if (!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function esc(str) { if (str === null || str === undefined || str === '') return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+        // Only allow safe link targets (blocks javascript: etc.)
+        function safeUrl(u) { u = String(u || '').trim(); return /^(https?:|data:|blob:|#)/i.test(u) ? esc(u) : '#'; }
+        // Locale date that never prints "Invalid Date"
+        function safeDate(d, opts) { const dt = new Date(d); return (d && !isNaN(dt)) ? dt.toLocaleDateString(opts ? 'en-IN' : undefined, opts) : '—'; }
 
         // =============================================
         // JOBS — DETAIL PANEL RENDER
