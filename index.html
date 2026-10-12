@@ -3593,7 +3593,21 @@
                 <div style="background:#f9fafb;padding:1rem;border-radius:0.5rem;margin-bottom:1rem;border-left:3px solid #10b981;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
                         <div style="font-weight:700;color:#065f46;">📦 Work Items / Line Items</div>
+                        <div style="display:inline-flex;border:1px solid #d1d5db;border-radius:0.5rem;overflow:hidden;">
+                            <button type="button" id="fqModeManual" onclick="setFQItemMode('manual')" style="padding:0.3rem 0.7rem;font-size:0.78rem;border:none;cursor:pointer;background:#2563eb;color:#fff;">✍️ Manual</button>
+                            <button type="button" id="fqModeOcr" onclick="setFQItemMode('ocr')" style="padding:0.3rem 0.7rem;font-size:0.78rem;border:none;border-left:1px solid #d1d5db;cursor:pointer;background:#fff;color:#374151;">📷 Read from file</button>
+                        </div>
+                    </div>
+                    <div id="fqManualBar" style="text-align:right;margin-bottom:0.5rem;">
                         <button class="btn btn-secondary" onclick="addFQItem()" style="padding:0.3rem 0.75rem;font-size:0.82rem;">+ Add Item</button>
+                    </div>
+                    <div id="fqOcrPanel" style="display:none;margin-bottom:0.75rem;">
+                        <div class="file-upload" onclick="document.getElementById('fqOcrInput').click()">
+                            <div>📷 Click to choose a quote / BOQ (image or PDF)</div>
+                            <div style="font-size:0.75rem;color:#6b7280;margin-top:0.5rem;">Read on this device — the file is not uploaded. Description, quantity and rate are filled in; unit and GST you can edit.</div>
+                        </div>
+                        <input type="file" id="fqOcrInput" accept="image/*,application/pdf" style="display:none" onchange="runFQOcr(this.files[0]); this.value='';">
+                        <div id="fqOcrStatus" style="margin-top:0.5rem;font-size:0.8rem;color:#6b7280;"></div>
                     </div>
                     <!-- Header Row -->
                     <div style="display:grid;grid-template-columns:24px 2fr 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;padding:0.3rem 0;font-size:0.72rem;font-weight:600;color:#6b7280;border-bottom:2px solid #e5e7eb;margin-bottom:0.25rem;">
@@ -9509,41 +9523,47 @@ ${email} has been completely removed from the system.`);
             return items;
         }
 
+        // Shared: read an image / PDF to plain text in the browser (nothing is uploaded)
+        async function ocrFileToText(file, say) {
+            say('⏳ Loading reader…');
+            await _loadScriptOnce('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+            const worker = await Tesseract.createWorker('eng', 1, {
+                logger: m => { if (m.status === 'recognizing text') say('🔍 Reading… ' + Math.round((m.progress || 0) * 100) + '%'); }
+            });
+            await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
+            const sources = [];
+            if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+                say('⏳ Preparing PDF…');
+                await _loadScriptOnce('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+                for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                    const page = await pdf.getPage(i);
+                    const vp = page.getViewport({ scale: 3 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = vp.width; canvas.height = vp.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+                    sources.push(canvas);
+                }
+            } else {
+                sources.push(file);
+            }
+            let text = '';
+            for (let i = 0; i < sources.length; i++) {
+                say('🔍 Reading page ' + (i + 1) + ' of ' + sources.length + '…');
+                const { data } = await worker.recognize(sources[i]);
+                text += '\n' + data.text;
+            }
+            await worker.terminate();
+            return text;
+        }
+
         async function runSpurchOcr(file) {
             if (!file) return;
             const st = document.getElementById('spurchOcrStatus');
             const say = t => { if (st) st.textContent = t; };
             try {
-                say('⏳ Loading reader…');
-                await _loadScriptOnce('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-                const worker = await Tesseract.createWorker('eng', 1, {
-                    logger: m => { if (m.status === 'recognizing text') say('🔍 Reading… ' + Math.round((m.progress || 0) * 100) + '%'); }
-                });
-                await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
-                const sources = [];
-                if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
-                    say('⏳ Preparing PDF…');
-                    await _loadScriptOnce('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-                    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-                    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-                        const page = await pdf.getPage(i);
-                        const vp = page.getViewport({ scale: 3 });
-                        const canvas = document.createElement('canvas');
-                        canvas.width = vp.width; canvas.height = vp.height;
-                        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-                        sources.push(canvas);
-                    }
-                } else {
-                    sources.push(file);
-                }
-                let text = '';
-                for (let i = 0; i < sources.length; i++) {
-                    say('🔍 Reading page ' + (i + 1) + ' of ' + sources.length + '…');
-                    const { data } = await worker.recognize(sources[i]);
-                    text += '\n' + data.text;
-                }
-                await worker.terminate();
+                const text = await ocrFileToText(file, say);
                 const found = parseSpurchOcrText(text);
                 if (!found.length) { say('⚠️ No item lines found. Try a clearer image, or add items manually.'); return; }
                 // replace a single untouched blank row, otherwise append
@@ -16598,6 +16618,7 @@ ${email} has been completely removed from the system.`);
             renderFQItems();
             calculateFQTotal();
             renderFQUploadedFiles();
+            setFQItemMode('manual');
 
             // Update modal title
             document.querySelector('#finalQuoteModal h2').textContent = isClone ? '📄 Clone Quote / Proposal' : (editQuote ? '✏️ Edit Quote / Proposal' : '📋 Final Quote / Proposal');
@@ -16610,6 +16631,37 @@ ${email} has been completely removed from the system.`);
         let fqUploadedFiles = [];
         let fqEditingQuoteId = null; // null = new quote, string = editing existing
         let fqEditingContext = null; // 'lead' or 'project'
+
+        function setFQItemMode(mode) {
+            const ocr = mode === 'ocr';
+            const m = document.getElementById('fqModeManual'), o = document.getElementById('fqModeOcr');
+            if (m) m.style.background = ocr ? '#fff' : '#2563eb', m.style.color = ocr ? '#374151' : '#fff';
+            if (o) o.style.background = ocr ? '#2563eb' : '#fff', o.style.color = ocr ? '#fff' : '#374151';
+            const bar = document.getElementById('fqManualBar'), panel = document.getElementById('fqOcrPanel');
+            if (bar) bar.style.display = ocr ? 'none' : '';
+            if (panel) panel.style.display = ocr ? '' : 'none';
+            const st = document.getElementById('fqOcrStatus'); if (st && !ocr) st.textContent = '';
+        }
+
+        async function runFQOcr(file) {
+            if (!file) return;
+            const st = document.getElementById('fqOcrStatus');
+            const say = t => { if (st) st.textContent = t; };
+            try {
+                const text = await ocrFileToText(file, say);
+                const found = parseSpurchOcrText(text);
+                if (!found.length) { say('⚠️ No item lines found. Try a clearer image, or add items manually.'); return; }
+                if (fqItems.length === 1 && !fqItems[0].description) fqItems = [];
+                found.forEach(f => fqItems.push({ id: Date.now().toString() + Math.random(), description: f.name, qty: f.quantity, unit: 'Nos', rate: f.rate, gstPct: 18 }));
+                renderFQItems();
+                calculateFQTotal();
+                setFQItemMode('manual');
+                alert('✅ ' + found.length + ' item(s) read from the file.\n\nPlease review descriptions, quantities, rates, unit and GST before saving — automatic reading can make mistakes.');
+            } catch (e) {
+                console.error('OCR error:', e);
+                say('❌ Could not read the file: ' + e.message);
+            }
+        }
 
         function addFQItem() {
             fqItems.push({ id: Date.now().toString(), description: '', qty: 1, unit: 'Sqft', rate: 0, gstPct: 18 });
@@ -17390,6 +17442,8 @@ ${email} has been completely removed from the system.`);
         window.applyProjectCollapsibles = applyProjectCollapsibles;
         window.setSpurchItemMode = setSpurchItemMode;
         window.runSpurchOcr = runSpurchOcr;
+        window.setFQItemMode = setFQItemMode;
+        window.runFQOcr = runFQOcr;
         window.deleteProjectQuote = deleteProjectQuote;
         window.showProjectQuoteModal = showProjectQuoteModal;
         window.renderTasksTab = renderTasksTab;
