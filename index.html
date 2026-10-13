@@ -102,7 +102,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: minmax(0,1fr) minmax(0,2fr);
             gap: 1.5rem;
         }
 
@@ -382,7 +382,7 @@
 
         @media (max-width: 1024px) {
             .grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0,1fr);
             }
         }
 
@@ -722,7 +722,7 @@
         }
         .reimb-stat-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
             gap: 0;
             border-bottom: 1px solid #e5e7eb;
         }
@@ -1155,6 +1155,40 @@
             margin-top: 0.5rem;
         }
 
+
+        /* ---- Edge-case layout hygiene (display only) ---- */
+        .lead-pipeline {
+            scroll-snap-type: x proximity;
+            scroll-padding: 1rem;
+            padding-bottom: 1.25rem;
+            scrollbar-width: auto;
+            scrollbar-color: #9ca3af #f3f4f6;
+        }
+        .lead-pipeline::-webkit-scrollbar { height: 12px; }
+        .lead-pipeline::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 6px; }
+        .lead-pipeline::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 6px; }
+        /* Columns share the width when it fits, otherwise keep a readable minimum and scroll */
+        .lead-column { flex: 1 0 172px; max-width: 300px; min-width: 0; scroll-snap-align: start; }
+        .lead-column-header { white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }
+        .lead-card, .lead-card-title, .lead-card-company, .lead-card-value, .lead-card-date {
+            min-width: 0; overflow-wrap: anywhere; word-break: break-word;
+        }
+        .lead-card-title, .lead-card-company {
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+        }
+        /* Long names / notes never push a row or card past its container */
+        .list-item .item-info, .item-info, .customer-name, .item-title, .item-detail, .item-date,
+        .user-card-email, .customer-contact { min-width: 0; overflow-wrap: anywhere; }
+        .list-item { min-width: 0; }
+        .modal-content { max-width: 100%; }
+        .modal-content input, .modal-content select, .modal-content textarea { min-width: 0; max-width: 100%; }
+        .lead-list-table td, .lead-list-table th { overflow-wrap: anywhere; }
+        .lead-list-table { table-layout: auto; }
+        .lead-stage-pill { white-space: nowrap; }
+        .status-badge { white-space: nowrap; }
+        /* Buttons placed directly in a column flex container keep their natural width */
+        [style*="flex-direction: column"] > .btn, [style*="flex-direction:column"] > .btn { align-self: flex-start; }
+
         .stage-contacted { background: #3b82f6; }
         .stage-proposal_shared { background: #8b5cf6; }
         .stage-negotiation { background: #f59e0b; }
@@ -1195,13 +1229,13 @@
 
         /* ── Lead multi-contact rows ── */
         .lead-contacts-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f9fafb; margin-bottom: 4px; }
-        .lead-contact-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
+        .lead-contact-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
         .lead-contact-row:last-child { margin-bottom: 0; }
         .lead-contact-row .contact-idx { font-size: 0.7rem; font-weight: 700; color: #2563eb; padding-top: 10px; text-align: center; }
         .lead-contact-remove { background: none; border: none; color: #dc2626; cursor: pointer; font-size: 1rem; padding: 6px 0; line-height: 1; }
         .lead-contact-remove:hover { color: #991b1b; }
         @media (max-width: 640px) {
-            .lead-contact-row { grid-template-columns: 1fr 1fr; }
+            .lead-contact-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
             .lead-contact-row .contact-full { grid-column: 1 / -1; }
         }
 
@@ -1367,10 +1401,10 @@
             .tab { padding: 0.6rem 0.9rem; font-size: 0.8rem; white-space: nowrap; }
 
             /* Grid: always single column */
-            .grid { grid-template-columns: 1fr !important; }
+            .grid { grid-template-columns: minmax(0,1fr) !important; }
 
             /* Stats: 2-column grid */
-            .stats { grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1rem; }
+            .stats { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.65rem; margin-bottom: 1rem; }
             .stat-value { font-size: 1.2rem; }
 
             /* Customer list: limit height so detail is reachable */
@@ -1428,7 +1462,7 @@
             .modal-footer button { flex: 1; min-width: 100px; }
 
             /* Form grids: single column */
-            .form-grid { grid-template-columns: 1fr !important; }
+            .form-grid { grid-template-columns: minmax(0,1fr) !important; }
 
             /* Inputs: comfortable tap targets */
             .input, select.input, textarea.input {
@@ -1453,7 +1487,7 @@
             .jobs-detail-panel { width: 100%; }
 
             /* Lead pipeline: narrower cards */
-            .lead-column { flex: 0 0 230px; }
+            .lead-column { flex: 0 0 230px; max-width: none; }
 
             /* Lead toolbar: stack search/filters vertically */
             .lead-search-toolbar {
@@ -1499,7 +1533,7 @@
             .tab { padding: 0.55rem 0.65rem; font-size: 0.73rem; }
 
             /* Stats: single column */
-            .stats { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: minmax(0,1fr); }
 
             /* Reimb left panel: shorter */
             .reimb-left { max-height: 190px; }
@@ -1530,7 +1564,7 @@
             .project-header { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
 
             /* Lead contact row: 2 columns */
-            .lead-contact-row { grid-template-columns: 1fr 1fr; }
+            .lead-contact-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
             .lead-contact-row .contact-full { grid-column: 1 / -1; }
 
             /* Mat table: reduce font */
@@ -1743,7 +1777,7 @@
       /* Single column: stack every field grid inside a form body */
       .modal .modal-body .form-grid,
       .modal .modal-body [style*="grid-template-columns"] {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0,1fr) !important;
       }
       #createUserError {
         background: #fef2f2;
@@ -2488,7 +2522,7 @@
                                         <span style="font-size:0.88rem; font-weight:700; color:#065f46;">💰 Advance Wallet</span>
                                         <button id="reimbAddAdvanceBtn" class="btn btn-primary" onclick="showAddAdvanceModal()" style="padding:0.2rem 0.6rem; font-size:0.75rem; background:#059669; border-color:#059669; display:none;">+ Add Advance</button>
                                     </div>
-                                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;">
+                                    <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:0.5rem;">
                                         <div style="text-align:center; background:white; border-radius:0.45rem; padding:0.5rem 0.25rem;">
                                             <div style="font-size:1rem; font-weight:700;" id="reimbWalletBalanceAmt">₹0</div>
                                             <div style="font-size:0.67rem; color:#6b7280; margin-top:0.1rem;">Wallet Balance</div>
@@ -2822,7 +2856,7 @@
                     <label class="label">Description</label>
                     <input type="text" id="expEditDesc" class="input" placeholder="e.g. Toll at NICE Road, M4 screws…">
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group">
                         <label class="label">Amount (₹)</label>
                         <input type="number" id="expEditAmount" class="input" min="0" step="0.01" placeholder="0.00" oninput="updateExpEditTotal()">
@@ -2876,7 +2910,7 @@
                     <span style="font-size:0.8rem;color:#6b7280;">Paying for:</span>
                     <div id="expPaySummary" style="font-size:0.95rem;font-weight:600;color:#111827;margin-top:0.2rem;"></div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group">
                         <label class="label">Payment Mode <span style="color:red">*</span></label>
                         <select id="expPayMode" class="input" onchange="onExpPayModeChange()">
@@ -2928,7 +2962,7 @@
                     <div id="advTechName" style="font-weight:600;color:#111827;font-size:0.95rem;margin-top:0.15rem;"></div>
                     <div style="font-size:0.78rem;color:#6b7280;margin-top:0.4rem;">Current Wallet Balance: <strong id="advCurrentBal" style="color:#059669;">₹0</strong></div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group">
                         <label class="label">Advance Amount (₹) <span style="color:red">*</span></label>
                         <input type="number" id="advAmount" class="input" min="1" step="1" placeholder="Enter amount…">
@@ -3292,7 +3326,7 @@
             </div>
             <div class="modal-body">
                 <!-- Invoice Details -->
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                     <div class="form-group">
                         <label>Invoice Number*</label>
                         <input type="text" class="input" id="invoiceNumber" placeholder="INV-001">
@@ -3306,7 +3340,7 @@
                 <!-- Company GST Details -->
                 <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.75rem;">🏢 Company GST Details</div>
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Company Name*</label>
                             <input type="text" class="input" id="companyName" placeholder="Your Company Pvt Ltd">
@@ -3333,7 +3367,7 @@
                 <!-- Customer GST Details -->
                 <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.75rem;">👤 Customer GST Details</div>
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Customer Name*</label>
                             <input type="text" class="input" id="customerName" placeholder="Customer Name">
@@ -3380,7 +3414,7 @@
                 <!-- Invoice Summary -->
                 <div style="background: #e0f2fe; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.5rem;">Invoice Summary</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                    <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.5rem; font-size: 0.875rem;">
                         <div>Subtotal:</div><div style="text-align: right;" id="invoiceSubtotal">₹0.00</div>
                         <div>Discount:</div><div style="text-align: right;" id="invoiceDiscountDisplay">₹0.00</div>
                         <div>CGST:</div><div style="text-align: right;" id="invoiceCGST">₹0.00</div>
@@ -3407,7 +3441,7 @@
             </div>
             <div class="modal-body">
                 <!-- Credit Note Details -->
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                     <div class="form-group">
                         <label>Credit Note Number*</label>
                         <input type="text" class="input" id="creditNoteNumber" placeholder="CN-0001">
@@ -3429,7 +3463,7 @@
                 <!-- Company GST Details -->
                 <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.75rem;">🏢 Company GST Details</div>
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Company Name*</label>
                             <input type="text" class="input" id="cnCompanyName" placeholder="Your Company Pvt Ltd">
@@ -3456,7 +3490,7 @@
                 <!-- Customer GST Details -->
                 <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.75rem;">👤 Customer GST Details</div>
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Customer Name*</label>
                             <input type="text" class="input" id="cnCustomerName" placeholder="Customer Name">
@@ -3500,7 +3534,7 @@
                 <!-- Credit Note Summary -->
                 <div style="background: #fef3c7; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
                     <div style="font-weight: 600; margin-bottom: 0.5rem;">Credit Note Summary</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                    <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.5rem; font-size: 0.875rem;">
                         <div>Subtotal:</div><div style="text-align: right;" id="cnSubtotal">₹0.00</div>
                         <div>Discount:</div><div style="text-align: right;" id="cnDiscountDisplay">₹0.00</div>
                         <div>CGST:</div><div style="text-align: right;" id="cnCGST">₹0.00</div>
@@ -3528,7 +3562,7 @@
             <div class="modal-body">
 
                 <!-- Quote Header -->
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);">
                     <div class="form-group">
                         <label>Quote Number*</label>
                         <input type="text" class="input" id="fqQuoteNo" placeholder="QT-001">
@@ -3546,7 +3580,7 @@
                 <!-- Client Details -->
                 <div style="background:#f0f9ff;padding:1rem;border-radius:0.5rem;margin-bottom:1rem;border-left:3px solid #0284c7;">
                     <div style="font-weight:700;margin-bottom:0.75rem;color:#0369a1;">👤 Client Details</div>
-                    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Client Name*</label>
                             <input type="text" class="input" id="fqClientName" placeholder="Client Name">
@@ -3573,7 +3607,7 @@
                 <!-- Project Details -->
                 <div style="background:#f9fafb;padding:1rem;border-radius:0.5rem;margin-bottom:1rem;border-left:3px solid #6b7280;">
                     <div style="font-weight:700;margin-bottom:0.75rem;color:#374151;">🏗️ Project Details</div>
-                    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="form-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);">
                         <div class="form-group">
                             <label>Project Type</label>
                             <input type="text" class="input" id="fqProjectType" placeholder="e.g. Full Interior, Modular Kitchen">
@@ -3610,14 +3644,14 @@
                         <div id="fqOcrStatus" style="margin-top:0.5rem;font-size:0.8rem;color:#6b7280;"></div>
                     </div>
                     <!-- Header Row -->
-                    <div style="display:grid;grid-template-columns:24px 2fr 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;padding:0.3rem 0;font-size:0.72rem;font-weight:600;color:#6b7280;border-bottom:2px solid #e5e7eb;margin-bottom:0.25rem;">
+                    <div style="display:grid;grid-template-columns:24px minmax(0,2fr) 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;padding:0.3rem 0;font-size:0.72rem;font-weight:600;color:#6b7280;border-bottom:2px solid #e5e7eb;margin-bottom:0.25rem;">
                         <span></span><span>Description</span><span>Qty</span><span>Unit</span><span>Rate (₹)</span><span>GST%</span><span>GST Amt</span><span>Total</span><span></span>
                     </div>
                     <div id="fqItemsContainer"></div>
                 </div>
 
                 <!-- Pricing Summary — discount only at order level -->
-                <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;">
                     <div>
                         <div class="form-group">
                             <label>Overall Discount (₹)</label>
@@ -3626,7 +3660,7 @@
                     </div>
                     <div style="background:#e0f2fe;border-radius:0.5rem;padding:1rem;font-size:0.875rem;">
                         <div style="font-weight:700;margin-bottom:0.6rem;color:#0369a1;">Quote Summary</div>
-                        <div style="display:grid;grid-template-columns:1fr auto;gap:0.35rem;">
+                        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0.35rem;">
                             <span>Subtotal (before GST):</span><span id="fqSubtotal" style="text-align:right;font-weight:600;">₹0.00</span>
                             <span>Total GST:</span><span id="fqGSTDisplay" style="text-align:right;">₹0.00</span>
                             <span>Discount:</span><span id="fqDiscountDisplay" style="text-align:right;color:#dc2626;">₹0.00</span>
@@ -3703,7 +3737,7 @@
                         <button type="button" class="btn btn-secondary" style="font-size:0.78rem;padding:4px 10px;" onclick="addLeadContact()">+ Add Contact</button>
                     </div>
                     <div class="lead-contacts-section">
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 32px;gap:8px;margin-bottom:4px;padding:0 0 4px;border-bottom:1px solid #e5e7eb;">
+                        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 32px;gap:8px;margin-bottom:4px;padding:0 0 4px;border-bottom:1px solid #e5e7eb;">
                             <span style="font-size:0.72rem;font-weight:600;color:#374151;">Name*</span>
                             <span style="font-size:0.72rem;font-weight:600;color:#374151;">Designation</span>
                             <span style="font-size:0.72rem;font-weight:600;color:#374151;">Phone</span>
@@ -5593,7 +5627,7 @@ ${email} has been completely removed from the system.`);
                         <div>${projectsHtml}</div>
                     </div>
 
-                    ${isAdmin() ? `<button class="btn btn-danger" onclick="deleteCustomer()">Delete Customer</button>` : ''}
+                    ${isAdmin() ? `<button class="btn btn-danger" onclick="deleteCustomer()" style="align-self: flex-start;">Delete Customer</button>` : ''}
                 </div>
             `;
             applyProjectCollapsibles('detailsPanel');
@@ -8948,7 +8982,7 @@ ${email} has been completely removed from the system.`);
                 <div style="border:1px solid #e5e7eb;border-radius:0.6rem;margin-bottom:0.4rem;background:#fff;overflow:hidden;">
                     <!-- Compact header row (always visible) -->
                     <div onclick="toggleSpurchExpanded('${p.id}')"
-                         style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:0.5rem;align-items:center;padding:0.55rem 0.75rem;cursor:pointer;user-select:none;${isExpanded?'background:#f8faff;border-bottom:1px solid #e5e7eb;':''}">
+                         style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:0.5rem;align-items:center;padding:0.55rem 0.75rem;cursor:pointer;user-select:none;${isExpanded?'background:#f8faff;border-bottom:1px solid #e5e7eb;':''}">
                         <span style="background:${tc.bg};color:${tc.tc};padding:0.1rem 0.45rem;border-radius:0.35rem;font-size:0.7rem;font-weight:700;white-space:nowrap;">${tc.label}</span>
                         <div style="min-width:0;">
                             ${p.refNumber ? `<span style="font-size:0.8rem;font-weight:600;color:#374151;">#${esc(p.refNumber)}</span> ` : ''}
@@ -9599,7 +9633,7 @@ ${email} has been completely removed from the system.`);
                 const gstA = cost * (parseFloat(it.gstPercent)||0) / 100;
                 const tot  = cost + gstA;
                 return `
-                <div style="display:grid;grid-template-columns:2fr 60px 70px 80px 55px 90px 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;" data-iid="${it._id}">
+                <div style="display:grid;grid-template-columns:minmax(0,2fr) 60px 70px 80px 55px 90px 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;" data-iid="${it._id}">
                     <input class="input" style="font-size:0.78rem;padding:0.3rem 0.5rem;" placeholder="Item name" value="${esc(it.name)}"
                            oninput="spurchTempItems[${idx}].name=this.value">
                     <input class="input" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Unit" value="${esc(it.unit||'Nos')}"
@@ -9639,7 +9673,7 @@ ${email} has been completely removed from the system.`);
             if (!con) return;
             if (!spurchTempPayments.length) { con.innerHTML = `<p style="color:#9ca3af;font-size:0.8rem;text-align:center;">No payments recorded yet</p>`; totEl.style.display='none'; return; }
             con.innerHTML = spurchTempPayments.map((pay, idx) => `
-                <div style="display:grid;grid-template-columns:110px 100px 110px 1fr 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;">
+                <div style="display:grid;grid-template-columns:110px 100px 110px minmax(0,1fr) 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;">
                     <input class="input" type="date" style="font-size:0.78rem;padding:0.3rem 0.4rem;" value="${pay.date||''}"
                            oninput="spurchTempPayments[${idx}].date=this.value">
                     <input class="input" type="number" min="0.01" step="0.01" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Amount ₹" value="${pay.amount||''}"
@@ -10286,7 +10320,7 @@ ${email} has been completely removed from the system.`);
                             ${m.items && m.items.length > 0 ? `
                                 <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
                                     <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">📦 Items (${m.items.length}):</div>
-                                    <div style="display: grid; grid-template-columns: 2fr 60px 70px 80px 70px 80px 90px; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-bottom: 0.25rem;">
+                                    <div style="display: grid; grid-template-columns: minmax(0,2fr) 60px 70px 80px 70px 80px 90px; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; margin-bottom: 0.25rem;">
                                         <span>Item</span><span>Unit</span><span>Qty</span><span>Rate</span><span>GST%</span><span>GST Amt</span><span>Total</span>
                                     </div>
                                     ${m.items.map(item => {
@@ -10296,7 +10330,7 @@ ${email} has been completely removed from the system.`);
                                         const gstAmt = parseFloat(item.gstAmount) || (cost * (parseFloat(item.gstPercent) || 0) / 100);
                                         const total = cost + gstAmt;
                                         return `
-                                        <div style="display: grid; grid-template-columns: 2fr 60px 70px 80px 70px 80px 90px; gap: 0.25rem; padding: 0.25rem 0; font-size: 0.875rem; border-bottom: 1px solid #e5e7eb;">
+                                        <div style="display: grid; grid-template-columns: minmax(0,2fr) 60px 70px 80px 70px 80px 90px; gap: 0.25rem; padding: 0.25rem 0; font-size: 0.875rem; border-bottom: 1px solid #e5e7eb;">
                                             <span>${esc(item.name)}</span>
                                             <span>${item.unit || 'Nos'}</span>
                                             <span>${qty}</span>
@@ -10306,7 +10340,7 @@ ${email} has been completely removed from the system.`);
                                             <span style="font-weight: 600;">${formatCurrency(total)}</span>
                                         </div>`;
                                     }).join('')}
-                                    <div style="display: grid; grid-template-columns: 2fr 60px 70px 80px 70px 80px 90px; gap: 0.25rem; padding: 0.5rem 0 0; font-size: 0.875rem; font-weight: 700; border-top: 2px solid #e5e7eb; margin-top: 0.25rem;">
+                                    <div style="display: grid; grid-template-columns: minmax(0,2fr) 60px 70px 80px 70px 80px 90px; gap: 0.25rem; padding: 0.5rem 0 0; font-size: 0.875rem; font-weight: 700; border-top: 2px solid #e5e7eb; margin-top: 0.25rem;">
                                         <span>Totals</span><span></span><span></span><span></span><span></span>
                                         <span style="color: #0284c7;">${formatCurrency(m.totalGST || 0)}</span>
                                         <span style="color: #059669;">${formatCurrency(m.grandTotal || (m.totalCost || 0) + (m.totalGST || 0))}</span>
@@ -10669,14 +10703,14 @@ ${email} has been completely removed from the system.`);
                         </div>
                         ${(q.items||[]).length > 0 ? `
                         <div style="background:#f9fafb;border-radius:0.375rem;overflow:hidden;border:1px solid #e5e7eb;">
-                            <div style="display:grid;grid-template-columns:2fr 60px 90px 90px 70px 90px 100px;gap:0;font-size:0.72rem;font-weight:600;color:#6b7280;background:#f3f4f6;padding:0.3rem 0.6rem;border-bottom:1px solid #e5e7eb;">
+                            <div style="display:grid;grid-template-columns:minmax(0,2fr) 60px 90px 90px 70px 90px 100px;gap:0;font-size:0.72rem;font-weight:600;color:#6b7280;background:#f3f4f6;padding:0.3rem 0.6rem;border-bottom:1px solid #e5e7eb;">
                                 <span>Description</span><span>Qty</span><span>Unit</span><span>Rate</span><span>GST%</span><span>GST Amt</span><span>Total</span>
                             </div>
                             ${(q.items||[]).map(item => {
                                 const base = (item.qty||0)*(item.rate||0);
                                 const gst = base * (item.gstPct||0)/100;
                                 const tot = base + gst;
-                                return `<div style="display:grid;grid-template-columns:2fr 60px 90px 90px 70px 90px 100px;gap:0;font-size:0.78rem;padding:0.3rem 0.6rem;border-bottom:1px solid #f0f0f0;">
+                                return `<div style="display:grid;grid-template-columns:minmax(0,2fr) 60px 90px 90px 70px 90px 100px;gap:0;font-size:0.78rem;padding:0.3rem 0.6rem;border-bottom:1px solid #f0f0f0;">
                                     <span>${item.description||'-'}</span>
                                     <span>${item.qty||0}</span>
                                     <span>${item.unit||''}</span>
@@ -10745,7 +10779,7 @@ ${email} has been completely removed from the system.`);
 
                                 ${isAdmin() ? `
                                     <div style="display: flex; gap: 0.75rem;">
-                                        <button class="btn btn-primary" onclick="showEditProjectModal(selectedProject)" style="flex: 1">✏️ Edit Project</button>
+                                        <button class="btn btn-primary" onclick="showEditProjectModal(selectedProject)">✏️ Edit Project</button>
                                         <button class="btn btn-danger" onclick="deleteProject('${selectedProject.id}')">🗑️ Delete</button>
                                     </div>
                                 ` : ''}
@@ -10813,7 +10847,7 @@ ${email} has been completely removed from the system.`);
                             <details class="proj-sub" id="addMaterialDetails" style="margin: 0.5rem 1rem;"><summary>➕ Add Material Procurement</summary>
                             <div class="card-body">
                                 <!-- Supplier and Payment Info -->
-                                <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="form-grid" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem; margin-bottom: 1rem;">
                                     <div>
                                         <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; display: block;">Supplier Name*</label>
                                         <div style="position:relative;">
@@ -10873,7 +10907,7 @@ ${email} has been completely removed from the system.`);
                                 <div class="selected-files" id="projectSelectedFiles"></div>
 
                                 <!-- Save Button -->
-                                <button class="btn btn-primary" onclick="saveProjectMaterials()" style="width: 100%; margin-top: 1rem;">💾 Save Materials Procurement</button>
+                                <button class="btn btn-primary" onclick="saveProjectMaterials()" style="margin-top: 1rem;">💾 Save Materials Procurement</button>
                             </div>
                             </details>
                         ` : ''}
@@ -11370,7 +11404,7 @@ ${email} has been completely removed from the system.`);
             }
 
             container.innerHTML = `
-                <div style="display: grid; grid-template-columns: 2fr 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem; margin-bottom: 0.25rem; align-items: center;">
+                <div style="display: grid; grid-template-columns: minmax(0,2fr) 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem; margin-bottom: 0.25rem; align-items: center;">
                     <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Item Name*</div>
                     <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Unit</div>
                     <div style="font-size: 0.75rem; font-weight: 600; color: #374151;">Qty*</div>
@@ -11387,7 +11421,7 @@ ${email} has been completely removed from the system.`);
                     const gstAmt = (cost * (parseFloat(item.gstPercent) || 0) / 100);
                     const total = cost + gstAmt;
                     return `
-                    <div style="display: grid; grid-template-columns: 2fr 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
+                    <div style="display: grid; grid-template-columns: minmax(0,2fr) 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
                         <input type="text" class="input" placeholder="Material name*" value="${esc(item.name)}" 
                                onchange="updateMaterialItem('${item.id}', 'name', this.value)" style="margin: 0;">
                         <select class="input" onchange="updateMaterialItem('${item.id}', 'unit', this.value)" style="margin: 0; padding: 0.4rem;">
@@ -11418,7 +11452,7 @@ ${email} has been completely removed from the system.`);
                         <button class="btn btn-danger" onclick="removeMaterialItem('${item.id}')" style="padding: 0.5rem; margin: 0;">×</button>
                     </div>`;
                 }).join('')}
-                <div style="text-align: right; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 2px solid #e5e7eb; display: grid; grid-template-columns: 2fr 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem;">
+                <div style="text-align: right; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 2px solid #e5e7eb; display: grid; grid-template-columns: minmax(0,2fr) 80px 80px 100px 70px 90px 100px auto; gap: 0.4rem;">
                     <span></span><span></span><span></span>
                     <span style="color: #6b7280;">Totals:</span>
                     <span></span>
@@ -11482,14 +11516,14 @@ ${email} has been completely removed from the system.`);
             }
 
             container.innerHTML = `
-                <div style="display: grid; grid-template-columns: 120px 2fr 120px auto; gap: 0.4rem; margin-bottom: 0.25rem; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px minmax(0,2fr) 120px auto; gap: 0.4rem; margin-bottom: 0.25rem; align-items: center;">
                     <div style="font-size: 0.75rem; font-weight: 600; color: #166534;">Date</div>
                     <div style="font-size: 0.75rem; font-weight: 600; color: #166534;">Note</div>
                     <div style="font-size: 0.75rem; font-weight: 600; color: #166534;">Amount (₹)*</div>
                     <div></div>
                 </div>
                 ${tempSupplierPayments.map(payment => `
-                    <div style="display: grid; grid-template-columns: 120px 2fr 120px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
+                    <div style="display: grid; grid-template-columns: 120px minmax(0,2fr) 120px auto; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center;">
                         <input type="date" class="input" value="${payment.date}" 
                                onchange="updateSupplierPayment('${payment.id}', 'date', this.value)" style="margin: 0;">
                         <input type="text" class="input" placeholder="Payment note (optional)" value="${esc(payment.note)}" 
@@ -16439,7 +16473,7 @@ ${email} has been completely removed from the system.`);
                     <span style="font-size:1.1rem;font-weight:700;color:#111827;">${task.actionType || 'Task'}</span>
                     ${statusBadge}
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1.5rem;font-size:0.875rem;margin-bottom:1rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.75rem 1.5rem;font-size:0.875rem;margin-bottom:1rem;">
                     <div><span style="color:#6b7280;font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.15rem;">LEAD</span>
                         <span style="font-weight:600;">${task.leadName || '—'}</span>${task.leadCompany ? `<span style="color:#6b7280;"> · ${task.leadCompany}</span>` : ''}</div>
                     <div><span style="color:#6b7280;font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.15rem;">STAGE</span>
@@ -16763,7 +16797,7 @@ ${email} has been completely removed from the system.`);
                     ondragstart="itemDragStart(event, this)" ondragend="itemDragEnd(event, this)"
                     ondragover="itemDragOver(event, this)" ondragleave="itemDragLeave(event, this)"
                     ondrop="itemDrop(event, this, 'fq')"
-                    style="display:grid;grid-template-columns:24px 2fr 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;align-items:center;padding:0.45rem 0;border-bottom:1px solid #f0f0f0;">
+                    style="display:grid;grid-template-columns:24px minmax(0,2fr) 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;align-items:center;padding:0.45rem 0;border-bottom:1px solid #f0f0f0;">
                     <span class="drag-handle" title="Drag to reorder" style="min-width:0;"
                         onmousedown="document.getElementById('fqRow_${idx}').draggable=true">≡</span>
                     <input class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Description / Work Item" value="${item.description.replace(/"/g,'&quot;')}"
@@ -18421,7 +18455,7 @@ ${email} has been completely removed from the system.`);
             const matTotal = (j.materials||[]).length;
             const totalMin = (j.timeLogs||[]).reduce((s,l)=>s+(l.durationMin||0),0);
             c.innerHTML = `
-            <div style="padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+            <div style="padding:1.25rem;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;">
                 <div>
                     <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:0.75rem;letter-spacing:0.05em;">Job Info</div>
                     ${infoRow('Type', jobTypeIcon(j.jobType)+' '+(j.jobType||'General').charAt(0).toUpperCase()+(j.jobType||'general').slice(1))}
@@ -18804,7 +18838,7 @@ ${email} has been completely removed from the system.`);
                     <div style="font-weight:700;font-size:1.1rem;color:#065f46;">Handover Completed!</div>
                     <div style="font-size:0.875rem;color:#047857;margin-top:0.3rem;">${fmtDate(h.completedAt)}</div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-bottom:1.25rem;">
                     ${infoRow('Customer', h.customerName||'—')}
                     ${infoRow('OTP Verified', '✅ Yes')}
                     ${infoRow('Handover Date', fmtDate(h.completedAt))}
@@ -18821,11 +18855,11 @@ ${email} has been completely removed from the system.`);
                     </div>
                     <p style="font-size:0.875rem;color:#6b7280;">Complete all work, get customer confirmation with OTP, and capture their signature to finish handover.</p>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-bottom:1.5rem;">
                     ${progressRow('Checklist', (selectedJob.checklist||[]).filter(x=>x.completed).length, (selectedJob.checklist||[]).length, '#2563eb')}
                     ${progressRow('Materials Installed', (selectedJob.materials||[]).filter(m=>m.status==='installed').length, (selectedJob.materials||[]).length, '#16a34a')}
                 </div>
-                ${canManageData() ? `<button class="btn btn-success" onclick="openHandoverModal()" style="width:100%;padding:0.75rem;font-size:0.95rem;">🤝 Start Handover Process</button>` : '<p style="color:#9ca3af;text-align:center;">Only admins can initiate handover.</p>'}
+                ${canManageData() ? `<button class="btn btn-success" onclick="openHandoverModal()" style="padding:0.6rem 1.25rem;font-size:0.95rem;">🤝 Start Handover Process</button>` : '<p style="color:#9ca3af;text-align:center;">Only admins can initiate handover.</p>'}
                 `}
             </div>`;
         }
@@ -19052,7 +19086,7 @@ ${email} has been completely removed from the system.`);
                 <button class="close-btn" onclick="closeModal('jobModal')">×</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem;">
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Job Title <span style="color:red">*</span></label>
                         <input type="text" class="input" id="jobTitle" placeholder="e.g. CCTV Installation – Floor 3" style="width:100%;">
@@ -19166,7 +19200,7 @@ ${email} has been completely removed from the system.`);
                 <button class="close-btn" onclick="closeModal('jobMaterialModal')">×</button>
             </div>
             <div class="modal-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem;">
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Material Name <span style="color:red">*</span></label>
                         <input type="text" class="input" id="matName" placeholder="e.g. IP Camera 4MP" style="width:100%;">
@@ -19225,7 +19259,7 @@ ${email} has been completely removed from the system.`);
                 <button class="close-btn" onclick="closeModal('jobTimeLogModal')">×</button>
             </div>
             <div class="modal-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem;">
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Technician</label>
                         <select class="input" id="timeLogTech" style="width:100%;"></select>
@@ -19444,7 +19478,7 @@ ${email} has been completely removed from the system.`);
                 <button class="close-btn" onclick="closeModal('credentialModal')">×</button>
             </div>
             <div class="modal-body">
-                <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="form-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);">
                     <div class="form-group">
                         <label>Device Type <span style="color:red;">*</span></label>
                         <select class="input" id="credDeviceType" style="width:100%;">
@@ -19547,7 +19581,7 @@ ${email} has been completely removed from the system.`);
             </div>
             <div class="modal-body" style="display:flex;flex-direction:column;gap:0.875rem;">
                 <input type="hidden" id="suppFormId">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group" style="grid-column:1/-1;">
                         <label class="label">Supplier / Company Name *</label>
                         <input type="text" id="suppFormName" class="input" placeholder="e.g. Ramesh Electricals Pvt Ltd">
@@ -19864,7 +19898,7 @@ ${email} has been completely removed from the system.`);
             </div>
             <div class="modal-body" style="display:flex;flex-direction:column;gap:0.875rem;">
                 <input type="hidden" id="spurchEditId">
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group">
                         <label class="label">Type *</label>
                         <select id="spurchType" class="input" onchange="updateSpurchTypeLabel()">
@@ -19962,7 +19996,7 @@ ${email} has been completely removed from the system.`);
             </div>
             <div class="modal-body" style="display:flex;flex-direction:column;gap:0.875rem;">
                 <input type="hidden" id="sapPurchaseId">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.75rem;">
                     <div class="form-group">
                         <label class="label">Amount (₹) *</label>
                         <input type="number" id="sapAmount" class="input" min="0.01" step="0.01" placeholder="0.00">
