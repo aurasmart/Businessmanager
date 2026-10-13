@@ -1988,6 +1988,277 @@
       }
     }
     </style>
+
+    <!-- PREMIUM POLISH: purely visual refinements (colours, radii, shadows, spacing, mobile touch).
+         Self-contained: delete this one <style> block to return to the previous look. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style id="premium-polish">
+      :root {
+        --pp-ink: #0f172a;
+        --pp-line: #e6e9ef;
+        --pp-soft: 0 1px 2px rgba(15,23,42,.04), 0 2px 8px -2px rgba(15,23,42,.06);
+        --pp-lift: 0 6px 18px -6px rgba(15,23,42,.16), 0 2px 6px -2px rgba(15,23,42,.08);
+        --pp-ring: 0 0 0 3px rgba(37,99,235,.16);
+      }
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Noto Sans', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        background: #f6f7fa; color: var(--pp-ink);
+        text-rendering: optimizeLegibility;
+      }
+      h1, h2, h3 { letter-spacing: -0.01em; }
+
+      /* Header */
+      .header {
+        background: rgba(255,255,255,.86);
+        -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
+        border-bottom: 1px solid var(--pp-line);
+        box-shadow: 0 1px 0 rgba(15,23,42,.02), 0 6px 16px -12px rgba(15,23,42,.18);
+      }
+
+      /* Cards */
+      .card { border-radius: 0.8rem; border-color: var(--pp-line); box-shadow: var(--pp-soft); }
+      .card-header { background: linear-gradient(#fff, #fbfcfd); border-bottom-color: var(--pp-line); }
+      .stat-card { border-radius: 0.8rem; box-shadow: var(--pp-soft); }
+      .list-item { transition: background .15s ease; }
+      .list-item:hover { background: #f8fafc; }
+      .empty-state { color: #94a3b8; }
+
+      /* Buttons */
+      .btn { border-radius: 0.6rem; font-weight: 600; letter-spacing: .005em;
+             box-shadow: 0 1px 2px rgba(15,23,42,.08); transition: transform .12s ease, box-shadow .15s ease, filter .15s ease, background .15s ease; }
+      .btn:hover { box-shadow: var(--pp-lift); filter: brightness(1.04); transform: translateY(-1px); }
+      .btn:active { transform: translateY(0) scale(.985); box-shadow: 0 1px 2px rgba(15,23,42,.1); }
+      .btn:focus-visible, .tab:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--pp-ring); }
+      .btn-primary { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+      .btn-success { background: linear-gradient(180deg, #22c55e, #16a34a); }
+      .btn-danger  { background: linear-gradient(180deg, #ef4444, #dc2626); }
+      .btn-secondary { background: #fff; color: #334155; border: 1px solid #d9dee7; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+      .btn-secondary:hover { background: #f8fafc; }
+
+      /* Inputs */
+      .input, .search-box, input[type="text"], input[type="number"], input[type="date"], input[type="email"],
+      input[type="password"], input[type="tel"], select, textarea {
+        border-radius: 0.6rem; transition: border-color .15s ease, box-shadow .15s ease;
+      }
+      .input:focus, .search-box:focus, input:focus, select:focus, textarea:focus {
+        outline: none; border-color: #3b82f6; box-shadow: var(--pp-ring);
+      }
+
+      /* Tabs */
+      .tabs { border-bottom-color: var(--pp-line); }
+      .tab { font-weight: 600; border-radius: 0.5rem 0.5rem 0 0; transition: color .15s ease, background .15s ease; }
+      .tab:hover { background: rgba(37,99,235,.05); }
+      .tab.active { border-bottom-width: 3px; }
+
+      /* Badges */
+      .status-badge, .lead-stage-pill { letter-spacing: .01em; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04); }
+
+      /* Lead board */
+
+      /* Detail dropdowns */
+      details.proj-sub { background: #fff; border: 1px solid var(--pp-line); border-radius: 0.7rem; padding: 0 0.75rem; box-shadow: var(--pp-soft); }
+      details.proj-sub[open] { padding-bottom: 0.6rem; }
+      details.proj-sub > summary { padding: 0.65rem 0.25rem; border-radius: 0.5rem; }
+      .sec-chevron { color: #94a3b8; }
+
+      /* Modals (desktop; mobile is handled by the full-screen layer above) */
+      .modal { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+      .modal-content { border-radius: 1rem; box-shadow: 0 24px 60px -18px rgba(15,23,42,.45); }
+
+      /* Thin, quiet scrollbars */
+      * { scrollbar-width: thin; scrollbar-color: #c3cad6 transparent; }
+
+      /* ---------- Data comfort: hierarchy, numerals, rhythm ---------- */
+      ::selection { background: rgba(37,99,235,.18); }
+      body { font-variant-numeric: tabular-nums; line-height: 1.5; }
+      a { text-underline-offset: 2px; }
+      .grid { gap: 1.25rem; }
+      .container { padding-top: 1.25rem; }
+
+      /* Page / section titles */
+      .card-header { font-size: 0.95rem; font-weight: 650; color: #0f172a; letter-spacing: -0.005em; }
+      .card-header h3 { font-size: 1rem; font-weight: 650; }
+      .card-body { padding: 1.1rem; }
+
+      /* Summary tiles: quiet label, strong number, colour accent on the left */
+      .stats { gap: 0.9rem; }
+      .stat-card { border-width: 1px 1px 1px 4px; padding: 0.95rem 1.05rem; }
+      .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 0.35rem; }
+      .stat-value { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+
+      /* Lists: calm separators, clear selected row, readable text tiers */
+      .customer-item, .job-list-item, .list-item { border-bottom-color: #eef1f5; }
+      .customer-item { padding: 0.9rem 1rem; transition: background .15s ease, box-shadow .15s ease; }
+      .customer-item:hover { background: #f8fafc; }
+      .customer-item.active { background: linear-gradient(90deg, #eaf2ff, #f6f9ff); border-left: 4px solid #2563eb; box-shadow: inset 0 0 0 1px rgba(37,99,235,.08); }
+      .customer-name, .item-title { color: #0f172a; font-weight: 600; letter-spacing: -0.005em; }
+      .customer-contact, .item-detail { color: #64748b; }
+      .item-date { color: #94a3b8; letter-spacing: .01em; }
+      .balance { letter-spacing: .01em; }
+
+      /* Search */
+      .search-box { height: 2.5rem; border-radius: 999px; background: #fff; border-color: #dbe0ea; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+
+      /* Tables: light header, subtle stripes, comfortable rows */
+      .card table th { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: #64748b; background: #f8fafc; }
+      .card table td { border-color: #eef1f5; }
+
+
+      /* Empty states feel intentional, not broken */
+      .placeholder { padding: 4.5rem 1.5rem; }
+      .placeholder-icon { opacity: .35; filter: grayscale(.4); }
+      .placeholder-text { color: #475569; }
+      .empty-state { padding: 2rem 1rem; font-size: 0.9rem; }
+
+      /* Detail dropdown headers read as section titles */
+      details.proj-sub > summary { font-size: 0.88rem; color: #0f172a; font-weight: 650; }
+      .sec-body { animation: pp-fade .18s ease both; }
+      @keyframes pp-fade { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+
+      /* Status pills: slightly bolder so state is obvious at a glance */
+      .status-badge { font-weight: 650; }
+
+      /* ---------- Uniform control sizing (search, filter, date, inputs, buttons) ---------- */
+      :root { --ctl-h: 40px; --ctl-h-sm: 34px; --ctl-r: 0.6rem; }
+      .input, .search-box,
+      input:not([type]), input[type="text"], input[type="number"], input[type="date"], input[type="email"],
+      input[type="password"], input[type="tel"], input[type="search"], input[type="time"], input[type="url"],
+      input[type="datetime-local"], input[type="month"], select {
+        min-height: var(--ctl-h); line-height: 1.25; border-radius: var(--ctl-r);
+        padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.875rem;
+      }
+      /* compact controls (inline-padded, inside dense rows) stay compact but uniform with each other */
+      .input[style*="padding"], input[style*="padding"], select[style*="padding"] { min-height: var(--ctl-h-sm); }
+      /* dates: same height as text boxes on Safari/iOS */
+      input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] {
+        -webkit-appearance: none; appearance: none; display: block; width: 100%;
+      }
+      input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.25em; }
+      /* selects: one consistent chevron on every browser */
+      select, select.input {
+        -webkit-appearance: none; appearance: none; padding-right: 2.1rem;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 12px;
+      }
+      select[multiple] { background-image: none; padding-right: 0.75rem; }
+      /* search box: icon space on the left, same height as everything else */
+      .search-box { border-radius: var(--ctl-r); }
+      /* standard buttons match control height; small inline-padded buttons are left compact */
+      .btn:not([style*="padding"]) { min-height: var(--ctl-h); display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+      .btn[style*="padding"] { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: var(--ctl-h-sm); }
+      /* toolbars: filters and buttons line up on one baseline */
+      .card-header [style*="display: flex"] { align-items: center; }
+
+      /* ---------- Icons (replace emoji with consistent line icons) ---------- */
+      .ic { display: inline-block; width: 1.12em; height: 1.12em; vertical-align: -0.2em; margin-right: 0.15em; flex: 0 0 auto;
+            fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .ic.ic-ok { color: #16a34a; } .ic.ic-bad { color: #dc2626; } .ic.ic-warn { color: #d97706; }
+      .ic.ic-info { color: #2563eb; } .ic.ic-mute { color: #64748b; }
+      .ic.ic-dot { fill: currentColor; stroke: none; width: 0.7em; height: 0.7em; vertical-align: 0; margin-right: 0.35em; }
+      .tab .ic { width: 1.15em; height: 1.15em; margin-right: 0.4em; color: #64748b; }
+      .tab.active .ic { color: #2563eb; }
+      .btn .ic { margin-right: 0; }
+      .btn-primary .ic, .btn-success .ic, .btn-danger .ic, .btn-warning .ic { color: #fff; stroke: #fff; }
+      .ic:last-child { margin-right: 0; }
+
+      @media (prefers-reduced-motion: reduce) { .btn, .list-item { transition: none !important; } .btn:hover, .lead-card:hover { transform: none; } }
+
+      /* ================== MOBILE (phones) ================== */
+      @media (max-width: 768px) {
+        body { background: #f4f6fa; }
+        .header { padding: 0.65rem 1rem; padding-top: calc(0.65rem + env(safe-area-inset-top, 0px)); }
+        h1 { font-size: 1.2rem; }
+        .sync-status { margin-left: 0.5rem; font-size: 0.75rem; }
+        .container, #mainContent { padding-left: 0.75rem; padding-right: 0.75rem; }
+
+        /* Touch targets */
+        .btn { min-height: 40px; }
+        .btn:hover { transform: none; box-shadow: 0 1px 2px rgba(15,23,42,.08); filter: none; }
+        details.proj-sub > summary, .card-header[data-sec-toggle="1"] { min-height: 44px; display: flex; align-items: center; }
+        .list-item { padding: 0.85rem 0.9rem; }
+
+
+
+        /* Lead details page: tighter padding, header stacks, action row wraps evenly */
+        #leadDetailsPanel > div { padding: 1rem !important; gap: 1.1rem !important; }
+        #leadDetailsPanelCard .card-header > div { flex-wrap: wrap; }
+        #leadDetailsPanel select.input { min-width: 0 !important; flex: 1 1 100% !important; }
+        #leadDetailsPanel [style*="display: flex; gap: 0.5rem; flex-wrap: wrap;"] > .btn { flex: 1 1 calc(50% - 0.25rem); }
+
+        /* Stats and summaries */
+        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+        .stat-card { padding: 0.8rem; }
+
+        /* Dropdown sections */
+        details.proj-sub { padding: 0 0.6rem; }
+        .card-header { padding: 0.85rem 0.9rem; }
+
+        :root { --ctl-h: 44px; --ctl-h-sm: 38px; }
+        /* Easier scanning on phones */
+        .customer-item { padding: 0.95rem 1rem; }
+        .stat-value { font-size: 1.3rem; }
+        .stat-label { font-size: 0.68rem; }
+        .card-header { font-size: 0.92rem; }
+        .search-box { height: 2.75rem; }
+        .grid { gap: 0.9rem; }
+        .card-body { padding: 0.95rem; }
+
+        /* Quiet scrollbars on touch */
+        * { scrollbar-width: none; }
+      }
+      @media (max-width: 380px) {
+        .stats { grid-template-columns: 1fr; }
+      }
+    
+      /* Search icon (replaces emoji placeholder) + toolbar alignment + kanban readability */
+      input[type="text"][placeholder^="Search"], input[type="search"] { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 0.8rem center; background-size: 16px; padding-left: 2.3rem !important; }
+      #leadListCard > .card-header > div { align-items: flex-start !important; gap: 0.75rem; }
+      #leadListCard .search-box { flex: 1 1 260px; }
+      .lead-card-value, .lead-card-date { white-space: nowrap; }
+      .lead-card-title { overflow-wrap: anywhere; }
+    
+      /* Customers / Projects: list first; opening one shows its details as its own page (all screen sizes) */
+      #customersTab .grid, #projectsTab .grid { grid-template-columns: minmax(0,1fr) !important; }
+      #customersTab .grid:not(.m-detail) #detailsPanel,
+      #projectsTab .grid:not(.m-detail) #projectDetailsPanel { display: none; }
+      #customersTab .grid.m-detail > .card,
+      #projectsTab .grid.m-detail > .card { display: none; }
+      button, input, select, textarea { font-family: inherit; }
+      .m-back-bar { display: none; }
+      .grid.m-detail > .m-back-bar { display: flex; margin: 0 0 0.25rem; }
+      .m-back-bar .btn { width: auto; }
+
+      /* Jobs: same list -> detail page pattern */
+      #jobsTab .jobs-list-panel { width: 100% !important; max-height: none !important; position: static !important; }
+      #jobsTab .jobs-layout:not(.j-detail) .jobs-detail-panel { display: none; }
+      #jobsTab .jobs-layout.j-detail .jobs-list-panel { display: none; }
+      #jobsTab .jobs-layout.j-detail #jobBackBtn { display: block !important; }
+      #jobsTab .jobs-layout.j-detail .jobs-detail-panel { width: 100%; }
+
+      /* ===== Mobile pass 2: compact toolbars, list -> detail screens ===== */
+      @media (max-width: 768px) {
+        #readonlyNotice { display: none !important; }
+        .header-content { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+        /* Leads toolbar: 3 compact rows instead of a tall stack */
+        #leadListCard > .card-header > div { display: grid !important; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.5rem; align-items: stretch !important; }
+        #leadListCard > .card-header > div > div { display: contents !important; }
+        #leadListCard .search-box { grid-column: 1 / -1; min-width: 0 !important; width: 100%; }
+        #leadListCard select.input { width: 100% !important; min-width: 0 !important; }
+        #leadTerritoryFilter { grid-column: 1 / -1; }
+        #leadListCard .lead-view-toggle { width: 100%; }
+        #leadListCard .lead-view-btn { flex: 1; min-height: var(--ctl-h); justify-content: center; }
+        #leadListCard > .card-header > div > .btn-primary { white-space: nowrap; width: 100%; }
+
+        /* Stage chips scroll sideways instead of wrapping into rows */
+        #projectsTab .card-header > div:last-child,
+        #jobsTab .jobs-list-panel .card-header > div:nth-of-type(1) { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+        #projectsTab .card-header > div:last-child .btn,
+        #jobsTab .jobs-list-panel .card-header .btn { flex: 0 0 auto; white-space: nowrap; }
+      }
+    </style>
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -2123,7 +2394,7 @@
                         <div class="card-header">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                    <input type="text" class="search-box" placeholder="🔍 Search leads..." id="leadSearchInput" oninput="filterLeads()" style="margin: 0; min-width: 180px;">
+                                    <input type="text" class="search-box" placeholder="Search leads..." id="leadSearchInput" oninput="filterLeads()" style="margin: 0; min-width: 180px;">
                                     <select class="input" id="leadStageFilter" onchange="filterLeadsByStage()" style="width: auto; margin: 0;">
                                         <option value="all">All Stages</option>
                                         <option value="new">New</option>
@@ -2179,7 +2450,7 @@
                     <div class="card">
                         <div class="card-header">
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                                <input type="text" class="search-box" placeholder="🔍 Search customers..." id="searchInput" oninput="filterCustomers()" style="margin:0;min-width:180px;">
+                                <input type="text" class="search-box" placeholder="Search customers..." id="searchInput" oninput="filterCustomers()" style="margin:0;min-width:180px;">
                                 <select class="input" id="customerTerritoryFilter" onchange="filterCustomers()" style="width:auto;margin:0;display:none;">
                                     <option value="all">All Territories</option>
                                 </select>
@@ -2200,7 +2471,7 @@
                     <div class="card">
                         <div class="card-header">
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;">
-                                <input type="text" class="search-box" placeholder="🔍 Search projects..." id="projectSearchInput" oninput="filterProjects()" style="margin:0;min-width:180px;">
+                                <input type="text" class="search-box" placeholder="Search projects..." id="projectSearchInput" oninput="filterProjects()" style="margin:0;min-width:180px;">
                                 <select class="input" id="projectTerritoryFilter" onchange="filterProjects()" style="width:auto;margin:0;display:none;">
                                     <option value="all">All Territories</option>
                                 </select>
@@ -2568,7 +2839,7 @@
                                 <h3 style="font-size:0.95rem;font-weight:700;color:#111827;margin:0;">🏪 Suppliers</h3>
                                 <button class="btn btn-primary" onclick="openAddSupplierModal()" style="padding:0.3rem 0.7rem;font-size:0.78rem;">+ Add</button>
                             </div>
-                            <input type="text" class="search-box" id="supplierSearchInput" placeholder="🔍 Search suppliers…"
+                            <input type="text" class="search-box" id="supplierSearchInput" placeholder="Search suppliers…"
                                    oninput="renderSupplierList()" style="margin:0;width:100%;">
                         </div>
                         <div id="supplierListContainer" style="padding:0.5rem 0;">
@@ -2619,7 +2890,7 @@
                                     </select>
                                     <span style="font-size:0.78rem;color:#6b7280;font-weight:600;margin-left:0.5rem;">📁 Project:</span>
                                     <select id="spurchProjectSel" class="input" style="padding:0.2rem 0.5rem;font-size:0.78rem;height:28px;width:auto;max-width:210px;" onchange="onSpurchProjectSelect()"></select>
-                                    <input type="text" id="spurchProjectSearch" class="input" placeholder="🔍 Search project…"
+                                    <input type="text" id="spurchProjectSearch" class="input" placeholder="Search project…"
                                            style="padding:0.2rem 0.5rem;font-size:0.78rem;height:28px;width:150px;" oninput="onSpurchProjectSearch()">
                                     <div id="spurchCustomRange" style="display:none;display:flex;gap:0.3rem;align-items:center;">
                                         <input type="date" id="spurchDateFrom" class="input" style="padding:0.2rem 0.4rem;font-size:0.78rem;height:28px;width:130px;" onchange="renderSupplierDetail()">
@@ -2658,7 +2929,7 @@
                     <!-- Left: Job List -->
                     <div class="card jobs-list-panel" style="width: 360px; flex-shrink: 0; max-height: calc(100vh - 200px); overflow-y: auto; position: sticky; top: 80px;">
                         <div class="card-header" style="padding: 0.75rem 1rem;">
-                            <input type="text" class="search-box" placeholder="🔍 Search jobs…" id="jobSearchInput" oninput="filterJobs()" style="margin: 0 0 0.6rem 0; width: 100%;">
+                            <input type="text" class="search-box" placeholder="Search jobs…" id="jobSearchInput" oninput="filterJobs()" style="margin: 0 0 0.6rem 0; width: 100%;">
                             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
                                 <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;" onclick="filterJobsByStatus('all')" id="jfAll">All</button>
                                 <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;" onclick="filterJobsByStatus('not_started')" id="jfNotStarted">Not Started</button>
@@ -2795,7 +3066,7 @@
                             <select class="input" id="taskOwnerFilter" onchange="renderTasksTab()" style="width: auto; padding: 0.4rem 0.6rem; font-size: 0.82rem;">
                                 <option value="all">All Owners</option>
                             </select>
-                            <input type="text" class="input" id="taskSearchInput" oninput="renderTasksTab()" placeholder="🔍 Search..." style="width: 160px; padding: 0.4rem 0.6rem; font-size: 0.82rem;">
+                            <input type="text" class="input" id="taskSearchInput" oninput="renderTasksTab()" placeholder="Search..." style="width: 160px; padding: 0.4rem 0.6rem; font-size: 0.82rem;">
                         </div>
                     </div>
                     <div class="card-body" style="padding: 0;">
@@ -8753,7 +9024,7 @@ ${email} has been completely removed from the system.`);
                             ${s.contactPerson ? `<div style="font-size:0.72rem;color:#6b7280;margin-top:0.15rem;">👤 ${esc(s.contactPerson)}${s.phone ? ' · ' + esc(s.phone) : ''}</div>` : ''}
                         </div>
                         ${outstanding > 0
-                            ? `<span style="flex-shrink:0;background:#fef2f2;color:#b91c1c;padding:0.15rem 0.45rem;border-radius:0.5rem;font-size:0.7rem;font-weight:700;">₹${fmtN(outstanding)} due</span>`
+                            ? `<span style="flex-shrink:0;background:#fef2f2;color:#b91c1c;padding:0.15rem 0.45rem;border-radius:0.5rem;font-size:0.7rem;font-weight:700;">${fmtN(outstanding)} due</span>`
                             : `<span style="flex-shrink:0;background:#f0fdf4;color:#166534;padding:0.15rem 0.45rem;border-radius:0.5rem;font-size:0.7rem;font-weight:700;">✅ Clear</span>`}
                     </div>
                 </div>`;
@@ -9524,9 +9795,65 @@ ${email} has been completely removed from the system.`);
             });
         }
 
+        // Invoice / quotation tables (Description | HSN | Qty+unit | Rate | per | Amount): read row by row,
+        // join wrapped description lines, and pick up the GST % from CGST/SGST/IGST lines. Falls back to the generic reader.
+        function parseSpurchOcrText(text) {
+            const num = s => parseFloat(String(s).replace(/,/g, ''));
+            const UNIT = '(?:n[o0]s|pcs?|pieces?|mtrs?|meters?|mt|kgs?|sets?|box(?:es)?|rolls?|ltrs?|pairs?|each|ea|units?|sqft|sqm|lot)';
+            const rowRe = new RegExp('^(.*?)\\s+(?:[A-Za-z]?\\d{4,8}\\s+)?(\\d+(?:\\.\\d+)?|[iIl])\\s*' + UNIT + '\\.?\\s+(?:Rs\\.?\\s*|₹\\s*)?(\\d[\\d,]*(?:\\.\\d+)?)\\b', 'i');
+            const stop = /(cgst|sgst|igst|total|subtotal|taxable|round\s*off|continued|computer generated|declaration|e\.?\s*&\s*o\.?\s*e|bank|ifsc|a\/c|amount chargeable|authori[sz]ed|signature|description of goods|hsn|sl\.?\s*no|quantity|\brate\b|\bper\b|disc|terms|conditions|warranty|bill to|ship to|goods once|account)/i;
+            const GST = [0, 5, 12, 18, 28];
+            const items = [];
+            let prev = null;
+            (text || '').split(/\r?\n/).forEach(raw => {
+                let line = raw.replace(/[|_~`^<>=¦§©®]/g, ' ').replace(/\s+/g, ' ').trim();
+                if (!line) { prev = null; return; }
+                const m = line.match(rowRe);
+                if (m && !stop.test(m[1])) {
+                    let name = m[1].replace(/^\d{1,3}[.)]?\s+(?=\S)/, '').replace(/[@°º*]+/g, '').replace(/\s{2,}/g, ' ').trim();
+                    const qty = /^[iIl]$/.test(m[2]) ? 1 : num(m[2]); let rate = num(m[3]), gstPct = null;
+                    // Figures after the rate: [tax] [amount]. amount = qty x rate (+ tax when the column is tax-inclusive)
+                    const tail = (line.slice(m[0].length).match(/\d[\d,]*(?:\.\d+)?/g) || []).map(num).filter(n => !isNaN(n));
+                    const amt = tail.length ? tail[tail.length - 1] : NaN;
+                    if (amt > 0 && qty > 0) {
+                        const base = qty * rate;
+                        if (Math.abs(base - amt) <= 0.02) { /* amount excludes tax: rate is right */ }
+                        else {
+                            const g = GST.find(p => p > 0 && Math.abs(base * (1 + p / 100) - amt) <= Math.max(1, amt * 0.002));
+                            if (g) gstPct = g;                                  // amount includes tax: rate is right
+                            else rate = Math.round(amt / qty * 100) / 100;      // rate was misread: rebuild from amount
+                        }
+                    }
+                    name = name.replace(/\$(?=\d)/g, 'S');
+                    if (name.length >= 2 && /[A-Za-z]/.test(name) && qty > 0 && qty < 100000 && rate >= 0) {
+                        prev = { _id: Date.now().toString() + Math.random(), name, unit: 'Nos', quantity: Math.round(qty * 1000) / 1000, rate, gstPercent: gstPct == null ? 18 : gstPct, _gstFromRow: gstPct != null, gstAmount: 0, cost: 0, total: 0 };
+                        items.push(prev);
+                        return;
+                    }
+                }
+                // wrapped description line: no amounts, not a header/total
+                if (prev && !/\d[\d,]*\.\d{2}/.test(line) && !stop.test(line) && line.length < 70) {
+                    const extra = line.replace(/\(\s*\S{1,4}\s*\)/g, ' ').replace(/\s{2,}/g, ' ').trim();   // drop "(18%)" tax notes
+                    if (extra) prev.name = (prev.name + ' ' + extra).replace(/\s{2,}/g, ' ').trim();
+                } else {
+                    prev = null;
+                }
+            });
+            if (!items.length) return parseSpurchOcrTextGeneric(text);
+            const generic = parseSpurchOcrTextGeneric(text);
+            if (generic.length > items.length) return generic;
+            // Document-level GST % (CGST+SGST, or IGST) for rows that don't carry their own
+            let gst = 0;
+            const t = text || '';
+            const c = t.match(/cgst[^\d\n]{0,20}(\d{1,2}(?:\.\d+)?)\s*%/i), s = t.match(/sgst[^\d\n]{0,20}(\d{1,2}(?:\.\d+)?)\s*%/i), ig = t.match(/igst[^\d\n]{0,20}(\d{1,2}(?:\.\d+)?)\s*%/i);
+            if (c && s) gst = parseFloat(c[1]) + parseFloat(s[1]); else if (ig) gst = parseFloat(ig[1]);
+            items.forEach(i => { if (!i._gstFromRow && gst > 0 && gst <= 40) i.gstPercent = gst; delete i._gstFromRow; });
+            return items;
+        }
+
         // Turn OCR text into item rows. Reads only description, quantity and rate; unit stays
         // 'Nos' and GST stays 18% (amount is calculated) - all editable in the rows for review.
-        function parseSpurchOcrText(text) {
+        function parseSpurchOcrTextGeneric(text) {
             const skip = /(sub\s*-?total|grand\s*total|total|cgst|sgst|igst|round\s*off|bank|ifsc|a\/c|account|gstin|pan\b|invoice|quotation|quote|date|phone|mobile|email|www\.|terms|thank|amount in words|hsn|sl\.?\s*no|description)/i;
             const num = s => parseFloat(String(s).replace(/,/g, ''));
             const items = [];
@@ -11071,8 +11398,7 @@ ${email} has been completely removed from the system.`);
                     const chev = header.querySelector('.sec-chevron');
                     if (chev) chev.classList.remove('collapsed');
                     header.dataset.secEmpty = '';
-                    const k2 = (header.textContent || '').replace(/^\s*\u25BC\s*/, '').replace(/\s+/g, ' ').trim().slice(0, 60);
-                    projSectionOpenState[k2] = true;
+                    if (header.dataset.secKey) projSectionOpenState[header.dataset.secKey] = true;
                 }
             }
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -11087,6 +11413,7 @@ ${email} has been completely removed from the system.`);
 
                 const key = (header.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60);
                 if (!key) return;
+                header.dataset.secKey = key;
 
                 // Move everything after the header into a single body wrapper
                 const body = document.createElement('div');
@@ -15156,8 +15483,8 @@ ${email} has been completely removed from the system.`);
                                     ${lead.company ? `<div class="lead-card-company">🏢 ${esc(lead.company)}</div>` : ''}
                                     ${lead.projectType ? `<div class="lead-card-company">📋 ${esc(lead.projectType)}</div>` : ''}
                                     ${lead.leadOwner ? `<div class="lead-card-company" style="color:#6366f1;">🧑‍💼 ${esc(lead.leadOwner)}</div>` : ''}
-                                    ${lead.value ? `<div class="lead-card-value">${formatCurrency(lead.value)}</div>` : ''}
-                                    <div class="lead-card-date">Created: ${formatDate(lead.createdAt)}</div>
+                                    ${lead.value ? `<div class="lead-card-value">₹${(Math.round(parseFloat(lead.value)||0)).toLocaleString('en-IN')}</div>` : ''}
+                                    <div class="lead-card-date">Created ${formatDate(lead.createdAt).replace(/[ ,]+\d{1,2}:\d{2}.*$/,'')}</div>
                                 </div>
                             `).join('')
                         }
@@ -16686,7 +17013,7 @@ ${email} has been completely removed from the system.`);
                 const found = parseSpurchOcrText(text);
                 if (!found.length) { say('⚠️ No item lines found. Try a clearer image, or add items manually.'); return; }
                 if (fqItems.length === 1 && !fqItems[0].description) fqItems = [];
-                found.forEach(f => fqItems.push({ id: Date.now().toString() + Math.random(), description: f.name, qty: f.quantity, unit: 'Nos', rate: f.rate, gstPct: 18 }));
+                found.forEach(f => fqItems.push({ id: Date.now().toString() + Math.random(), description: f.name, qty: f.quantity, unit: 'Nos', rate: f.rate, gstPct: f.gstPercent || 18 }));
                 renderFQItems();
                 calculateFQTotal();
                 setFQItemMode('manual');
@@ -20263,6 +20590,8 @@ ${email} has been completely removed from the system.`);
       }
       function partsOf(btn) {
         var raw = (btn.textContent || '').trim().replace(/\s+/g, ' ');
+        // The icon script may already have swapped the tab's emoji for an SVG; it keeps the original here
+        if (btn.dataset && btn.dataset.emoji) return { ico: btn.dataset.emoji, label: raw };
         var sp = raw.split(' ');
         if (sp.length > 1 && /[^\w]/.test(sp[0])) return { ico: sp[0], label: sp.slice(1).join(' ') };
         return { ico: '●', label: raw };
@@ -20419,5 +20748,202 @@ ${email} has been completely removed from the system.`);
     })();
     </script>
 
+
+    <script id="premium-icons">
+    /* Visual only: swaps emoji in the page text for consistent line icons. Remove this script to restore emoji. */
+    (function () {
+      var P = {
+        ck:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/>',
+        xc:'<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+        x:'<path d="M6 6l12 12M18 6L6 18"/>',
+        file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+        note:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+        clip:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>',
+        cal:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>',
+        pen:'<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
+        save:'<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
+        warn:'<path d="M12 4L3 20h18z"/><path d="M12 10v4M12 17v.01"/>',
+        clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+        users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c3 0 5 1.2 5 4"/>',
+        cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
+        wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1"/>',
+        card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+        search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>',
+        box:'<path d="M12 3l8 4v10l-8 4-8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
+        clipx:'<path d="M20 11l-8 8a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/>',
+        trash:'<path d="M4 7h16M10 3h4M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+        radio:'<circle cx="12" cy="12" r="2"/><path d="M7.5 7.5a6 6 0 0 0 0 9M16.5 7.5a6 6 0 0 1 0 9M4.5 4.5a10 10 0 0 0 0 15M19.5 4.5a10 10 0 0 1 0 15"/>',
+        dot:'<circle cx="12" cy="12" r="6"/>',
+        bld:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
+        wrench:'<path d="M14.5 6a4 4 0 0 0 4.7 5.2L10 20.4a2 2 0 0 1-3-3L16.2 8.2A4 4 0 0 0 14.5 6z"/>',
+        pin:'<path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+        rcpt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+        cloud:'<path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9.5 4.3 4.3 0 0 1 17.5 18z"/>',
+        down:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+        up:'<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>',
+        check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+        eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        chart:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
+        folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+        img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/>',
+        store:'<path d="M4 9l1.5-5h13L20 9"/><path d="M5 9v11h14V9M4 9h16M10 20v-6h4v6"/>',
+        car:'<path d="M5 16v-5l2-5h10l2 5v5z"/><path d="M5 11h14"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>',
+        cam:'<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+        refresh:'<path d="M20 11a8 8 0 0 0-14-4M4 4v4h4M4 13a8 8 0 0 0 14 4M20 20v-4h-4"/>',
+        trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v2a3 3 0 0 0 4 3M16 6h4v2a3 3 0 0 1-4 3M12 13v4M8 20h8"/>',
+        ban:'<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>',
+        bank:'<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+        mob:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+        tel:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+        link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+        target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+        globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+        lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+        key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
+        arrR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+        arrL:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+        chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+        mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+        bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+        cog:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+        brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 13h18"/>',
+        plus:'<path d="M12 5v14M5 12h14"/>',
+        menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+        pinx:'<path d="M12 3l3 6 6 1-4.5 4 1 6.5L12 17l-5.5 3.5 1-6.5L3 10l6-1z"/>'
+      };
+      var M = {
+        '✅':['ck','ic-ok'],'❌':['xc','ic-bad'],'✕':['x'],'✖':['x'],'×':null,
+        '📄':['file'],'📃':['file'],'📑':['file'],'📘':['file'],'📗':['file'],'📕':['file'],'📋':['clip'],'📝':['note'],
+        '📅':['cal'],'🗓':['cal'],'✏':['pen'],'✎':['pen'],'✍':['pen'],'💾':['save'],'⚠':['warn','ic-warn'],'🚨':['warn','ic-bad'],
+        '⏳':['clock','ic-warn'],'👤':['user'],'🧑':['user'],'👥':['users'],'💰':['wallet'],'💵':['cash'],'💸':['cash'],'💳':['card'],
+        '🔍':['search'],'📦':['box'],'📎':['clipx'],'🗑':['trash'],'📡':['radio'],'🔴':['dot','ic-dot ic-bad'],'🟡':['dot','ic-dot ic-warn'],'🟢':['dot','ic-dot ic-ok'],
+        '🏢':['bld'],'🏗':['bld'],'🔧':['wrench'],'🔩':['wrench'],'📍':['pin'],'🧾':['rcpt'],'☁':['cloud'],'⬇':['down'],'⬆':['up'],'📤':['up'],
+        '✓':['check'],'👁':['eye'],'📊':['chart'],'📈':['chart'],'📁':['folder'],'🖼':['img'],'🏪':['store'],'🛍':['store'],'🛒':['store'],
+        '🚗':['car'],'🚛':['car'],'🚚':['car'],'📷':['cam'],'📸':['cam'],'🔄':['refresh'],'🏆':['trophy'],'⛔':['ban','ic-bad'],
+        '🏦':['bank'],'📱':['mob'],'📞':['tel'],'🔗':['link'],'🎯':['target'],'🌐':['globe'],'🗺':['globe'],'🔐':['lock'],'🔑':['key'],
+        '→':['arrR'],'←':['arrL'],'💬':['chat'],'📧':['mail'],'⚡':['bolt'],'⚙':['cog'],'💼':['brief'],'➕':['plus'],'☰':['menu']
+      };
+      var keys = Object.keys(M).filter(function (k) { return M[k]; });
+      var RE = new RegExp('(' + keys.map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')\\uFE0F?(?:\\u200D\\uD83D\\uDCBC)?', 'g');
+      var SKIP = { SCRIPT:1, STYLE:1, TEXTAREA:1, OPTION:1, SELECT:1, TITLE:1, INPUT:1, NOSCRIPT:1, SVG:1, CODE:1 };
+
+      function svg(def) {
+        return '<svg class="ic ' + (def[1] || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + P[def[0]] + '</svg>';
+      }
+      function convertText(node) {
+        var t = node.nodeValue;
+        if (!t || t.length > 4000) return;
+        RE.lastIndex = 0;
+        if (!RE.test(t)) return;
+        RE.lastIndex = 0;
+        var pe = node.parentNode;
+        if (pe && pe.classList && pe.classList.contains('tab') && !pe.dataset.emoji) {
+          var first = t.match(RE); RE.lastIndex = 0;
+          if (first) pe.dataset.emoji = first[0].replace(/\uFE0F/g, '');
+        }
+        var holder = document.createElement('span');
+        holder.innerHTML = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(RE, function (m, k) { return svg(M[k]); });
+        var frag = document.createDocumentFragment();
+        while (holder.firstChild) frag.appendChild(holder.firstChild);
+        node.parentNode.replaceChild(frag, node);
+      }
+      function walk(root) {
+        if (!root || root.nodeType === 8) return;
+        if (root.nodeType === 3) { if (root.parentNode && !SKIP[root.parentNode.nodeName.toUpperCase()]) convertText(root); return; }
+        if (root.nodeType !== 1 || SKIP[root.nodeName.toUpperCase()] || root.closest && root.closest('[data-noicon]')) return;
+        var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (n) {
+            var p = n.parentNode; if (!p || SKIP[p.nodeName.toUpperCase()]) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        var list = [], n; while ((n = tw.nextNode())) list.push(n);
+        list.forEach(convertText);
+      }
+
+      var queue = new Set(), scheduled = false;
+      function flush() {
+        scheduled = false;
+        obs.disconnect();
+        queue.forEach(function (n) { if (n.isConnected !== false) walk(n); });
+        queue.clear();
+        obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+      }
+      var obs = new MutationObserver(function (muts) {
+        muts.forEach(function (m) {
+          if (m.type === 'characterData') queue.add(m.target);
+          else m.addedNodes.forEach(function (n) { queue.add(n); });
+        });
+        if (!scheduled) { scheduled = true; requestAnimationFrame(flush); }
+      });
+      function start() { walk(document.body); obs.observe(document.body, { childList: true, subtree: true, characterData: true }); }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+    })();
+    </script>
+
+    <script id="mobile-detail-nav">
+    (function () {
+      var isM = function () { return window.innerWidth <= 768; };
+      var TABS = [
+        { fn: 'selectCustomer', tab: 'customersTab', label: 'Customers' },
+        { fn: 'selectProject',  tab: 'projectsTab',  label: 'Projects' }
+      ];
+      function grid(t) { var el = document.getElementById(t); return el && el.querySelector('.grid'); }
+      function leave(g) { if (g) { g.classList.remove('m-detail'); window.scrollTo(0, 0); } }
+      TABS.forEach(function (t) {
+        var orig = window[t.fn];
+        if (typeof orig !== 'function') return;
+        window[t.fn] = function () {
+          var r, err;
+          try { r = orig.apply(this, arguments); } catch (e) { err = e; }
+          var g = grid(t.tab);
+          if (g) {
+            if (!g.querySelector(':scope > .m-back-bar')) {
+              var bar = document.createElement('div');
+              bar.className = 'm-back-bar';
+              bar.innerHTML = '<button class="btn btn-secondary" type="button">\u2190 ' + t.label + '</button>';
+              bar.firstChild.onclick = function () { history.back(); };
+              g.insertBefore(bar, g.firstChild);
+            }
+            if (!g.classList.contains('m-detail')) {
+              g.classList.add('m-detail');
+              history.pushState({ mdetail: t.tab }, '');
+              window.scrollTo(0, 0);
+            }
+          }
+          if (err) throw err;
+          return r;
+        };
+      });
+      // Jobs
+      function jl() { var el = document.getElementById('jobsTab'); return el && el.querySelector('.jobs-layout'); }
+      var origSelJob = window.selectJob, origBackJob = window.jobGoBackToList;
+      if (typeof origSelJob === 'function') window.selectJob = function () {
+        var r, err; try { r = origSelJob.apply(this, arguments); } catch (e) { err = e; }
+        var l = jl();
+        if (l && !l.classList.contains('j-detail')) { l.classList.add('j-detail'); history.pushState({ mdetail: 'jobsTab' }, ''); window.scrollTo(0, 0); }
+        if (err) throw err; return r;
+      };
+      if (typeof origBackJob === 'function') window.jobGoBackToList = function () {
+        var l = jl();
+        if (l && l.classList.contains('j-detail')) { history.back(); return; }
+        return origBackJob.apply(this, arguments);
+      };
+      window.addEventListener('popstate', function () {
+        TABS.forEach(function (t) { leave(grid(t.tab)); });
+        var l = jl();
+        if (l && l.classList.contains('j-detail')) { l.classList.remove('j-detail'); if (typeof origBackJob === 'function') origBackJob(); }
+      });
+      var sw = window.switchTab;
+      if (typeof sw === 'function') {
+        window.switchTab = function () {
+          TABS.forEach(function (t) { var g = grid(t.tab); if (g) g.classList.remove('m-detail'); });
+          var jj = jl(); if (jj) jj.classList.remove('j-detail');
+          return sw.apply(this, arguments);
+        };
+      }
+    })();
+    </script>
 </body>
 </html>
