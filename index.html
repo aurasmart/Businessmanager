@@ -1791,7 +1791,7 @@
       }
       /* Single column: stack every field grid inside a form body */
       .modal .modal-body .form-grid,
-      .modal .modal-body [style*="grid-template-columns"] {
+      .modal .modal-body [style*="grid-template-columns"]:not([style*="minmax(0,1fr) minmax(0,1fr)"]):not([style*="minmax(0,1fr) auto"]):not(.fq-r):not(.sp-r) {
         grid-template-columns: minmax(0,1fr) !important;
       }
       #createUserError {
@@ -3515,7 +3515,80 @@ html[data-theme="dark"] [style*=" color: rgb(102, 102, 102)"] { color: #c3cbdb !
 html[data-theme="dark"] [style*=";color: rgb(30, 58, 95)"],
 html[data-theme="dark"] [style*=" color: rgb(30, 58, 95)"] { color: #8ab4ff !important; }
     </style>
-    <style id="mobile-shell">
+    <style id="item-forms">
+.rm-t { display: none; }
+/* Desktop/tablet: fit invoice + credit-note item tables to the popup width (no slider) */
+.it-tbl { table-layout: fixed; width: 100% !important; }
+.it-tbl th, .it-tbl td { padding: 0.3rem 0.25rem !important; }
+.it-tbl input, .it-tbl select { width: 100% !important; min-width: 0 !important; max-width: 100%; box-sizing: border-box; padding-left: 0.4rem; padding-right: 0.4rem; }
+.it-tbl td { overflow: hidden; }
+.it-tbl .btn { padding: 0.25rem 0.4rem !important; }
+.it-inv th:nth-child(1) { width: 22px; } .it-inv th:nth-child(3) { width: 12%; } .it-inv th:nth-child(4) { width: 8%; } .it-inv th:nth-child(5) { width: 12%; } .it-inv th:nth-child(6) { width: 12%; } .it-inv th:nth-child(7) { width: 12%; } .it-inv th:nth-child(8) { width: 12%; } .it-inv th:nth-child(9) { width: 36px; }
+.it-cn th:nth-child(2) { width: 12%; } .it-cn th:nth-child(3) { width: 8%; } .it-cn th:nth-child(4) { width: 12%; } .it-cn th:nth-child(5) { width: 12%; } .it-cn th:nth-child(6) { width: 12%; } .it-cn th:nth-child(7) { width: 12%; } .it-cn th:nth-child(8) { width: 36px; }
+#invoiceItemsContainer > div, #creditNoteItemsContainer > div { overflow-x: visible !important; }
+.fq-f { display: contents; }
+@media (max-width: 768px) {
+  /* Item-entry tables -> stacked cards (no sideways scrolling) */
+  .it-tbl, .it-tbl tbody { display: block !important; width: 100% !important; }
+  .it-tbl thead { display: none !important; }
+  #invoiceItemsContainer > div, #creditNoteItemsContainer > div { overflow-x: visible !important; }
+  .it-tbl tr { display: grid !important; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.5rem 0.6rem; background: #fff; border: 1px solid #dbe3ee; border-radius: 12px; padding: 0.75rem; margin-bottom: 0.65rem; }
+  .it-tbl td { display: block !important; padding: 0 !important; min-width: 0; text-align: left !important; }
+  .it-tbl td::before { display: block; font-size: 0.68rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #64748b; margin-bottom: 2px; }
+  .it-tbl input, .it-tbl select { width: 100% !important; min-width: 0 !important; max-width: 100% !important; box-sizing: border-box; }
+  .it-tbl .btn { width: 100%; min-height: 38px; }
+  /* invoice: drag | desc | hsn | qty | unit | rate | gst | amount | remove */
+  .it-inv tr > td:nth-child(1) { display: none !important; }
+  .it-inv tr > td:nth-child(2) { grid-column: 1 / -1; } .it-inv tr > td:nth-child(2)::before { content: "Description *"; }
+  .it-inv tr > td:nth-child(3)::before { content: "HSN code *"; }
+  .it-inv tr > td:nth-child(4)::before { content: "Qty *"; }
+  .it-inv tr > td:nth-child(5)::before { content: "Unit"; }
+  .it-inv tr > td:nth-child(6)::before { content: "Rate *"; }
+  .it-inv tr > td:nth-child(7)::before { content: "GST %"; }
+  .it-inv tr > td:nth-child(8) { align-self: end; font-weight: 700; } .it-inv tr > td:nth-child(8)::before { content: "Amount"; font-weight: 600; }
+  .it-inv tr > td:nth-child(9) { grid-column: 1 / -1; }
+  /* credit note: desc | hsn | qty | unit | rate | gst | amount | remove */
+  .it-cn tr > td:nth-child(1) { grid-column: 1 / -1; } .it-cn tr > td:nth-child(1)::before { content: "Description *"; }
+  .it-cn tr > td:nth-child(2)::before { content: "HSN code *"; }
+  .it-cn tr > td:nth-child(3)::before { content: "Qty *"; }
+  .it-cn tr > td:nth-child(4)::before { content: "Unit"; }
+  .it-cn tr > td:nth-child(5)::before { content: "Rate *"; }
+  .it-cn tr > td:nth-child(6)::before { content: "GST %"; }
+  .it-cn tr > td:nth-child(7) { align-self: end; font-weight: 700; } .it-cn tr > td:nth-child(7)::before { content: "Amount"; font-weight: 600; }
+  .it-cn tr > td:nth-child(8) { grid-column: 1 / -1; }
+  .it-tbl .rm-t, .fq-r .rm-t, .sp-r .rm-t { display: inline; }
+  /* quote + supplier purchase item rows */
+  body.mp-rail-on .modal { padding-left: 38px; }
+  .fq-r, .sp-r { grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 0.5rem 0.6rem !important; background: #fff; border: 1px solid #dbe3ee !important; border-radius: 12px; padding: 0.75rem !important; margin-bottom: 0.65rem; align-items: stretch !important; }
+  .fq-r > .drag-handle { display: none !important; }
+  .fq-hd { display: none !important; }
+  .fq-f { display: block !important; min-width: 0; }
+  .fq-f::before { content: attr(data-l); display: block; font-size: 0.68rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #64748b; margin-bottom: 2px; }
+  .fq-r > :nth-child(2), .sp-r > :nth-child(1) { grid-column: 1 / -1; }
+  .fq-r > button, .sp-r > button { grid-column: 1 / -1; width: 100% !important; min-height: 38px; height: auto !important; padding: 0.4rem !important; }
+  .sp-r > span { grid-column: 1 / -1; text-align: right !important; font-size: 0.9rem !important; }
+  .fq-r input, .fq-r select, .sp-r input, .sp-r select { font-size: 16px !important; min-height: 38px; }
+}
+html[data-theme="dark"] .it-tbl tr, html[data-theme="dark"] .fq-r, html[data-theme="dark"] .sp-r { background: #131c31 !important; border-color: #26324d !important; }
+html[data-theme="dark"] .it-tbl td::before { color: #94a3b8; }
+</style>
+<style id="table-cards">
+@media (max-width: 768px) {
+  table.mc, table.mc thead, table.mc tbody, table.mc tfoot, table.mc tr, table.mc td { display: block !important; width: 100% !important; box-sizing: border-box; overflow: visible !important; }
+  table.mc thead { display: none !important; }
+  div:has(> table.mc) { overflow-x: visible !important; }
+  table.mc tr { background: #fff !important; border: 1px solid #e3e9f2 !important; border-radius: 12px; padding: 0.55rem 0.75rem !important; margin-bottom: 0.5rem; }
+  table.mc td { display: flex !important; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.22rem 0 !important; border: 0 !important; text-align: right !important; min-width: 0; font-size: 0.82rem !important; background: transparent !important; }
+  table.mc td::before { content: attr(data-l); flex: 0 0 34%; text-align: left; font-size: 0.7rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #64748b; }
+  table.mc td[data-l=""]::before { display: none; }
+  table.mc td[data-l=""] { justify-content: flex-end; }
+  table.mc td:empty { display: none !important; }
+}
+html[data-theme="dark"] table.mc tr { background: #131c31 !important; border-color: #26324d !important; }
+html[data-theme="dark"] table.mc td { color: #e8edf7 !important; }
+html[data-theme="dark"] table.mc td::before { color: #94a3b8; }
+</style>
+<style id="mobile-shell">
       /* Menu drawer (phone) */
       .mp-drawer { position: fixed; top: 0; bottom: 0; left: 0; width: min(82vw, 320px); z-index: 10002; background: #fff; box-shadow: 10px 0 40px -10px rgba(11,27,58,.45); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 0px) 0 calc(env(safe-area-inset-bottom, 0px) + 16px); animation: mpDrawerIn .22s ease-out; }
       @keyframes mpDrawerIn { from { transform: translateX(-100%); } to { transform: none; } }
@@ -5361,7 +5434,7 @@ html[data-theme="dark"] [style*=" color: rgb(30, 58, 95)"] { color: #8ab4ff !imp
                         <div id="fqOcrStatus" style="margin-top:0.5rem;font-size:0.8rem;color:#6b7280;"></div>
                     </div>
                     <!-- Header Row -->
-                    <div style="display:grid;grid-template-columns:24px minmax(0,2fr) 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;padding:0.3rem 0;font-size:0.72rem;font-weight:600;color:#6b7280;border-bottom:2px solid #e5e7eb;margin-bottom:0.25rem;">
+                    <div class="fq-hd" style="display:grid;grid-template-columns:24px minmax(0,2fr) 60px 90px 100px 70px 90px 110px 36px;gap:0.35rem;padding:0.3rem 0;font-size:0.72rem;font-weight:600;color:#6b7280;border-bottom:2px solid #e5e7eb;margin-bottom:0.25rem;">
                         <span></span><span>Description</span><span>Qty</span><span>Unit</span><span>Rate (₹)</span><span>GST%</span><span>GST Amt</span><span>Total</span><span></span>
                     </div>
                     <div id="fqItemsContainer"></div>
@@ -11421,22 +11494,22 @@ ${email} has been completely removed from the system.`);
                 const gstA = cost * (parseFloat(it.gstPercent)||0) / 100;
                 const tot  = cost + gstA;
                 return `
-                <div style="display:grid;grid-template-columns:minmax(0,2fr) 60px 70px 80px 55px 90px 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;" data-iid="${it._id}">
+                <div class="sp-r" style="display:grid;grid-template-columns:minmax(0,2fr) 60px 70px 80px 55px 90px 32px;gap:0.35rem;align-items:center;margin-bottom:0.35rem;" data-iid="${it._id}">
                     <input class="input" style="font-size:0.78rem;padding:0.3rem 0.5rem;" placeholder="Item name" value="${esc(it.name)}"
                            oninput="spurchTempItems[${idx}].name=this.value">
-                    <input class="input" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Unit" value="${esc(it.unit||'Nos')}"
-                           oninput="spurchTempItems[${idx}].unit=this.value">
-                    <input class="input" type="number" min="1" step="1" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Qty" value="${it.quantity||''}"
+                    <label class="fq-f" data-l="Unit"><input class="input" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Unit" value="${esc(it.unit||'Nos')}"
+                           oninput="spurchTempItems[${idx}].unit=this.value"></label>
+                    <label class="fq-f" data-l="Qty"><input class="input" type="number" min="1" step="1" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Qty" value="${it.quantity||''}"
                            oninput="spurchTempItems[${idx}].quantity=parseInt(this.value)||0;this.value=spurchTempItems[${idx}].quantity||''"
-                           onchange="_renderSpurchItems()">
-                    <input class="input" type="number" min="0" step="0.01" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Rate ₹" value="${it.rate||''}"
+                           onchange="_renderSpurchItems()"></label>
+                    <label class="fq-f" data-l="Rate (₹)"><input class="input" type="number" min="0" step="0.01" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="Rate ₹" value="${it.rate||''}"
                            oninput="spurchTempItems[${idx}].rate=parseFloat(this.value)||0"
-                           onchange="_renderSpurchItems()">
-                    <input class="input" type="number" min="0" max="100" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="GST%" value="${it.gstPercent||0}"
+                           onchange="_renderSpurchItems()"></label>
+                    <label class="fq-f" data-l="GST %"><input class="input" type="number" min="0" max="100" style="font-size:0.78rem;padding:0.3rem 0.4rem;" placeholder="GST%" value="${it.gstPercent||0}"
                            oninput="spurchTempItems[${idx}].gstPercent=parseFloat(this.value)||0"
-                           onchange="_renderSpurchItems()">
+                           onchange="_renderSpurchItems()"></label>
                     <span style="font-size:0.78rem;font-weight:600;text-align:right;padding-right:0.25rem;">₹${fmtN(tot)}</span>
-                    <button onclick="removeSpurchItem('${it._id}')" style="background:#fee2e2;border:none;border-radius:0.375rem;cursor:pointer;padding:0.2rem 0.5rem;color:#ef4444;font-weight:700;">×</button>
+                    <button onclick="removeSpurchItem('${it._id}')" style="background:#fee2e2;border:none;border-radius:0.375rem;cursor:pointer;padding:0.2rem 0.5rem;color:#ef4444;font-weight:700;">×<span class="rm-t"> Remove item</span></button>
                 </div>`;
             }).join('');
             // totals row
@@ -15306,7 +15379,7 @@ ${email} has been completely removed from the system.`);
 
             container.innerHTML = `
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                    <table class="it-tbl it-inv" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
                             <tr style="background: #e5e7eb;">
                                 <th style="padding: 0.5rem; width: 28px;"></th>
@@ -15372,7 +15445,7 @@ ${email} has been completely removed from the system.`);
                                         ${formatCurrency(amount)}
                                     </td>
                                     <td style="padding: 0.5rem;">
-                                        <button class="btn btn-danger" onclick="removeInvoiceItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×</button>
+                                        <button class="btn btn-danger" onclick="removeInvoiceItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×<span class="rm-t"> Remove item</span></button>
                                     </td>
                                 </tr>
                             `}).join('')}
@@ -16426,7 +16499,7 @@ ${email} has been completely removed from the system.`);
 
             container.innerHTML = `
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                    <table class="it-tbl it-cn" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
                             <tr style="background: #e5e7eb;">
                                 <th style="padding: 0.5rem; text-align: left;">Description*</th>
@@ -16484,7 +16557,7 @@ ${email} has been completely removed from the system.`);
                                         ${formatCurrency(amount)}
                                     </td>
                                     <td style="padding: 0.5rem;">
-                                        <button class="btn btn-danger" onclick="removeCreditNoteItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×</button>
+                                        <button class="btn btn-danger" onclick="removeCreditNoteItem('${item.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">×<span class="rm-t"> Remove item</span></button>
                                     </td>
                                 </tr>
                             `}).join('')}
@@ -18736,7 +18809,7 @@ ${email} has been completely removed from the system.`);
                 const total = base + gstAmt;
                 const fmt = v => '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `
-                <div id="fqRow_${idx}" data-idx="${idx}"
+                <div id="fqRow_${idx}" class="fq-r" data-idx="${idx}"
                     ondragstart="itemDragStart(event, this)" ondragend="itemDragEnd(event, this)"
                     ondragover="itemDragOver(event, this)" ondragleave="itemDragLeave(event, this)"
                     ondrop="itemDrop(event, this, 'fq')"
@@ -18745,19 +18818,19 @@ ${email} has been completely removed from the system.`);
                         onmousedown="document.getElementById('fqRow_${idx}').draggable=true">≡</span>
                     <input class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Description / Work Item" value="${item.description.replace(/"/g,'&quot;')}"
                         oninput="updateFQItem('${item.id}','description',this.value)">
-                    <input class="input" type="number" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Qty" value="${item.qty}"
-                        oninput="updateFQItem('${item.id}','qty',this.value)">
-                    <select class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" onchange="updateFQItem('${item.id}','unit',this.value)">
+                    <label class="fq-f" data-l="Qty"><input class="input" type="number" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Qty" value="${item.qty}"
+                        oninput="updateFQItem('${item.id}','qty',this.value)"></label>
+                    <label class="fq-f" data-l="Unit"><select class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" onchange="updateFQItem('${item.id}','unit',this.value)">
                         ${['Sqft','Sqmt','Rft','Nos','Set','Lump Sum','LS'].map(u => `<option ${item.unit===u?'selected':''}>${u}</option>`).join('')}
-                    </select>
-                    <input class="input" type="number" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Rate ₹" value="${item.rate}"
-                        oninput="updateFQItem('${item.id}','rate',this.value)">
-                    <select class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" onchange="updateFQItem('${item.id}','gstPct',this.value)">
+                    </select></label>
+                    <label class="fq-f" data-l="Rate (₹)"><input class="input" type="number" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" placeholder="Rate ₹" value="${item.rate}"
+                        oninput="updateFQItem('${item.id}','rate',this.value)"></label>
+                    <label class="fq-f" data-l="GST %"><select class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;min-width:0;" onchange="updateFQItem('${item.id}','gstPct',this.value)">
                         ${[0,5,12,18,28].map(g => `<option value="${g}" ${(item.gstPct||0)==g?'selected':''}>${g}%</option>`).join('')}
-                    </select>
-                    <input id="fqGstAmt_${item.id}" class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;background:#fffbeb;min-width:0;" readonly value="${fmt(gstAmt)}">
-                    <input id="fqTotal_${item.id}" class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;background:#f0fdf4;font-weight:600;min-width:0;" readonly value="${fmt(total)}">
-                    <button onclick="removeFQItem('${item.id}')" style="background:#fee2e2;border:none;border-radius:0.375rem;cursor:pointer;color:#dc2626;font-size:1rem;width:36px;height:36px;min-width:0;">✕</button>
+                    </select></label>
+                    <label class="fq-f" data-l="GST amt"><input id="fqGstAmt_${item.id}" class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;background:#fffbeb;min-width:0;" readonly value="${fmt(gstAmt)}"></label>
+                    <label class="fq-f" data-l="Total"><input id="fqTotal_${item.id}" class="input" style="font-size:0.8rem;padding:0.3rem 0.45rem;background:#f0fdf4;font-weight:600;min-width:0;" readonly value="${fmt(total)}"></label>
+                    <button onclick="removeFQItem('${item.id}')" style="background:#fee2e2;border:none;border-radius:0.375rem;cursor:pointer;color:#dc2626;font-size:1rem;width:36px;height:36px;min-width:0;">✕<span class="rm-t"> Remove item</span></button>
                 </div>`;
             }).join('');
         }
@@ -22757,5 +22830,33 @@ ${email} has been completely removed from the system.`);
       };
     })();
     </script>
+<script id="table-cards">
+(function () {
+  var mq = window.matchMedia('(max-width: 768px)');
+  function enhance() {
+    if (!mq.matches) return;
+    document.querySelectorAll('table:not(.mc):not(.it-tbl)').forEach(function (t) {
+      var ths = t.querySelectorAll('thead th');
+      if (!ths.length) return;
+      var heads = [];
+      ths.forEach(function (th) { var n = th.colSpan || 1; for (var i = 0; i < n; i++) heads.push((th.textContent || '').trim()); });
+      t.querySelectorAll('tbody tr, tfoot tr').forEach(function (tr) {
+        var col = 0;
+        Array.prototype.forEach.call(tr.children, function (td) {
+          var span = td.colSpan || 1;
+          td.setAttribute('data-l', span > 1 ? '' : (heads[col] || ''));
+          col += span;
+        });
+      });
+      t.classList.add('mc');
+    });
+  }
+  var raf = 0;
+  new MutationObserver(function () { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; enhance(); }); })
+    .observe(document.body, { childList: true, subtree: true });
+  mq.addEventListener && mq.addEventListener('change', enhance);
+  enhance();
+})();
+</script>
 </body>
 </html>
