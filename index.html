@@ -3588,6 +3588,51 @@ html[data-theme="dark"] table.mc tr { background: #131c31 !important; border-col
 html[data-theme="dark"] table.mc td { color: #e8edf7 !important; }
 html[data-theme="dark"] table.mc td::before { color: #94a3b8; }
 </style>
+<style id="task-rows">
+html[data-theme="dark"] #reimbWalletSummaryCard { background: #10261f !important; border-color: #1d4d3a !important; }
+html[data-theme="dark"] #reimbWalletSummaryCard > div:first-child span { color: #6ee7b7 !important; }
+html[data-theme="dark"] #reimbWalletSummaryCard > div:last-child > div { background: #0f1a2e !important; border: 1px solid #26324d; }
+html[data-theme="dark"] #reimbWalletBalanceAmt { color: #e8edf7; }
+html[data-theme="dark"] #reimbWalletPaidAmt { color: #93c5fd !important; }
+html[data-theme="dark"] #reimbWalletPendingAmt { color: #fbbf24 !important; }
+html[data-theme="dark"] #reimbWalletSummaryCard > div:last-child > div > div:last-child { color: #94a3b8 !important; }
+html[data-theme="dark"] [style*="linear-gradient(135deg,#f0fdf4"], html[data-theme="dark"] [style*="linear-gradient(135deg, #f0fdf4"], html[data-theme="dark"] [style*="linear-gradient(135deg,#eff6ff"], html[data-theme="dark"] [style*="linear-gradient(135deg,#fffbeb"], html[data-theme="dark"] [style*="linear-gradient(135deg,#fef2f2"] { background: #131c31 !important; border-color: #26324d !important; }
+#tasksList { padding: 0.75rem 1rem 1rem; }
+.tk-row { margin-bottom: 0.65rem; border-top: 1px solid #e3e9f2 !important; border-right: 1px solid #e3e9f2 !important; border-bottom: 1px solid #e3e9f2 !important; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.tk-row:last-child { margin-bottom: 0; }
+.tk-main { padding: 0.95rem 1.1rem !important; }
+.tk-row:hover { background: #f8fafc !important; }
+.tk-act .btn { min-height: 32px; padding: 0.3rem 0.8rem !important; font-size: 0.78rem !important; }
+html[data-theme="dark"] .tk-row, html[data-theme="dark"] .tk-row[style] { background: #131c31 !important; border-top-color: #26324d !important; border-right-color: #26324d !important; border-bottom-color: #26324d !important; box-shadow: none; }
+html[data-theme="dark"] .tk-row:hover { background: #18233d !important; }
+html[data-theme="dark"] .tk-title { color: #f1f5f9 !important; }
+html[data-theme="dark"] .tk-row .tk-main { color: #cbd5e1; }
+html[data-theme="dark"] .tk-row .tk-main strong { color: #e8edf7 !important; }
+@media (max-width: 900px) { .tk-row { flex-wrap: wrap; } .tk-main { flex-basis: 100%; } .tk-act { padding: 0 1rem 0.75rem !important; width: 100%; } .tk-act .btn { flex: 1; } }
+</style>
+<style id="ux-round3">
+@media (min-width: 769px) {
+  .customer-list { padding: 0.6rem 0.7rem; }
+  .customer-item { border: 1px solid #e3e9f2 !important; border-left: 4px solid transparent !important; border-radius: 12px; margin-bottom: 0.5rem; padding: 0.8rem 1rem; transition: background .15s, border-color .15s, box-shadow .15s; }
+  .customer-item:hover { background: #f8fafc; box-shadow: 0 2px 8px -4px rgba(15,23,42,.15); }
+  .customer-item.active { background: #eff6ff; border-color: #bfd4f6 !important; border-left: 4px solid #2563eb !important; }
+  html[data-theme="dark"] .customer-item { background: #131c31; border-color: #26324d !important; }
+  html[data-theme="dark"] .customer-item:hover { background: #18233d; box-shadow: none; }
+  html[data-theme="dark"] .customer-item.active { background: #172a52; border-color: #2f4a85 !important; border-left: 4px solid #60a5fa !important; }
+}
+.scope-note { display: none; align-items: center; gap: 0.6rem; margin: 0 0 0.6rem; padding: 0.45rem 0.8rem; border-radius: 10px; background: #eef4ff; border: 1px solid #c9d9f5; color: #1e3a8a; font-size: 0.82rem; font-weight: 600; }
+.scope-note.on { display: flex; }
+.scope-note button { margin-left: auto; border: 0; background: transparent; color: #2563eb; font-weight: 700; font-size: 0.82rem; cursor: pointer; padding: 0.2rem 0.4rem; }
+html[data-theme="dark"] .scope-note { background: #14213d; border-color: #26407a; color: #bfdbfe; }
+html[data-theme="dark"] .scope-note button { color: #93c5fd; }
+.mp-fab { display: none; }
+@media (max-width: 768px) {
+  .mp-fab { position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); width: 54px; height: 54px; border-radius: 50%; border: 0; z-index: 9985; align-items: center; justify-content: center; font-size: 1.9rem; line-height: 1; font-weight: 300; color: #fff; background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 10px 24px -6px rgba(37,99,235,.6), 0 2px 6px rgba(15,23,42,.25); -webkit-tap-highlight-color: transparent; }
+  .mp-fab.on { display: flex; }
+  .mp-fab:active { transform: scale(.94); }
+  #addCustomerBtn, #addProjectBtn, #addJobBtn, #leadsTab .card-header button[onclick="showAddLeadModal()"] { display: none !important; }
+}
+</style>
 <style id="mobile-shell">
       /* Menu drawer (phone) */
       .mp-drawer { position: fixed; top: 0; bottom: 0; left: 0; width: min(82vw, 320px); z-index: 10002; background: #fff; box-shadow: 10px 0 40px -10px rgba(11,27,58,.45); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 0px) 0 calc(env(safe-area-inset-bottom, 0px) + 16px); animation: mpDrawerIn .22s ease-out; }
@@ -18368,7 +18413,7 @@ ${email} has been completely removed from the system.`);
                 const isCompleted  = task.taskStatus === 'completed';
                 const isUpcoming   = task.taskStatus === 'upcoming';
 
-                const rowBg        = isOverdue  ? '#fff8f8' : isDueToday ? '#fffdf0' : isCompleted ? '#f6fef9' : '#ffffff';
+                const rowBg        = '#ffffff';
                 const accentColor  = isOverdue  ? '#dc2626' : isDueToday ? '#d97706' : isCompleted ? '#059669' : '#0369a1';
 
                 let daysBadge = '';
@@ -18382,10 +18427,10 @@ ${email} has been completely removed from the system.`);
                 const completedStr = task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '';
 
                 return `
-                <div style="display:flex;align-items:stretch;border-bottom:1px solid #f0f0f0;background:${rowBg};border-left:4px solid ${accentColor};">
-                    <div style="flex:1;padding:0.85rem 1rem;cursor:pointer;" onclick="showTaskDetail('${task.id}')" title="Click to view details">
+                <div class="tk-row" style="display:flex;align-items:center;border-bottom:1px solid #eef1f6;background:${rowBg};border-left:4px solid ${accentColor};">
+                    <div class="tk-main" style="flex:1;min-width:0;padding:0.8rem 1rem;cursor:pointer;" onclick="showTaskDetail('${task.id}')" title="Click to view details">
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
-                            <span style="font-weight:700;font-size:0.93rem;color:${isOverdue ? '#b91c1c' : '#111827'};">${task.actionType || 'Action'}</span>
+                            <span class="tk-title" style="font-weight:700;font-size:0.93rem;color:${isOverdue ? '#b91c1c' : '#111827'};">${task.actionType || 'Action'}</span>
                             ${daysBadge}
                         </div>
                         <div style="display:flex;flex-wrap:wrap;gap:0.75rem 1.5rem;font-size:0.8rem;color:#6b7280;">
@@ -18401,7 +18446,7 @@ ${email} has been completely removed from the system.`);
                                 <span style="font-weight:600;">Remarks:</span> ${task.completionRemarks}
                             </div>` : ''}
                     </div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;gap:0.4rem;padding:0.75rem 0.85rem;border-left:1px solid #f0f0f0;min-width:90px;">
+                    <div class="tk-act" style="display:flex;flex-direction:row;align-items:center;gap:0.5rem;padding:0.5rem 1rem 0.5rem 0.5rem;flex-shrink:0;">
                         <button onclick="jumpToLead('${task.leadId}')" class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.75rem;white-space:nowrap;">🔗 View Lead</button>
                         ${!isCompleted ? `<button onclick="markTaskDoneFromTab('${task.leadId}','${task.id}')" class="btn btn-success" style="padding:0.3rem 0.6rem;font-size:0.75rem;white-space:nowrap;">✓ Mark Done</button>` : ''}
                     </div>
@@ -22856,6 +22901,54 @@ ${email} has been completely removed from the system.`);
     .observe(document.body, { childList: true, subtree: true });
   mq.addEventListener && mq.addEventListener('change', enhance);
   enhance();
+})();
+</script>
+<script id="ux-round3">
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function shown(e) { return e && e.style.display !== 'none'; }
+  /* Scope note: "Showing only your work - Show all" */
+  function note(id, before, text, active, reset) {
+    var n = $(id);
+    if (!n) {
+      var a = before(); if (!a || !a.parentNode) return;
+      n = document.createElement('div'); n.id = id; n.className = 'scope-note';
+      n.innerHTML = '<span></span><button type="button">Show all</button>';
+      n.lastChild.addEventListener('click', reset);
+      a.parentNode.insertBefore(n, a);
+    }
+    n.firstChild.textContent = '\ud83d\udc64 ' + text;
+    n.classList.toggle('on', !!active);
+  }
+  function setSel(id, v) { var s = $(id); if (s) { s.value = v; s.dispatchEvent(new Event('change')); } }
+  function updateNotes() {
+    var lo = $('leadOwnerFilter');
+    note('scopeLeads', function () { return $('leadPipeline'); }, 'Showing only ' + (lo && lo.value !== 'all' ? lo.value + "'s" : '') + ' leads',
+      lo && lo.value !== 'all', function () { setSel('leadOwnerFilter', 'all'); });
+    var to = $('taskOwnerFilter');
+    note('scopeTasks', function () { return $('tasksList'); }, 'Showing only ' + (to && to.value !== 'all' ? to.value + "'s" : '') + ' tasks',
+      to && to.value !== 'all', function () { setSel('taskOwnerFilter', 'all'); });
+  }
+  /* Floating add button on phones */
+  var fab = document.createElement('button');
+  fab.className = 'mp-fab'; fab.type = 'button'; fab.setAttribute('aria-label', 'Add'); fab.textContent = '+';
+  document.body.appendChild(fab);
+  var action = null;
+  function updateFab() {
+    action = null;
+    var t = (typeof currentTab !== 'undefined') ? currentTab : '';
+    var modal = document.querySelector('.modal.show');
+    if (!modal) {
+      if (t === 'leads' && $('leadsTab') && shown($('leadsTab')) && $('leadDetailsPanelCard') && $('leadDetailsPanelCard').style.display === 'none' && typeof showAddLeadModal === 'function' && (typeof canManageData !== 'function' || canManageData()))
+        { action = showAddLeadModal; fab.setAttribute('aria-label', 'Add lead'); }
+      else if (t === 'customers' && shown($('addCustomerBtn')) && !document.querySelector('#customersTab .grid.m-detail')) { action = function () { $('addCustomerBtn').click(); }; fab.setAttribute('aria-label', 'Add customer'); }
+      else if (t === 'projects' && shown($('addProjectBtn')) && !document.querySelector('#projectsTab .grid.m-detail')) { action = function () { $('addProjectBtn').click(); }; fab.setAttribute('aria-label', 'Add project'); }
+      else if (t === 'jobs' && shown($('addJobBtn')) && !document.querySelector('#jobsTab .jobs-layout.j-detail')) { action = function () { $('addJobBtn').click(); }; fab.setAttribute('aria-label', 'New job'); }
+    }
+    fab.classList.toggle('on', !!action);
+  }
+  fab.addEventListener('click', function () { if (action) action(); });
+  setInterval(function () { try { updateNotes(); updateFab(); } catch (e) {} }, 400);
 })();
 </script>
 </body>
