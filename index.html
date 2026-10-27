@@ -3589,6 +3589,99 @@ html[data-theme="dark"] table.mc td { color: #e8edf7 !important; }
 html[data-theme="dark"] table.mc td::before { color: #94a3b8; }
 </style>
 <style id="task-rows">
+        #tasksTab svg { stroke: currentColor !important; }
+
+        .lead-priority-dot.priority-high { background: #ef4444; } .lead-priority-dot.priority-medium { background: #f59e0b; } .lead-priority-dot.priority-low { background: #10b981; }
+        .tk-main .tk-title ~ span svg { stroke: currentColor !important; color: currentColor !important; }
+        .pc-st-won .pc-avatar { --a1: #10b981; --a2: #0d9488; } .pc-st-ongoing .pc-avatar { --a1: #3b82f6; --a2: #6366f1; } .pc-st-handovered .pc-avatar { --a1: #8b5cf6; --a2: #a855f7; }
+
+        /* Premium list cards (customers and projects, desktop) */
+        .customer-item.pc-card { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 1.05rem; border: 1px solid #e5e9f2 !important; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); position: relative; transition: transform .15s ease, box-shadow .18s ease, border-color .15s ease; }
+        .customer-item.pc-card:hover { background: #fff; transform: translateY(-2px); border-color: #c3d3f5 !important; box-shadow: 0 10px 24px rgba(37,99,235,0.10); }
+        .customer-item.pc-card.active { background: linear-gradient(135deg, #f3f7ff, #ffffff); border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+        .pc-avatar { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; background: linear-gradient(135deg, var(--a1, #3b82f6), var(--a2, #6366f1)); box-shadow: 0 4px 10px rgba(59,130,246,0.25); }
+        .pc-avatar.pc-sq { border-radius: 13px; }
+        .pc-h0 { --a1: #3b82f6; --a2: #6366f1; } .pc-h1 { --a1: #10b981; --a2: #0d9488; } .pc-h2 { --a1: #f59e0b; --a2: #ea580c; }
+        .pc-h3 { --a1: #8b5cf6; --a2: #ec4899; } .pc-h4 { --a1: #06b6d4; --a2: #3b82f6; } .pc-h5 { --a1: #ef4444; --a2: #f97316; }
+        .pc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+        .pc-body .customer-name { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+        .pc-body .customer-contact { margin: 0; font-size: 0.82rem; color: #64748b; }
+        .pc-body .project-header { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 0; }
+        .pc-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+        .pc-chip { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; background: #eef2ff; color: #3730a3; }
+        .pc-chip.pc-val { background: #ecfdf5; color: #047857; }
+        .pc-arrow { flex: 0 0 auto; color: #94a3b8; font-size: 1.5rem; line-height: 1; transition: transform .15s ease, color .15s ease; }
+        .customer-item.pc-card:hover .pc-arrow { transform: translateX(3px); color: #2563eb; }
+        html[data-theme="dark"] .customer-item.pc-card { background: #131c31; border-color: #26324d !important; box-shadow: none; }
+        html[data-theme="dark"] .customer-item.pc-card:hover { background: #18233d !important; border-color: #3b4a70 !important; box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
+        html[data-theme="dark"] .customer-item.pc-card.active { background: rgba(59,130,246,0.14) !important; border-color: #3b82f6 !important; }
+        html[data-theme="dark"] .pc-body .customer-name { color: #e5ecfa; }
+        html[data-theme="dark"] .pc-body .customer-contact { color: #94a3b8; }
+        html[data-theme="dark"] .pc-chip { background: rgba(99,102,241,0.20); color: #c7d2fe; }
+        html[data-theme="dark"] .pc-chip.pc-val { background: rgba(16,185,129,0.18); color: #6ee7b7; }
+
+        /* Lists: use the width on desktop (cards in a responsive grid, table fills its card) */
+        .ll-wrap { flex: 1 1 100%; min-width: 0; }
+        @media (min-width: 769px) {
+            #customerList, #projectList, #jobList { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.75rem; padding: 0.9rem; align-content: start; }
+            #customerList > *, #projectList > *, #jobList > * { margin: 0 !important; min-width: 0; }
+            #jobList > .job-list-item { border: 1px solid #e5e9f2; border-radius: 14px; background: #fff; border-bottom: 1px solid #e5e9f2; }
+            #jobList > .job-list-item:hover { border-color: #c7d2fe; }
+            #jobList > .job-list-item.job-active { border-left: 3px solid #2563eb; }
+            #jobList > div:not(.job-list-item) { grid-column: 1 / -1; }
+            #jobsTab .jobs-list-panel > .card-header { display: flex !important; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+            #jobsTab .jobs-list-panel > .card-header > .search-box { flex: 1 1 260px; width: auto !important; margin: 0 !important; }
+            #jobsTab .jobs-list-panel > .card-header > div:nth-of-type(1) { display: flex !important; flex: 0 1 auto; flex-wrap: wrap; }
+            #jobsTab .jobs-list-panel > .card-header > select { flex: 0 0 200px; width: auto !important; margin: 0 !important; }
+        }
+        html[data-theme="dark"] #jobList > .job-list-item { background: #131c31; border-color: #26324d; }
+        html[data-theme="dark"] #jobList > .job-list-item:hover { border-color: #3b4a70; }
+
+        /* Kanban: columns share the row evenly so none is cut off; scroll only when truly too narrow */
+        @media (min-width: 769px) {
+            #leadPipeline.lead-pipeline { gap: 0.75rem; padding: 0.9rem 1rem 1.1rem; scroll-snap-type: x mandatory; scroll-padding: 1rem; }
+            #leadPipeline .lead-column { flex: 1 1 0; min-width: 166px; max-width: none; padding: 0.65rem; gap: 0.6rem; border: 1px solid #dde4f0; border-radius: 14px; }
+            #leadPipeline .lead-column-header { display: flex; align-items: center; min-height: 3.4rem; border-radius: 10px; padding: 0.45rem 0.6rem; }
+            #leadPipeline .lead-column-header::before { flex: 0 0 auto; }
+            #leadPipeline .lead-column-header .lc-t { flex: 1; min-width: 0; }
+            #leadPipeline::after { content: ""; flex: 0 0 1px; }
+        }
+        html[data-theme="dark"] #leadPipeline .lead-column { border-color: #26324d; }
+
+        @media (min-width: 1000px) {
+            .dt-proj { display: grid !important; grid-template-columns: 1fr 1fr; gap: 1.25rem !important; align-items: stretch; }
+            .dt-proj > .card, .dt-proj > .stats { grid-column: 1 / -1; }
+            .dt-proj > .card:has(> .sec-body[style*="display: none"]) { grid-column: auto; }
+            .dt-proj > .stats { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important; gap: 0.75rem !important; margin: 0 !important; }
+            .dt-idgrid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; align-items: start; }
+            .dt-idgrid > .dt-span { grid-column: 1 / -1; }
+        }
+
+        @media (min-width: 1000px) {
+            .dt-cust { display: grid !important; grid-template-columns: 340px minmax(0, 1fr); gap: 1.25rem 1.5rem !important; align-items: start; }
+            .dt-cust > .dt-c-info { grid-column: 1; grid-row: 1; }
+            .dt-cust > .stats { grid-column: 1; grid-row: 2; display: grid !important; grid-template-columns: 1fr !important; gap: 0.75rem !important; margin: 0 !important; }
+            .dt-cust > .dt-c-proj { grid-column: 2; grid-row: 1 / span 3; }
+            .dt-cust > button { grid-column: 1; grid-row: 3; }
+        }
+
+        /* Detail screens: two-column layout on desktop so wide panels are not mostly empty */
+        .dt-wrap { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem; }
+        .dt-cols { display: flex; flex-direction: column; gap: 1.5rem; }
+        .dt-main, .dt-side { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+        .dt-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .dt-actions .input { flex: 1; min-width: 200px; }
+        @media (min-width: 1000px) {
+            .dt-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1.5rem; row-gap: 1.25rem; align-items: start; }
+            .dt-head { grid-column: 1; grid-row: 1; }
+            .dt-actions { grid-column: 2; grid-row: 1; justify-content: flex-end; align-items: center; flex-wrap: nowrap; }
+            .dt-actions .input { flex: 0 0 auto; min-width: 0; width: 170px; }
+            .dt-cols { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+            .dt-main > div, .dt-side > details.proj-sub { margin: 0; }
+            .dt-main > .dt-card { background: rgba(148,163,184,0.08); border: 1px solid rgba(148,163,184,0.28); border-radius: 12px; padding: 1rem 1.1rem; margin: 0 !important; }
+        }
+        @media (min-width: 1000px) and (max-width: 1299px) { .dt-actions { flex-wrap: wrap; max-width: 420px; } }
+
 html[data-theme="dark"] #reimbWalletSummaryCard { background: #10261f !important; border-color: #1d4d3a !important; }
 html[data-theme="dark"] #reimbWalletSummaryCard > div:first-child span { color: #6ee7b7 !important; }
 html[data-theme="dark"] #reimbWalletSummaryCard > div:last-child > div { background: #0f1a2e !important; border: 1px solid #26324d; }
@@ -7277,6 +7370,10 @@ ${email} has been completely removed from the system.`);
         }
 
         // Render customer list
+        // Premium list-card helpers (initials avatar with a stable colour per name)
+        function pcInitials(n) { return esc(String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join('').toUpperCase() || '?'); }
+        function pcHue(n) { let h = 0; String(n || '').split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) % 6; }); return 'pc-h' + h; }
+
         function renderCustomerList() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             customerTerritoryFilterVal = document.getElementById('customerTerritoryFilter')?.value || 'all';
@@ -7312,13 +7409,17 @@ ${email} has been completely removed from the system.`);
                     const isActive = selectedCustomer && selectedCustomer.id === c.id;
                     
                     return `
-                        <div class="customer-item ${isActive ? 'active' : ''}" onclick="selectCustomer('${c.id}')">
-                            <div class="customer-name">${esc(c.name)}</div>
-                            ${c.contact ? `<div class="customer-contact">${c.contact}</div>` : ''}
-                            <div class="balance positive">
-                                ${projectCount} project${projectCount !== 1 ? 's' : ''}
-                                ${totalValue > 0 ? ` • ${formatCurrency(totalValue)}` : ''}
+                        <div class="customer-item pc-card ${isActive ? 'active' : ''}" onclick="selectCustomer('${c.id}')">
+                            <div class="pc-avatar ${pcHue(c.name)}">${pcInitials(c.name)}</div>
+                            <div class="pc-body">
+                                <div class="customer-name">${esc(c.name)}</div>
+                                ${c.contact ? `<div class="customer-contact">📞 ${esc(c.contact)}</div>` : ''}
+                                <div class="pc-chips">
+                                    <span class="pc-chip">${projectCount} project${projectCount !== 1 ? 's' : ''}</span>
+                                    ${totalValue > 0 ? `<span class="pc-chip pc-val">${formatCurrency(totalValue)}</span>` : ''}
+                                </div>
                             </div>
+                            <span class="pc-arrow">›</span>
                         </div>
                     `;
                 }).join('');
@@ -7433,9 +7534,9 @@ ${email} has been completely removed from the system.`);
                 }).join('');
 
             document.getElementById('detailsPanel').innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="dt-cust" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <!-- Customer Info -->
-                    <div class="card">
+                    <div class="card dt-c-info">
                         <div class="card-header">
                             <h2>${esc(selectedCustomer.name)}</h2>
                         </div>
@@ -7469,7 +7570,7 @@ ${email} has been completely removed from the system.`);
                     </div>
 
                     <!-- Projects List -->
-                    <div class="card">
+                    <div class="card dt-c-proj">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                             <h3>🏗️ Projects</h3>
                             ${isAdmin() ? `<button class="btn btn-primary" onclick="createProjectForCustomer('${selectedCustomer.id}')" style="font-size: 0.875rem; padding: 0.5rem 1rem;">+ New Project</button>` : ''}
@@ -12130,13 +12231,16 @@ ${email} has been completely removed from the system.`);
                     const stageLabel = p.stage.charAt(0).toUpperCase() + p.stage.slice(1);
                     
                     return `
-                        <div class="customer-item ${isActive ? 'active' : ''}" onclick="selectProject('${p.id}')">
-                            <div class="project-header">
-                                <div class="customer-name">${esc(p.name)}</div>
-                                <span class="status-badge ${stageClass}">${stageLabel}</span>
+                        <div class="customer-item pc-card pc-st-${esc(p.stage || '')} ${isActive ? 'active' : ''}" onclick="selectProject('${p.id}')">
+                            <div class="pc-avatar pc-sq ${pcHue(p.name)}">${pcInitials(p.name)}</div>
+                            <div class="pc-body">
+                                <div class="project-header">
+                                    <div class="customer-name">${esc(p.name)}</div>
+                                    <span class="status-badge ${stageClass}">${stageLabel}</span>
+                                </div>
+                                ${p.customerName ? `<div class="customer-contact">👤 ${esc(p.customerName)}</div>` : ''}
+                                ${p.value ? `<div class="pc-chips"><span class="pc-chip pc-val">${formatCurrency(p.value)}</span></div>` : ''}
                             </div>
-                            ${p.customerName ? `<div class="customer-contact">👤 ${esc(p.customerName)}</div>` : ''}
-                            ${p.value ? `<div class="customer-contact">💰 ${formatCurrency(p.value)}</div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -12665,7 +12769,7 @@ ${email} has been completely removed from the system.`);
                 }).join('');
 
             document.getElementById('projectDetailsPanel').innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="dt-proj" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <!-- Project Header -->
                     <div class="card">
                         <div class="card-header">
@@ -12675,7 +12779,7 @@ ${email} has been completely removed from the system.`);
                             </div>
                         </div>
                         <div class="card-body">
-                            <div style="display: grid; gap: 1rem;">
+                            <div class="dt-idgrid" style="display: grid; gap: 1rem;">
                                 ${selectedProject.customerName ? `
                                     <div>
                                         <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem;">Customer</div>
@@ -12711,14 +12815,14 @@ ${email} has been completely removed from the system.`);
                                 ` : ''}
 
                                 ${selectedProject.description ? `
-                                    <div>
+                                    <div class="dt-span">
                                         <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Description</div>
                                         <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">${esc(selectedProject.description)}</div>
                                     </div>
                                 ` : ''}
 
                                 ${isAdmin() ? `
-                                    <div style="display: flex; gap: 0.75rem;">
+                                    <div class="dt-span" style="display: flex; gap: 0.75rem;">
                                         <button class="btn btn-primary" onclick="showEditProjectModal(selectedProject)">✏️ Edit Project</button>
                                         <button class="btn btn-danger" onclick="deleteProject('${selectedProject.id}')">🗑️ Delete</button>
                                     </div>
@@ -13040,7 +13144,11 @@ ${email} has been completely removed from the system.`);
                 chevron.textContent = '\u25BC';
                 const firstEl = header.firstElementChild;
                 header.insertBefore(chevron, header.firstChild);
-                if (firstEl) firstEl.style.flex = '1';
+                if (firstEl) {
+                    // Icon-only first span: let the title span (next) take the free space instead
+                    const grow = (firstEl.tagName === 'SPAN' && firstEl.nextElementSibling && firstEl.nextElementSibling.tagName === 'SPAN') ? firstEl.nextElementSibling : firstEl;
+                    grow.style.flex = '1';
+                }
                 header.style.display = 'flex';
                 header.style.alignItems = 'center';
                 header.style.gap = '0.5rem';
@@ -17084,8 +17192,7 @@ ${email} has been completely removed from the system.`);
                 return `
                     <div class="lead-column">
                         <div class="lead-column-header ${stage.color}">
-                            ${esc(stage.label)}
-                            <span class="lead-column-count">(${stageLeads.length})</span>
+                            <span class="lc-t">${esc(stage.label)} <span class="lead-column-count">(${stageLeads.length})</span></span>
                         </div>
                         ${stageLeads.length === 0 ?
                             '<div style="text-align:center;color:#9ca3af;font-size:0.875rem;padding:1rem;">No leads</div>' :
@@ -17107,6 +17214,8 @@ ${email} has been completely removed from the system.`);
         }
 
         let leadSectionOpen = {};
+        // Sections start closed; they open only when the user clicks them
+        const secOpen = k => leadSectionOpen[k] === true;
         function selectLead(id) {
             if (!selectedLead || selectedLead.id !== id) leadSectionOpen = {};
             selectedLead = leads.find(l => l.id === id);
@@ -17153,9 +17262,9 @@ ${email} has been completely removed from the system.`);
             const activities = selectedLead.activities || [];
 
             document.getElementById('leadDetailsPanel').innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem;">
+                <div class="dt-wrap">
                     <!-- Lead Header -->
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div class="dt-head" style="display: flex; justify-content: space-between; align-items: start;">
                         <div>
                             <div>
                                 <h2 style="margin: 0 0 0.25rem 0;">${esc(selectedLead.projectName || selectedLead.contactPerson || '')}</h2>
@@ -17166,12 +17275,13 @@ ${email} has been completely removed from the system.`);
                     </div>
                     </div>
 
+                    <div class="dt-cols"><div class="dt-main">
                     <!-- Customer Contacts -->
                     ${(() => {
                         const contacts = selectedLead.contacts && selectedLead.contacts.length > 0
                             ? selectedLead.contacts
                             : [{ name: selectedLead.contactPerson||'', phone: selectedLead.phone||'', email: selectedLead.email||'', designation:'' }];
-                        return `<div style="margin-bottom:1rem;">
+                        return `<div class="dt-card" style="margin-bottom:1rem;">
                             <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;color:#374151;margin-bottom:0.5rem;letter-spacing:0.05em;">👥 Customer Contacts</div>
                             <div style="display:flex;flex-wrap:wrap;gap:0.75rem;">
                                 ${contacts.map((c,i) => `
@@ -17187,7 +17297,7 @@ ${email} has been completely removed from the system.`);
                     })()}
 
                     <!-- Lead Info Grid -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="dt-card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         ${selectedLead.leadGenDate ? `
                             <div>
                                 <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">Lead Gen Date</div>
@@ -17246,9 +17356,10 @@ ${email} has been completely removed from the system.`);
                         </div>
                     ` : ''}
 
+                    </div><div class="dt-side">
                     <!-- BOQ Files -->
                     ${selectedLead.boqFiles && selectedLead.boqFiles.length > 0 ? `
-                        <details class="proj-sub" ${leadSectionOpen.boq ? 'open' : ''} ontoggle="leadSectionOpen.boq = this.open">
+                        <details class="proj-sub" ${secOpen('boq') ? 'open' : ''} ontoggle="leadSectionOpen.boq = this.open">
                             <summary>📊 BOQ Files (${selectedLead.boqFiles.length})</summary>
                             <div class="files-grid">
                                 ${selectedLead.boqFiles.map(f => `
@@ -17267,7 +17378,7 @@ ${email} has been completely removed from the system.`);
 
                     <!-- Design Files -->
                     ${selectedLead.designFiles && selectedLead.designFiles.length > 0 ? `
-                        <details class="proj-sub" ${leadSectionOpen.design ? 'open' : ''} ontoggle="leadSectionOpen.design = this.open">
+                        <details class="proj-sub" ${secOpen('design') ? 'open' : ''} ontoggle="leadSectionOpen.design = this.open">
                             <summary>🎨 Design Bundle (${selectedLead.designFiles.length})</summary>
                             <div class="files-grid">
                                 ${selectedLead.designFiles.map(f => `
@@ -17284,26 +17395,10 @@ ${email} has been completely removed from the system.`);
                         </details>
                     ` : ''}
 
-                    ${canManageLeads() ? `
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <select class="input" style="flex: 1; min-width: 200px;" onchange="updateLeadStage(this.value)">
-                                ${leadStages.map(s => `
-                                    <option value="${esc(s.id)}" ${selectedLead.stage === s.id ? 'selected' : ''}>${esc(s.label)}</option>
-                                `).join('')}
-                            </select>
-                            <button class="btn btn-primary" onclick="showEditLeadModal()">✏️ Edit</button>
-                            <button class="btn btn-secondary" onclick="showLeadBOQModal()">📊 BOQ${(selectedLead.boqFiles && selectedLead.boqFiles.length) ? ' (' + selectedLead.boqFiles.length + ')' : ''}</button>
-                            <button class="btn btn-secondary" onclick="showAddActivityModal()">+ Add Activity</button>
-                            ${(selectedLead.stage === 'won_token' || selectedLead.stage === 'won_material') ? `
-                                <button class="btn btn-success" onclick="convertLeadToCustomer()">📋 Create Final Quote</button>
-                            ` : ''}
-                            <button class="btn btn-danger" onclick="deleteLead('${esc(selectedLead.id)}')">🗑️ Delete</button>
-                        </div>
-                    ` : ''}
 
                     <!-- Actions / Follow-ups -->
                     ${selectedLead.leadActions && selectedLead.leadActions.length > 0 ? `
-                        <details class="proj-sub" ${leadSectionOpen.actions ? 'open' : ''} ontoggle="leadSectionOpen.actions = this.open">
+                        <details class="proj-sub" ${secOpen('actions') ? 'open' : ''} ontoggle="leadSectionOpen.actions = this.open">
                             <summary>📋 Follow-up Actions (${selectedLead.leadActions.length})</summary>
                             ${selectedLead.leadActions.map(action => {
                                 const _today = new Date(); _today.setHours(0,0,0,0);
@@ -17349,7 +17444,7 @@ ${email} has been completely removed from the system.`);
 
                     <!-- Quotes -->
                     ${(selectedLead.finalQuotes && selectedLead.finalQuotes.length > 0) ? `
-                    <details class="proj-sub" ${leadSectionOpen.quotes ? 'open' : ''} ontoggle="leadSectionOpen.quotes = this.open">
+                    <details class="proj-sub" ${secOpen('quotes') ? 'open' : ''} ontoggle="leadSectionOpen.quotes = this.open">
                         <summary>📋 Quotes / Proposals (${selectedLead.finalQuotes.length})</summary>
                         ${selectedLead.finalQuotes.map(q => {
                             const fmt = v => '₹' + (parseFloat(v)||0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
@@ -17376,7 +17471,7 @@ ${email} has been completely removed from the system.`);
                     ` : ''}
 
                     <!-- Activities -->
-                    <details class="proj-sub" ${leadSectionOpen.activity ? 'open' : ''} ontoggle="leadSectionOpen.activity = this.open">
+                    <details class="proj-sub" ${secOpen('activity') ? 'open' : ''} ontoggle="leadSectionOpen.activity = this.open">
                         <summary>Activity Timeline (${activities.length})</summary>
                         ${activities.length === 0 ? 
                             '<div style="text-align: center; color: #9ca3af; padding: 1rem;">No activities yet</div>' :
@@ -17404,6 +17499,23 @@ ${email} has been completely removed from the system.`);
                             `}).join('')
                         }
                     </details>
+                    </div></div>
+                    ${canManageLeads() ? `
+                        <div class="dt-actions">
+                            <select class="input" onchange="updateLeadStage(this.value)">
+                                ${leadStages.map(s => `
+                                    <option value="${esc(s.id)}" ${selectedLead.stage === s.id ? 'selected' : ''}>${esc(s.label)}</option>
+                                `).join('')}
+                            </select>
+                            <button class="btn btn-primary" onclick="showEditLeadModal()">✏️ Edit</button>
+                            <button class="btn btn-secondary" onclick="showLeadBOQModal()">📊 BOQ${(selectedLead.boqFiles && selectedLead.boqFiles.length) ? ' (' + selectedLead.boqFiles.length + ')' : ''}</button>
+                            <button class="btn btn-secondary" onclick="showAddActivityModal()">+ Add Activity</button>
+                            ${(selectedLead.stage === 'won_token' || selectedLead.stage === 'won_material') ? `
+                                <button class="btn btn-success" onclick="convertLeadToCustomer()">📋 Create Final Quote</button>
+                            ` : ''}
+                            <button class="btn btn-danger" onclick="deleteLead('${esc(selectedLead.id)}')">🗑️ Delete</button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
@@ -18299,7 +18411,7 @@ ${email} has been completely removed from the system.`);
             }).join('');
 
             container.innerHTML = `
-            <div style="padding:0 0 1rem;">
+            <div class="ll-wrap" style="padding:0 0 1rem;">
                 <table class="lead-list-table">
                     <thead>
                         <tr>
@@ -22771,6 +22883,13 @@ ${email} has been completely removed from the system.`);
         window.switchTab = function () {
           TABS.forEach(function (t) { var g = grid(t.tab); if (g) g.classList.remove('m-detail'); });
           var jj = jl(); if (jj) jj.classList.remove('j-detail');
+          // Leaving a tab closes any open lead detail so coming back shows the list
+          try {
+            if (typeof selectedLead !== 'undefined' && selectedLead && typeof closeLeadDetails === 'function') {
+              closeLeadDetails(true);
+              if (/^#lead\//.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+            }
+          } catch (e) {}
           SR.forEach(function (x) { var l = rl(x.tab); if (l) l.classList.remove('s-detail'); });
           return sw.apply(this, arguments);
         };
