@@ -4041,6 +4041,7 @@ html[data-theme="dark"] .scope-note button { color: #93c5fd; }
                 <button class="tab" id="reportsTab" onclick="switchTab('reports')" style="display: none;">📊 Reports</button>
                 <button class="tab" id="reimbursementTab" onclick="switchTab('reimbursement')" style="display: none;">💰 Reimbursement</button>
                 <button class="tab" id="suppliersTab" onclick="switchTab('suppliers')" style="display: none;">🏪 Suppliers</button>
+                <button class="tab" id="finReconTab" onclick="switchTab('finrecon')" style="display: none;">🧮 Financial Reconciler</button>
             </div>
 
             <!-- Leads Tab -->
@@ -4485,6 +4486,31 @@ html[data-theme="dark"] .scope-note button { color: #93c5fd; }
                     </div><!-- /reimb-right -->
                 </div><!-- /reimb-layout -->
             </div><!-- /reimbursementTabContent -->
+
+            <!-- Financial Reconciler Tab (all projects) -->
+            <div id="finReconTabContent" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                            <span>🧮 Financial Reconciler — All Projects</span>
+                            <button class="btn btn-secondary" style="padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="finReconRender()">↻ Recalculate</button>
+                        </div>
+                    </div>
+                    <div style="padding:1.25rem 1.5rem 1.75rem;">
+                        <div id="finReconFilters" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1.25rem;">
+                            <input type="search" class="search-box" id="finReconSearch" placeholder="Search project or customer…" oninput="finReconRender()" style="margin:0;flex:1 1 220px;min-width:180px;">
+                            <select class="input" id="finReconStage" onchange="finReconRender()" style="width:auto;margin:0;">
+                                <option value="all">All stages</option><option value="won">Won</option><option value="ongoing">Ongoing</option><option value="handovered">Handovered</option>
+                            </select>
+                            <select class="input" id="finReconAttn" onchange="finReconRender()" style="width:auto;margin:0;">
+                                <option value="all">All projects</option><option value="outstanding">Customer outstanding</option><option value="credit">Customer credit / advance</option>
+                                <option value="uninvoiced">Materials not fully invoiced</option><option value="review">Needs review</option>
+                            </select>
+                        </div>
+                        <div id="finReconBody"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Suppliers Tab -->
             <div id="suppliersTabContent" style="display: none;">
@@ -5144,6 +5170,62 @@ html[data-theme="dark"] .scope-note button { color: #93c5fd; }
     </div>
 
     <!-- Generate Delivery Challan Modal -->
+    <!-- Financial Reconciliation: upload + review modals -->
+    <div class="modal" id="reconUploadModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2>Upload BOQ Document</h2>
+                <span class="close" onclick="closeModal('reconUploadModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>BOQ / quotation file (.xlsx, .xls, .csv, .pdf, .docx — max 10 MB)</label>
+                    <input type="file" class="input" id="reconFileInput" accept=".xlsx,.xls,.csv,.pdf,.docx">
+                </div>
+                <div class="form-group">
+                    <label>Name (optional)</label>
+                    <input type="text" class="input" id="reconSourceName" placeholder="e.g. Customer BOQ v2">
+                </div>
+                <div id="reconUploadStatus" style="font-size:0.82rem;color:#374151;white-space:pre-wrap;"></div>
+                <div style="font-size:0.75rem;color:#6b7280;margin-top:0.5rem;">The file is read in your browser. You can check and correct every extracted item before anything is saved.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('reconUploadModal')">Cancel</button>
+                <button class="btn btn-primary" id="reconReadBtn" onclick="reconReadFile()">Read file</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="reconReviewModal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="reconReviewTitle">Review extracted BOQ</h2>
+                <span class="close" onclick="closeModal('reconReviewModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" class="input" id="reconReviewName">
+                </div>
+                <div id="reconReviewWarn"></div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;margin-top:0.5rem;">
+                        <thead><tr style="background:#f3f4f6;font-size:0.72rem;text-align:left;">
+                            <th style="padding:0.3rem;">Description</th><th style="padding:0.3rem;">Code / Model</th><th style="padding:0.3rem;">Unit</th>
+                            <th style="padding:0.3rem;">Qty</th><th style="padding:0.3rem;">Rate</th><th style="padding:0.3rem;">Amount</th><th></th>
+                        </tr></thead>
+                        <tbody id="reconReviewBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-secondary" style="margin-top:0.5rem;padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="reconAddDraftRow()">+ Add row</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('reconReviewModal')">Cancel</button>
+                <button class="btn btn-primary" id="reconSaveBtn" onclick="reconSaveDraft()">Save BOQ</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="challanModal">
         <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
             <div class="modal-header">
@@ -6409,6 +6491,8 @@ html[data-theme="dark"] .scope-note button { color: #93c5fd; }
             if (reimbTabBtn) reimbTabBtn.style.display = (isSuperUser() || isOperationsDirector()) ? 'block' : 'none';
             const suppTabBtn = document.getElementById('suppliersTab');
             if (suppTabBtn) suppTabBtn.style.display = (isSuperUser() || isAdmin() || isOperationsDirector()) ? 'block' : 'none';
+            const finReconBtn = document.getElementById('finReconTab');
+            if (finReconBtn) finReconBtn.style.display = (isSuperUser() || isAdmin() || isOperationsDirector()) ? 'block' : 'none';
             document.getElementById('addCustomerBtn').style.display = canManageData() ? 'block' : 'none';
             document.getElementById('addProjectBtn').style.display = (canManageData() && currentTab === 'projects') ? 'block' : 'none';
             
@@ -10245,7 +10329,7 @@ ${email} has been completely removed from the system.`);
             event.target.classList.add('active');
 
             // Hide all tabs
-            ['leadsTab','customersTab','projectsTab','usersTab','tasksTab','reportsTabContent','jobsTab','reimbursementTabContent','suppliersTabContent'].forEach(id => {
+            ['leadsTab','customersTab','projectsTab','usersTab','tasksTab','reportsTabContent','jobsTab','reimbursementTabContent','suppliersTabContent','finReconTabContent'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
@@ -10292,6 +10376,11 @@ ${email} has been completely removed from the system.`);
                 if (!isSuperUser() && !isAdmin() && !isOperationsDirector()) return;
                 document.getElementById('suppliersTabContent').style.display = 'block';
                 loadSuppliers();
+            } else if (tab === 'finrecon') {
+                if (!isSuperUser() && !isAdmin() && !isOperationsDirector()) return;
+                document.getElementById('finReconTabContent').style.display = 'block';
+                finReconSelId = null;
+                finReconRender();
             }
         }
 
@@ -11934,7 +12023,8 @@ ${email} has been completely removed from the system.`);
                     items: items.map(i => ({ _id: Date.now().toString() + Math.random(), name: i.name, unit: i.unit || 'Nos', quantity: i.quantity, rate: i.rate, gstPercent: i.gstPercent == null ? 18 : i.gstPercent, gstAmount: 0, cost: 0, total: 0 })),
                     skippedZero: t.skippedZero || 0,
                     uncertain: t.uncertain || 0,
-                    discountPct: m ? parseFloat(m[1]) : null
+                    discountPct: m ? parseFloat(m[1]) : null,
+                    usedOcr: sources.length > 0
                 };
             } finally {
                 if (worker) { try { await worker.terminate(); } catch (e) {} }
@@ -12634,6 +12724,864 @@ ${email} has been completely removed from the system.`);
                 listElement.innerHTML = html;
             }
         }
+
+        /* RECON-CORE-START (pure logic: no DOM, no Firebase) */
+        const RECON_EPS = 0.0001;
+        const RECON_STOP = new Set(['and', 'the', 'of', 'with', 'for', 'a', 'an', 'to', 'in']);
+
+        // "1,00,000.50", "₹ 2,500", "Rs. 40", "(50)" -> number; anything else -> null
+        function reconNum(v) {
+            if (typeof v === 'number') return isFinite(v) ? v : null;
+            if (v === null || v === undefined) return null;
+            let s = String(v).replace(/₹|rs\.?|inr|,|\s/gi, '');
+            if (s === '') return null;
+            let neg = false;
+            if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+            if (!/^-?\d+(\.\d+)?$/.test(s) && !/^-?\.\d+$/.test(s)) return null;
+            const n = parseFloat(s);
+            return neg ? -n : n;
+        }
+
+        // "10 Nos" -> {qty:10, unit:'Nos'}; "12.5" -> {qty:12.5, unit:''}; "" -> {qty:null}
+        function reconQtyUnit(v) {
+            const n = reconNum(v);
+            if (n !== null) return { qty: n, unit: '' };
+            const m = String(v == null ? '' : v).trim().match(/^([\d,]+(?:\.\d+)?)\s*([A-Za-z][A-Za-z.\s]{0,14})$/);
+            if (m) return { qty: reconNum(m[1]), unit: m[2].trim() };
+            return { qty: null, unit: '' };
+        }
+
+        function reconNorm(s) {
+            return String(s == null ? '' : s).toLowerCase()
+                .replace(/&/g, ' and ')
+                .replace(/[^a-z0-9.]+/g, ' ')
+                .replace(/\.(?!\d)/g, ' ')
+                .replace(/(^|[^\d])\./g, '$1 ')
+                .replace(/\s+/g, ' ').trim();
+        }
+
+        const RECON_UNIT_GROUPS = {
+            nos: ['nos', 'no', 'pcs', 'pc', 'piece', 'pieces', 'each', 'ea', 'unit', 'units', 'number', 'numbers'],
+            mtr: ['mtr', 'mtrs', 'meter', 'meters', 'metre', 'metres', 'm', 'rmt', 'rm'],
+            sqft: ['sqft', 'sft', 'sqfeet', 'sqfoot', 'squarefeet'],
+            sqm: ['sqm', 'sqmt', 'sqmtr', 'sqmtrs', 'sqmeter', 'sqmeters', 'sqmetre'],
+            rft: ['rft', 'runningfeet', 'runningft'],
+            kg: ['kg', 'kgs', 'kilogram', 'kilograms'],
+            ltr: ['ltr', 'ltrs', 'l', 'litre', 'litres', 'liter', 'liters'],
+            set: ['set', 'sets'],
+            box: ['box', 'boxes'],
+            pair: ['pair', 'pairs'],
+            ls: ['ls', 'lumpsum', 'lump'],
+            hr: ['hr', 'hrs', 'hour', 'hours']
+        };
+        const RECON_UNIT_MAP = (() => {
+            const m = {};
+            Object.keys(RECON_UNIT_GROUPS).forEach(k => RECON_UNIT_GROUPS[k].forEach(a => { m[a] = k; }));
+            return m;
+        })();
+        function reconUnit(u) {
+            const s = String(u == null ? '' : u).toLowerCase().replace(/[^a-z]/g, '');
+            if (!s) return '';
+            return RECON_UNIT_MAP[s] || s;
+        }
+        function reconUnitsCompatible(a, b) {
+            const x = reconUnit(a), y = reconUnit(b);
+            return !x || !y || x === y;
+        }
+
+        function reconTokens(name) {
+            return reconNorm(name).split(' ').filter(t => t && !RECON_STOP.has(t));
+        }
+
+        // model / code like tokens: contain digits AND letters (ZS-102, TP4G, RJ45), upper-cased, no punctuation
+        function reconCodes(text, explicit) {
+            const out = new Set();
+            const add = c => { c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length >= 3) out.add(c); };
+            if (explicit) add(explicit);
+            (String(text || '').match(/[A-Za-z0-9][A-Za-z0-9\-\/]{2,}/g) || []).forEach(t => {
+                if (/[A-Za-z]/.test(t) && /\d/.test(t)) add(t);
+            });
+            return out;
+        }
+
+        function reconJaccard(a, b) {
+            const A = new Set(a), B = new Set(b);
+            if (!A.size || !B.size) return 0;
+            let inter = 0;
+            A.forEach(x => { if (B.has(x)) inter++; });
+            return inter / (A.size + B.size - inter);
+        }
+
+        function reconInvoiceGrand(inv) {
+            if (typeof _miNums === 'function') return _miNums(inv).grand;
+            return parseFloat(inv.grandTotal) || 0;
+        }
+
+        // ---------- 1. Customer outstanding ----------
+        function reconCustomerOutstanding(p) {
+            const seenInv = new Set(), invoices = [];
+            (p.invoices || []).forEach(inv => {
+                if (!inv) return;
+                if (inv.id !== undefined && inv.id !== null) {
+                    if (seenInv.has(String(inv.id))) return;
+                    seenInv.add(String(inv.id));
+                }
+                invoices.push({ id: inv.id, number: inv.invoiceNumber || '', date: inv.invoiceDate || '', amount: reconInvoiceGrand(inv) });
+            });
+            const seenPay = new Set(), payments = [];
+            (p.payments || []).forEach(pay => {
+                if (!pay) return;
+                if (pay.id !== undefined && pay.id !== null) {
+                    if (seenPay.has(String(pay.id))) return;
+                    seenPay.add(String(pay.id));
+                }
+                const amt = parseFloat(pay.amount);
+                if (!isFinite(amt)) return;
+                payments.push({ id: pay.id, date: pay.paymentDate || pay.date || '', amount: amt, mode: pay.paymentMode || '', ref: pay.refNumber || '' });
+            });
+            const r2 = n => Math.round(n * 100) / 100;
+            const totalInvoiced = r2(invoices.reduce((s, i) => s + i.amount, 0));
+            const totalPaid = r2(payments.reduce((s, i) => s + i.amount, 0));
+            const net = r2(totalInvoiced - totalPaid);
+            const creditNotes = (p.creditNotes || []);
+            return {
+                invoices, payments, totalInvoiced, totalPaid,
+                outstanding: net > 0 ? net : 0,
+                credit: net < 0 ? r2(-net) : 0,
+                invoiceCount: invoices.length, paymentCount: payments.length,
+                creditNoteCount: creditNotes.length,
+                creditNoteTotal: r2(creditNotes.reduce((s, c) => s + (parseFloat(c && c.grandTotal) || 0), 0))
+            };
+        }
+
+        // ---------- 2/3. Item matching ----------
+        // invoice lines (Tax Invoices only), each with a unique key so a line can never be counted twice
+        function reconInvoiceLines(p) {
+            const seenInv = new Set(), lines = [];
+            (p.invoices || []).forEach(inv => {
+                if (!inv) return;
+                if (inv.id !== undefined && inv.id !== null) {
+                    if (seenInv.has(String(inv.id))) return;
+                    seenInv.add(String(inv.id));
+                }
+                (inv.items || []).forEach((it, idx) => {
+                    if (!it) return;
+                    const qty = reconNum(it.quantity);
+                    const name = String(it.description || it.name || '').trim();
+                    lines.push({
+                        key: String(inv.id) + '#' + (it.id !== undefined && it.id !== null ? it.id : 'i' + idx),
+                        invoiceNo: inv.invoiceNumber || '', name, unit: it.unit || '', qty: qty === null ? 0 : qty,
+                        hsn: it.hsnCode || '', codes: reconCodes(name)
+                    });
+                });
+            });
+            return lines;
+        }
+
+        const RECON_LABELS = {
+            boq: { match: 'Matched', under: 'Under-billed', over: 'Over-billed', none: 'Not Invoiced', review: 'Review Required' },
+            proc: { match: 'Fully Invoiced', under: 'Partially Invoiced', over: 'Over-Invoiced', none: 'Not Invoiced', review: 'Review Required' }
+        };
+
+        // refs: [{name, code, unit, qty (number|null), source}]
+        // lines: from reconInvoiceLines;  manual: { "<scope>|<groupKey>": [lineKey,...] }
+        function reconMatchItems(refs, lines, manual, scope) {
+            manual = manual || {};
+            const labels = RECON_LABELS[scope === 'proc' ? 'proc' : 'boq'];
+
+            // group duplicate reference rows (same normalised name + unit)
+            const groups = [], byKey = {};
+            refs.forEach(r => {
+                const nn = reconNorm(r.name);
+                if (!nn) return;
+                const key = nn + '|' + reconUnit(r.unit);
+                let g = byKey[key];
+                if (!g) {
+                    g = byKey[key] = {
+                        key, name: r.name, unit: r.unit || '', normName: nn, tokens: reconTokens(r.name),
+                        codes: reconCodes(r.name, r.code), qty: 0, missingQty: false, sources: [], lines: [], cands: []
+                    };
+                    groups.push(g);
+                }
+                if (r.code) reconCodes('', r.code).forEach(c => g.codes.add(c));
+                if (r.qty === null || r.qty === undefined || !isFinite(r.qty) || r.qty < 0) g.missingQty = true;
+                else g.qty += r.qty;
+                g.sources.push({ source: r.source || '', qty: r.qty });
+                if (!g.unit && r.unit) g.unit = r.unit;
+            });
+
+            const consumed = new Set(), manualFor = {};
+            groups.forEach(g => (manual[scope + '|' + g.key] || []).forEach(k => { manualFor[k] = g; }));
+
+            const additional = [];
+            lines.forEach(L => {
+                const nn = reconNorm(L.name);
+                if (!nn) { additional.push(Object.assign({ note: 'No description on invoice line' }, L)); return; }
+                if (manualFor[L.key]) {   // user confirmed this link
+                    manualFor[L.key].lines.push(Object.assign({ manual: true }, L));
+                    consumed.add(L.key);
+                    return;
+                }
+                const lt = reconTokens(L.name);
+                const exactOk = [], exactBadUnit = [], cands = [];
+                groups.forEach(g => {
+                    const codeHit = [...g.codes].some(c => L.codes.has(c));
+                    const codeConflict = g.codes.size > 0 && L.codes.size > 0 && !codeHit;
+                    const exact = g.normName === nn || codeHit;
+                    if (exact) {
+                        if (reconUnitsCompatible(g.unit, L.unit)) exactOk.push(g); else exactBadUnit.push(g);
+                        return;
+                    }
+                    if (codeConflict) return;    // different model numbers: never the same product
+                    const j = reconJaccard(g.tokens, lt);
+                    const na = ' ' + nn + ' ', nb = ' ' + g.normName + ' ';
+                    const contains = lt.length >= 2 && g.tokens.length >= 2 && (na.indexOf(nb) >= 0 || nb.indexOf(na) >= 0);
+                    if (j >= 0.6 || contains) cands.push(g);
+                });
+                if (exactOk.length === 1) { exactOk[0].lines.push(L); consumed.add(L.key); return; }
+                if (exactOk.length > 1) { exactOk.forEach(g => g.cands.push(Object.assign({ why: 'Matches several reference rows (units differ)' }, L))); consumed.add(L.key); return; }
+                if (exactBadUnit.length) {
+                    exactBadUnit.forEach(g => g.cands.push(Object.assign({ why: 'Same item but unit differs (' + (L.unit || '-') + ' vs ' + (g.unit || '-') + ')' }, L)));
+                    consumed.add(L.key); return;
+                }
+                if (cands.length) {
+                    cands.forEach(g => g.cands.push(Object.assign({ why: 'Similar description, not identical' }, L)));
+                    consumed.add(L.key); return;
+                }
+                additional.push(L);
+            });
+
+            const rows = groups.map(g => {
+                const invoicedQty = Math.round(g.lines.reduce((s, l) => s + l.qty, 0) * 1000) / 1000;
+                const refQty = Math.round(g.qty * 1000) / 1000;
+                let status, reason = '';
+                if (g.cands.length) { status = 'review'; reason = g.cands[0].why; }
+                else if (g.missingQty) { status = 'review'; reason = 'Quantity missing in the reference list'; }
+                else if (!g.lines.length) status = 'none';
+                else if (Math.abs(invoicedQty - refQty) < RECON_EPS) status = 'match';
+                else if (invoicedQty < refQty) status = 'under';
+                else status = 'over';
+                return {
+                    key: g.key, name: g.name, unit: g.unit, code: [...g.codes].join(', '), qty: g.missingQty ? null : refQty,
+                    invoicedQty, diff: g.missingQty ? null : Math.round((refQty - invoicedQty) * 1000) / 1000,
+                    status, label: labels[status], reason,
+                    duplicates: g.sources.length > 1, sources: g.sources, lines: g.lines, candidates: g.cands
+                };
+            });
+            const counts = { match: 0, under: 0, over: 0, none: 0, review: 0 };
+            rows.forEach(r => { counts[r.status]++; });
+            return { rows, additional, counts, total: rows.length, labels };
+        }
+
+        // ---------- reference list builders ----------
+        function reconRefsFromQuote(q) {
+            return ((q && q.items) || []).map((it, i) => ({
+                name: String(it.description || it.name || '').trim(), code: it.code || '', unit: it.unit || '',
+                qty: reconNum(it.qty !== undefined ? it.qty : it.quantity),
+                source: 'Quote ' + ((q && q.quoteNo) || '') + ' line ' + (i + 1)
+            })).filter(r => r.name);
+        }
+        function reconRefsFromSource(s) {
+            return ((s && s.items) || []).map((it, i) => ({
+                name: String(it.name || '').trim(), code: it.code || '', unit: it.unit || '',
+                qty: reconNum(it.quantity),
+                source: ((s && (s.fileName || s.name)) || 'Uploaded BOQ') + ' line ' + (i + 1)
+            })).filter(r => r.name);
+        }
+        function reconRefsFromProcurement(p) {
+            const refs = [];
+            (p.materials || []).forEach(m => {
+                if (!m) return;
+                const tag = 'Procurement ' + (m.supplierName || 'supplier') + (m.procurementDate ? ' ' + m.procurementDate : '');
+                if (Array.isArray(m.items) && m.items.length) {
+                    m.items.forEach((it, i) => {
+                        const qu = reconQtyUnit(it.quantity);
+                        refs.push({ name: String(it.name || '').trim(), code: it.code || it.model || '', unit: it.unit || qu.unit, qty: qu.qty, source: tag + ' item ' + (i + 1) });
+                    });
+                } else if (m.name) {   // legacy single-item record (no unit stored)
+                    const qu = reconQtyUnit(m.quantity);
+                    refs.push({ name: String(m.name).trim(), code: '', unit: qu.unit, qty: qu.qty, source: tag + ' (legacy record)' });
+                }
+            });
+            return refs.filter(r => r.name);
+        }
+
+        // ---------- BOQ table parser (rows = 2D array of cell values) ----------
+        function reconClassifyHeader(cell) {
+            const t = String(cell == null ? '' : cell).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!t || t.length > 40) return null;
+            if (/\bhsn\b|\bsac\b/.test(t)) return 'hsn';
+            if (/^(sl|sr|s)( ?no)?$|^serial|^#$|^no$/.test(t)) return 'sl';
+            if (/(item|part|product|model|catalog|catalogue) ?(code|no|number)|\bsku\b|^model|^code$|part number|make model/.test(t)) return 'code';
+            if (/\b(qty|quantity|qnty)\b/.test(t)) return 'qty';
+            if (/^(unit|units|uom|u o m)$|^unit of|^unit \(/.test(t)) return 'unit';
+            if (/\b(total|amount|value)\b/.test(t) && !/\b(unit|per)\b/.test(t)) return 'amount';
+            if (/\b(rate|price|cost)\b/.test(t)) return 'rate';
+            if (/description|particulars|\bitem\b|material|product|\bname\b|details|work|scope/.test(t)) return 'desc';
+            return null;
+        }
+
+        function reconHeaderMap(row) {
+            const map = {};
+            (row || []).forEach((c, i) => {
+                const role = reconClassifyHeader(c);
+                if (role && map[role] === undefined) map[role] = i;
+            });
+            const ok = (map.desc !== undefined || map.code !== undefined) &&
+                (map.qty !== undefined || map.rate !== undefined || map.amount !== undefined);
+            return ok ? map : null;
+        }
+
+        function reconParseRows(rows) {
+            const items = [], warnings = [];
+            let map = null, tables = 0, skipped = 0, missingQty = 0;
+            (rows || []).forEach((row, rIdx) => {
+                row = row || [];
+                const nonEmpty = row.filter(c => String(c == null ? '' : c).trim() !== '').length;
+                if (!nonEmpty) return;
+                const hm = reconHeaderMap(row);
+                if (hm) { map = hm; tables++; return; }
+                if (!map) return;
+                const get = role => (map[role] === undefined ? '' : row[map[role]]);
+                let name = String(get('desc') == null ? '' : get('desc')).trim();
+                const code = String(get('code') == null ? '' : get('code')).trim();
+                if (!name && code) name = code;
+                if (!name) { skipped++; return; }
+                if (/^(sub ?total|grand ?total|total|net total|gst|igst|cgst|sgst|tax|discount|round ?off|amount in words|in words)\b/i.test(name)) { skipped++; return; }
+                const qu = reconQtyUnit(get('qty'));
+                const rate = reconNum(get('rate'));
+                const amount = reconNum(get('amount'));
+                if (qu.qty === null && rate === null && amount === null) { skipped++; return; }   // section heading / note line
+                const unitCell = String(get('unit') == null ? '' : get('unit')).trim();
+                if (qu.qty === null || qu.qty === 0) missingQty++;
+                items.push({
+                    name, code, unit: unitCell || qu.unit, quantity: qu.qty, rate, amount,
+                    rowNo: rIdx + 1
+                });
+            });
+            if (!tables) warnings.push('No table header (description / quantity / rate / amount) was found.');
+            if (missingQty) warnings.push(missingQty + ' item(s) have no quantity - please fill them in before saving.');
+            if (skipped) warnings.push(skipped + ' heading / total / blank-value line(s) were skipped.');
+            return { items, warnings, tables, skipped };
+        }
+        /* RECON-CORE-END */
+
+        /* ===== Financial Reconciliation: UI + document import (uses RECON-CORE above) ===== */
+        let reconFilter = 'all';
+        let reconSearch = '';
+        let reconSourceChoice = {};   // projectId -> 'quote:<id>' | 'upload:<id>' (view choice; persisted when the user may write)
+        let reconLast = null;         // last computed result, so row buttons can refer to it by index
+        let reconDraft = null;        // BOQ being reviewed before saving
+        const RECON_MAX_BYTES = 10 * 1024 * 1024;
+        const RECON_EXTS = ['xlsx', 'xls', 'csv', 'pdf', 'docx'];
+
+
+        // The reconciliation card can live on a project's detail page or inside the Financial Reconciler tab.
+        let finReconSelId = null;
+        function reconInTab() {
+            const t = document.getElementById('finReconTabContent');
+            return !!(t && t.style && t.style.display === 'block' && finReconSelId);
+        }
+        function reconProject() {
+            if (reconInTab()) return projects.find(x => String(x.id) === String(finReconSelId)) || null;
+            return selectedProject;
+        }
+        function reconEl(id) {
+            const root = document.getElementById(reconInTab() ? 'finReconTabContent' : 'projectDetailsPanel');
+            return root ? root.querySelector('#' + id) : null;
+        }
+        function reconRerender() {
+            if (reconInTab()) finReconRender(); else renderProjectDetails();
+        }
+        function reconEffectiveSource(p) {
+            const c = reconSourceChoice[p.id];
+            return c !== undefined ? c : (p.reconSelectedSource || '');
+        }
+
+        function reconCompute(p) {
+            const lines = reconInvoiceLines(p);
+            const manual = p.reconMatches || {};
+            const sel = reconEffectiveSource(p);
+            let boq = null, boqLabel = '', boqScope = 'boq:' + sel, srcInfo = null;
+            if (sel.indexOf('quote:') === 0) {
+                const q = (p.quotes || []).find(x => String(x.id) === sel.slice(6));
+                if (q) { boqLabel = 'Quote ' + (q.quoteNo || ''); boq = reconMatchItems(reconRefsFromQuote(q), lines, manual, boqScope); }
+            } else if (sel.indexOf('upload:') === 0) {
+                const s = (p.reconBoqSources || []).find(x => String(x.id) === sel.slice(7));
+                if (s) { srcInfo = s; boqLabel = s.name || s.fileName || 'Uploaded BOQ'; boq = reconMatchItems(reconRefsFromSource(s), lines, manual, boqScope); }
+            }
+            const proc = reconMatchItems(reconRefsFromProcurement(p), lines, manual, 'proc');
+            const cust = reconCustomerOutstanding(p);
+            return { cust, boq, boqLabel, boqScope, srcInfo, proc, sel };
+        }
+
+        function reconBadge(status, label) {
+            const c = { match: ['#dcfce7', '#166534', '✓'], under: ['#fef3c7', '#92400e', '▼'], over: ['#ffedd5', '#9a3412', '▲'], none: ['#fee2e2', '#991b1b', '✕'], review: ['#dbeafe', '#1d4ed8', '⚠'] }[status];
+            return `<span style="background:${c[0]};color:${c[1]};padding:0.15rem 0.55rem;border-radius:0.75rem;font-size:0.72rem;font-weight:700;white-space:nowrap;">${c[2]} ${esc(label)}</span>`;
+        }
+        function reconQ(n) { return n === null || n === undefined ? '—' : String(Math.round(n * 1000) / 1000); }
+        function reconRowVisible(row) {
+            if (reconFilter !== 'all' && row.status !== reconFilter) return false;
+            return reconTextVisible([row.name, row.code, row.unit].join(' '));
+        }
+        function reconTextVisible(text) {
+            const t = reconSearch.trim().toLowerCase();
+            return !t || String(text).toLowerCase().indexOf(t) >= 0;
+        }
+
+        function reconStat(label, value, color) {
+            return `<div style="flex:1 1 150px;min-width:140px;background:#f9fafb;border:1px solid #e5e7eb;border-left:4px solid ${color};border-radius:0.5rem;padding:0.8rem 1rem;">
+                <div style="font-size:0.72rem;color:#6b7280;margin-bottom:0.25rem;">${esc(label)}</div><div style="font-size:1.1rem;font-weight:700;color:#111827;">${value}</div></div>`;
+        }
+
+        function reconItemTable(kind, res) {
+            const canEdit = isAdmin();
+            const th = 'padding:0.65rem 0.85rem;text-align:left;font-size:0.72rem;color:#374151;';
+            const td = 'padding:0.75rem 0.85rem;vertical-align:top;border-bottom:1px solid #f0f0f0;font-size:0.82rem;line-height:1.5;';
+            const tdr = td + 'text-align:right;white-space:nowrap;';
+            const refName = kind === 'proc' ? 'Procured Qty' : 'BOQ Qty';
+            let body = '';
+            res.rows.forEach((row, ri) => {
+                if (!reconRowVisible(row)) return;
+                const matched = row.lines.map((l, li) => `<div>${esc(l.invoiceNo || 'Invoice')} · ${esc(l.name)} × ${reconQ(l.qty)} ${esc(l.unit)}${l.manual ? ` <span style="color:#1d4ed8;">(manually confirmed)</span>${canEdit ? ` <a href="#" onclick="reconUnconfirm('${kind}',${ri},${li});return false;" style="color:#991b1b;">undo</a>` : ''}` : ''}</div>`).join('');
+                const cands = row.candidates.map((c, ci) => `<div style="color:#1d4ed8;">⚠ ${esc(c.invoiceNo || 'Invoice')} · ${esc(c.name)} × ${reconQ(c.qty)} ${esc(c.unit)} — ${esc(c.why)}${canEdit ? ` <a href="#" onclick="reconConfirm('${kind}',${ri},${ci});return false;" style="font-weight:700;">Confirm this is the same item</a>` : ''}</div>`).join('');
+                const src = row.duplicates ? `<div style="color:#6b7280;">Combined from ${row.sources.length} reference lines: ${row.sources.map(s => esc(s.source) + ' (' + reconQ(s.qty) + ')').join('; ')}</div>` : `<div style="color:#9ca3af;">${esc((row.sources[0] || {}).source || '')}</div>`;
+                body += `<tr>
+                    <td style="${td}"><div style="font-weight:600;">${esc(row.name)}</div>${row.code ? `<div style="color:#6b7280;">Code: ${esc(row.code)}</div>` : ''}</td>
+                    <td style="${td}">${esc(row.unit || '—')}</td>
+                    <td style="${tdr}">${reconQ(row.qty)}</td>
+                    <td style="${tdr}">${reconQ(row.invoicedQty)}</td>
+                    <td style="${tdr}">${reconQ(row.diff)}</td>
+                    <td style="${td}">${reconBadge(row.status, row.label)}${row.reason ? `<div style="color:#6b7280;margin-top:0.2rem;">${esc(row.reason)}</div>` : ''}</td>
+                    <td style="${td}font-size:0.72rem;">${matched || (cands ? '' : '<span style="color:#9ca3af;">No invoice line</span>')}${cands}${src}</td></tr>`;
+            });
+            if (!body) body = `<tr><td colspan="7" style="padding:0.8rem;text-align:center;color:#6b7280;font-size:0.8rem;">No items match the current filter / search.</td></tr>`;
+            let extra = '';
+            const add = res.additional.filter(l => reconTextVisible(l.name + ' ' + l.invoiceNo));
+            if (add.length) {
+                extra = `<div style="margin-top:1.5rem;margin-bottom:0.5rem;font-weight:700;font-size:0.88rem;">Additional Invoiced Items <span style="font-weight:400;color:#6b7280;">(on Tax Invoices, not found in ${kind === 'proc' ? 'procurement records' : 'the selected BOQ'})</span></div>
+                    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f3f4f6;"><th style="${th}">Item</th><th style="${th}">Invoice</th><th style="${th}">Unit</th><th style="${th}text-align:right;">Qty</th></tr></thead><tbody>
+                    ${add.map(l => `<tr><td style="${td}">${esc(l.name || '(no description)')}</td><td style="${td}">${esc(l.invoiceNo)}</td><td style="${td}">${esc(l.unit)}</td><td style="${tdr}">${reconQ(l.qty)}</td></tr>`).join('')}</tbody></table></div>`;
+            }
+            return `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:720px;"><thead><tr style="background:#f3f4f6;">
+                <th style="${th}">Item</th><th style="${th}">Unit</th><th style="${th}text-align:right;">${refName}</th><th style="${th}text-align:right;">Invoiced Qty</th><th style="${th}text-align:right;">Difference</th><th style="${th}">Status</th><th style="${th}">Traceability</th></tr></thead><tbody>${body}</tbody></table></div>${extra}`;
+        }
+
+        function reconResultsHtml() {
+            const p = reconProject();
+            if (!p) return '';
+            const R = reconCompute(p);
+            reconLast = R;
+            const c = R.cust;
+            const th = 'padding:0.65rem 0.85rem;text-align:left;font-size:0.72rem;color:#374151;';
+            const td = 'padding:0.65rem 0.85rem;border-bottom:1px solid #f0f0f0;font-size:0.82rem;line-height:1.5;';
+            const h = (t, first) => `<div style="font-weight:700;font-size:1rem;margin:${first ? '0.5rem' : '2rem'} 0 1rem;${first ? '' : 'padding-top:1.5rem;border-top:1px solid #e5e7eb;'}">${t}</div>`;
+            const note = t => `<div style="font-size:0.75rem;color:#6b7280;margin-top:0.9rem;line-height:1.5;">${t}</div>`;
+            let out = '';
+
+            // 1. Customer outstanding
+            out += h('1. Customer Outstanding', true);
+            out += `<div style="display:flex;flex-wrap:wrap;gap:0.85rem;">
+                ${reconStat('Total Tax Invoice Amount (' + c.invoiceCount + ')', formatCurrency(c.totalInvoiced), '#2563eb')}
+                ${reconStat('Payments Received (' + c.paymentCount + ')', formatCurrency(c.totalPaid), '#16a34a')}
+                ${c.credit > 0 ? reconStat('Customer Credit / Advance', formatCurrency(c.credit), '#7c3aed') : reconStat('Outstanding Amount', formatCurrency(c.outstanding), c.outstanding > 0 ? '#dc2626' : '#16a34a')}</div>`;
+            out += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:1.1rem;"><thead><tr style="background:#f3f4f6;"><th style="${th}">Particulars</th><th style="${th}">Date</th><th style="${th}text-align:right;">Amount</th></tr></thead><tbody>
+                ${c.invoices.map(i => `<tr><td style="${td}">Tax Invoice ${esc(i.number)}</td><td style="${td}">${esc(i.date)}</td><td style="${td}text-align:right;">${formatCurrency(i.amount)}</td></tr>`).join('') || `<tr><td colspan="3" style="${td}color:#6b7280;">No Tax Invoices yet.</td></tr>`}
+                <tr style="font-weight:700;"><td style="${td}" colspan="2">Total Tax Invoice Amount</td><td style="${td}text-align:right;">${formatCurrency(c.totalInvoiced)}</td></tr>
+                ${c.payments.map(i => `<tr><td style="${td}">Payment${i.mode ? ' · ' + esc(i.mode) : ''}${i.ref ? ' · ' + esc(i.ref) : ''}</td><td style="${td}">${esc(String(i.date).slice(0, 10))}</td><td style="${td}text-align:right;">− ${formatCurrency(i.amount)}</td></tr>`).join('')}
+                <tr style="font-weight:700;"><td style="${td}" colspan="2">${c.credit > 0 ? 'Customer Credit / Advance' : 'Outstanding Amount'}</td><td style="${td}text-align:right;">${formatCurrency(c.credit > 0 ? c.credit : c.outstanding)}</td></tr></tbody></table></div>`;
+            out += note('Counts every Tax Invoice and every payment recorded on this project (the portal has no cancelled/void flag, so none are excluded). Proforma Invoices, quotations and BOQ values are never used. Credit Notes are not subtracted' + (c.creditNoteCount ? ` (${c.creditNoteCount} credit note(s) worth ${formatCurrency(c.creditNoteTotal)} exist — see Master Invoice)` : '') + '.');
+
+            // 2. BOQ vs invoices
+            out += h('2. BOQ / Quotation vs Tax Invoices' + (R.boqLabel ? ` <span style="font-weight:400;color:#6b7280;">— ${esc(R.boqLabel)}</span>` : ''));
+            if (!R.boq) {
+                out += `<div style="padding:1.1rem 1.25rem;background:#f9fafb;border:1px dashed #d1d5db;border-radius:0.5rem;font-size:0.85rem;color:#6b7280;">${R.sel ? 'The selected BOQ source no longer exists. Please choose another source.' : 'Select a project quotation or upload a BOQ document above to compare it with the Tax Invoices.'}</div>`;
+            } else {
+                const k = R.boq.counts;
+                out += `<div style="display:flex;flex-wrap:wrap;gap:0.85rem;margin-bottom:1.1rem;">
+                    ${reconStat('Total BOQ Items', R.boq.total, '#6b7280')}${reconStat('Matched', k.match, '#16a34a')}${reconStat('Under-billed', k.under, '#d97706')}
+                    ${reconStat('Over-billed', k.over, '#ea580c')}${reconStat('Not Invoiced', k.none, '#dc2626')}${reconStat('Review Required', k.review, '#2563eb')}</div>`;
+                out += reconItemTable('boq', R.boq);
+            }
+
+            // 3. Procurement vs invoices
+            out += h('3. Procurement vs Tax Invoices');
+            if (!R.proc.total) {
+                out += `<div style="padding:1.1rem 1.25rem;background:#f9fafb;border:1px dashed #d1d5db;border-radius:0.5rem;font-size:0.85rem;color:#6b7280;">No procurement records with item names exist on this project, so there is nothing to compare.</div>`;
+            } else {
+                const k = R.proc.counts;
+                out += `<div style="display:flex;flex-wrap:wrap;gap:0.85rem;margin-bottom:1.1rem;">
+                    ${reconStat('Total Procured Items', R.proc.total, '#6b7280')}${reconStat('Fully Invoiced', k.match, '#16a34a')}${reconStat('Partially Invoiced', k.under, '#d97706')}
+                    ${reconStat('Over-Invoiced', k.over, '#ea580c')}${reconStat('Not Invoiced', k.none, '#dc2626')}${reconStat('Review Required', k.review, '#2563eb')}</div>`;
+                out += reconItemTable('proc', R.proc);
+                out += note('Procurement records have no model/code field, so items are matched on name and unit (a model number written inside the name is also used). Procurement entries without a unit are compared by name only.');
+            }
+            return out;
+        }
+
+        function reconControlsHtml() {
+            const p = reconProject();
+            const sel = reconEffectiveSource(p);
+            const quotes = p.quotes || [], srcs = p.reconBoqSources || [];
+            const opt = (v, l) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`;
+            const chosenSrc = sel.indexOf('upload:') === 0 ? srcs.find(s => String(s.id) === sel.slice(7)) : null;
+            const fl = chosenSrc && chosenSrc.file ? safeUrl(chosenSrc.file.webUrl || chosenSrc.file.downloadUrl) : '';
+            const inp = 'padding:0.5rem 0.75rem;border:1px solid #d1d5db;border-radius:0.4rem;font-size:0.85rem;';
+            return `<div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:0.85rem;">
+                <label style="font-size:0.82rem;font-weight:600;color:#374151;">BOQ source</label>
+                <select style="${inp}max-width:100%;" onchange="reconSelectSource(this.value)">
+                    ${opt('', '— Select BOQ source —')}
+                    ${quotes.length ? `<optgroup label="Project quotations">${quotes.map(q => opt('quote:' + q.id, 'Quote ' + (q.quoteNo || q.id) + (q.clientName ? ' · ' + q.clientName : ''))).join('')}</optgroup>` : ''}
+                    ${srcs.length ? `<optgroup label="Uploaded BOQ documents">${srcs.map(s => opt('upload:' + s.id, (s.name || s.fileName || 'BOQ'))).join('')}</optgroup>` : ''}
+                </select>
+                ${chosenSrc ? `<button class="btn btn-secondary" style="padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="reconReviewSource('${esc(String(chosenSrc.id))}')">Review extracted items</button>` : ''}
+                ${chosenSrc && isAdmin() ? `<button class="btn btn-danger" style="padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="reconDeleteSource('${esc(String(chosenSrc.id))}')">Delete source</button>` : ''}
+                ${fl ? `<a href="${fl}" target="_blank" rel="noopener" style="font-size:0.78rem;">📎 Original file</a>` : ''}
+                ${chosenSrc && !chosenSrc.file ? `<span style="font-size:0.75rem;color:#991b1b;">Original file not stored${chosenSrc.fileError ? ' (' + esc(chosenSrc.fileError) + ')' : ''}</span>` : ''}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+                <select style="${inp}" onchange="reconFilter=this.value;reconRefresh()">
+                    ${[['all', 'All'], ['match', 'Matched / Fully Invoiced'], ['under', 'Under-billed / Partially Invoiced'], ['over', 'Over-billed / Over-Invoiced'], ['none', 'Not Invoiced'], ['review', 'Review Required']].map(o => `<option value="${o[0]}" ${reconFilter === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}
+                </select>
+                <input type="search" placeholder="Search item, description or model…" value="${esc(reconSearch)}" oninput="reconSearch=this.value;reconRefresh()" style="${inp}flex:1 1 200px;min-width:160px;">
+            </div>`;
+        }
+
+        function renderReconCard() {
+            const canWrite = canManageData();
+            return `<div class="card">
+                <div class="card-header">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                        <span>🧮 Financial Reconciliation</span>
+                        <span style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                            <button class="btn btn-secondary" style="padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="reconRefresh()">↻ Recalculate</button>
+                            ${canWrite ? `<button class="btn btn-primary" style="padding:0.25rem 0.6rem;font-size:0.75rem;" onclick="reconShowUploadModal()">⬆ Upload BOQ</button>` : ''}
+                        </span>
+                    </div>
+                </div>
+                <div style="padding:1.25rem 1.5rem 1.75rem;">
+                    <div id="reconControls" style="padding-bottom:0.5rem;">${reconControlsHtml()}</div>
+                    <div id="reconResults">${reconResultsHtml()}</div>
+                </div>
+            </div>`;
+        }
+
+        function reconRefresh() {
+            const el = reconEl('reconResults');
+            if (el && reconProject()) el.innerHTML = reconResultsHtml();
+        }
+        function reconRefreshAll() {
+            const c = reconEl('reconControls');
+            if (c && reconProject()) c.innerHTML = reconControlsHtml();
+            reconRefresh();
+        }
+
+        async function reconSaveFields(fields) {
+            const p = reconProject();
+            if (!p) return false;
+            try {
+                if (db) await db.collection('projects').doc(p.id).update(fields);
+                Object.assign(p, fields);
+                saveToLocalStorage();
+                return true;
+            } catch (e) {
+                console.error('Reconciliation save failed:', e);
+                alert('⛔ Could not save: ' + (e.message || e));
+                return false;
+            }
+        }
+
+        function reconSelectSource(val) {
+            const p = reconProject();
+            if (!p) return;
+            reconSourceChoice[p.id] = val;
+            reconRefreshAll();
+            if (canManageData() && db) db.collection('projects').doc(p.id).update({ reconSelectedSource: val }).then(() => { p.reconSelectedSource = val; }).catch(e => console.warn('Could not remember BOQ source:', e));
+        }
+
+        // ----- manual confirmation of uncertain matches -----
+        function reconManualMapChange(kind, ri, cand, add) {
+            const R = reconLast, res = kind === 'proc' ? R.proc : R.boq;
+            const scope = kind === 'proc' ? 'proc' : R.boqScope;
+            const manual = JSON.parse(JSON.stringify(reconProject().reconMatches || {}));
+            Object.keys(manual).forEach(k => {   // a line can belong to one reference row only
+                if (k.indexOf(scope + '|') === 0) manual[k] = manual[k].filter(x => x !== cand.key);
+            });
+            if (add) {
+                const key = scope + '|' + res.rows[ri].key;
+                manual[key] = (manual[key] || []).concat(cand.key);
+            }
+            Object.keys(manual).forEach(k => { if (!manual[k].length) delete manual[k]; });
+            return manual;
+        }
+        async function reconConfirm(kind, ri, ci) {
+            if (!checkPermission('write') || !isAdmin() || !reconLast) return;
+            const res = kind === 'proc' ? reconLast.proc : reconLast.boq;
+            const cand = res.rows[ri].candidates[ci];
+            if (!confirm('Confirm that invoice line "' + cand.name + '" (' + cand.invoiceNo + ') is the same item as "' + res.rows[ri].name + '"?\n\nIts quantity will then be counted in the comparison.')) return;
+            if (await reconSaveFields({ reconMatches: reconManualMapChange(kind, ri, cand, true) })) reconRefresh();
+        }
+        async function reconUnconfirm(kind, ri, li) {
+            if (!checkPermission('write') || !isAdmin() || !reconLast) return;
+            const res = kind === 'proc' ? reconLast.proc : reconLast.boq;
+            const line = res.rows[ri].lines[li];
+            if (await reconSaveFields({ reconMatches: reconManualMapChange(kind, ri, line, false) })) reconRefresh();
+        }
+
+        // ----- BOQ document import -----
+        function reconShowUploadModal() {
+            if (!checkPermission('write')) return;
+            document.getElementById('reconFileInput').value = '';
+            document.getElementById('reconSourceName').value = '';
+            document.getElementById('reconUploadStatus').textContent = '';
+            document.getElementById('reconReadBtn').disabled = false;
+            document.getElementById('reconUploadModal').classList.add('show');
+        }
+
+        // rows of a worksheet with vertically merged cells filled down
+        function reconSheetRows(ws) {
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+            (ws['!merges'] || []).forEach(m => {
+                if (m.e.r <= m.s.r) return;
+                const v = (rows[m.s.r] || [])[m.s.c];
+                if (v === undefined || v === '') return;
+                for (let r = m.s.r + 1; r <= m.e.r; r++) {
+                    rows[r] = rows[r] || [];
+                    if (rows[r][m.s.c] === undefined || rows[r][m.s.c] === '') rows[r][m.s.c] = v;
+                }
+            });
+            return rows;
+        }
+
+        async function reconExtract(file, say) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            let items = [], warnings = [], usedOcr = false, tables = 0;
+            const absorb = r => { items = items.concat(r.items); warnings = warnings.concat(r.warnings.filter(w => !/No table header/.test(w))); tables += r.tables; };
+            if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+                say('⏳ Reading spreadsheet…');
+                if (typeof XLSX === 'undefined') await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+                const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+                wb.SheetNames.forEach(n => absorb(reconParseRows(reconSheetRows(wb.Sheets[n]))));
+            } else if (ext === 'docx') {
+                say('⏳ Reading Word document…');
+                if (typeof mammoth === 'undefined') await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+                const html = (await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() })).value;
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const tbls = Array.from(doc.querySelectorAll('table'));
+                if (!tbls.length) warnings.push('No tables were found in the Word document.');
+                tbls.forEach(t => absorb(reconParseRows(Array.from(t.rows).map(tr => Array.from(tr.cells).map(td => td.textContent.trim())))));
+            } else if (ext === 'pdf') {
+                const r = await readQuoteFile(file, say);
+                usedOcr = !!r.usedOcr;
+                tables = 1;
+                items = r.items.map(i => ({ name: i.name, code: '', unit: i.unit || '', quantity: i.quantity, rate: i.rate, amount: null }));
+                if (usedOcr) warnings.push('Some pages were scanned images and were read with OCR. OCR can misread numbers - check every row.');
+                if (r.uncertain) warnings.push(r.uncertain + ' line(s) where quantity × rate does not match the amount in the file.');
+            }
+            if (!tables && ext !== 'pdf') warnings.unshift('No table header (description / quantity / rate / amount) was found in the file.');
+            items.forEach(i => { i.id = uid4(); });
+            return { items, warnings, usedOcr, ext };
+        }
+
+        async function reconReadFile() {
+            const input = document.getElementById('reconFileInput');
+            const status = document.getElementById('reconUploadStatus');
+            const f = input.files && input.files[0];
+            if (!f) { status.textContent = '⛔ Please choose a file.'; return; }
+            const ext = f.name.split('.').pop().toLowerCase();
+            if (RECON_EXTS.indexOf(ext) < 0) { status.textContent = '⛔ Unsupported file type. Use .xlsx, .xls, .csv, .pdf or .docx.'; return; }
+            if (f.size === 0) { status.textContent = '⛔ The file is empty.'; return; }
+            if (f.size > RECON_MAX_BYTES) { status.textContent = '⛔ File is larger than 10 MB (' + (f.size / 1048576).toFixed(1) + ' MB).'; return; }
+            const btn = document.getElementById('reconReadBtn');
+            btn.disabled = true;
+            try {
+                const r = await reconExtract(f, m => { status.textContent = m; });
+                if (!r.items.length) {
+                    status.textContent = '⛔ No items could be read from this file. ' + (r.ext === 'pdf' ? 'If it is a scanned or image-only PDF, OCR could not read it reliably - please upload a clearer copy or an Excel/CSV version. ' : '') + (r.warnings[0] || '') + ' Nothing was saved.';
+                    btn.disabled = false;
+                    return;
+                }
+                reconDraft = { editingId: null, name: document.getElementById('reconSourceName').value.trim() || f.name.replace(/\.[^.]+$/, ''), fileName: f.name, file: f, items: r.items, warnings: r.warnings };
+                closeModal('reconUploadModal');
+                reconOpenReview();
+            } catch (e) {
+                console.error('BOQ read failed:', e);
+                status.textContent = '⛔ Could not read the file: ' + (e.message || e);
+            }
+            btn.disabled = false;
+        }
+
+        function reconReviewSource(id) {
+            if (!checkPermission('write')) return;
+            const s = (reconProject().reconBoqSources || []).find(x => String(x.id) === String(id));
+            if (!s) return;
+            reconDraft = { editingId: s.id, name: s.name || s.fileName || '', fileName: s.fileName || '', file: null, items: JSON.parse(JSON.stringify(s.items || [])), warnings: s.extractionNote ? [s.extractionNote] : [] };
+            reconOpenReview();
+        }
+
+        function reconReviewRows() {
+            const inp = 'width:100%;box-sizing:border-box;padding:0.25rem 0.35rem;border:1px solid #d1d5db;border-radius:0.3rem;font-size:0.78rem;';
+            return reconDraft.items.map((it, i) => {
+                const missing = reconNum(it.quantity) === null;
+                return `<tr>
+                    <td style="padding:0.2rem;"><input style="${inp}min-width:180px;" value="${esc(it.name || '')}" oninput="reconDraft.items[${i}].name=this.value"></td>
+                    <td style="padding:0.2rem;"><input style="${inp}min-width:70px;" value="${esc(it.code || '')}" oninput="reconDraft.items[${i}].code=this.value"></td>
+                    <td style="padding:0.2rem;"><input style="${inp}width:60px;" value="${esc(it.unit || '')}" oninput="reconDraft.items[${i}].unit=this.value"></td>
+                    <td style="padding:0.2rem;"><input style="${inp}width:70px;${missing ? 'border-color:#dc2626;background:#fef2f2;' : ''}" value="${it.quantity === null || it.quantity === undefined ? '' : esc(String(it.quantity))}" oninput="reconDraft.items[${i}].quantity=this.value;this.style.borderColor=''"></td>
+                    <td style="padding:0.2rem;"><input style="${inp}width:80px;" value="${it.rate === null || it.rate === undefined ? '' : esc(String(it.rate))}" oninput="reconDraft.items[${i}].rate=this.value"></td>
+                    <td style="padding:0.2rem;"><input style="${inp}width:90px;" value="${it.amount === null || it.amount === undefined ? '' : esc(String(it.amount))}" oninput="reconDraft.items[${i}].amount=this.value"></td>
+                    <td style="padding:0.2rem;"><button class="btn btn-danger" style="padding:0.15rem 0.45rem;font-size:0.72rem;" onclick="reconDraft.items.splice(${i},1);reconOpenReview(true)">✕</button></td></tr>`;
+            }).join('');
+        }
+
+        function reconOpenReview(keepOpen) {
+            const d = reconDraft;
+            document.getElementById('reconReviewTitle').textContent = (d.editingId ? 'Review BOQ items — ' : 'Review extracted BOQ — ') + (d.fileName || d.name);
+            document.getElementById('reconReviewWarn').innerHTML = d.warnings.map(w => `<div style="color:#92400e;background:#fef3c7;border-radius:0.4rem;padding:0.35rem 0.6rem;margin-bottom:0.3rem;font-size:0.78rem;">⚠ ${esc(w)}</div>`).join('') +
+                (d.file ? '<div style="font-size:0.78rem;color:#374151;">Check every row against your document before saving. The original file will be uploaded to OneDrive when you save.</div>' : '');
+            document.getElementById('reconReviewName').value = d.name;
+            document.getElementById('reconReviewBody').innerHTML = reconReviewRows();
+            if (!keepOpen) document.getElementById('reconReviewModal').classList.add('show');
+        }
+
+        function reconAddDraftRow() {
+            reconDraft.items.push({ id: uid4(), name: '', code: '', unit: 'Nos', quantity: null, rate: null, amount: null });
+            reconOpenReview(true);
+        }
+
+        async function reconSaveDraft() {
+            if (!checkPermission('write') || !reconDraft) return;
+            const d = reconDraft, p = reconProject();
+            d.name = document.getElementById('reconReviewName').value.trim() || d.name;
+            const items = d.items.filter(it => String(it.name || '').trim());
+            if (!items.length) { alert('Add at least one item with a description.'); return; }
+            const noQty = items.filter(it => reconNum(it.quantity) === null).length;
+            if (noQty && !confirm(noQty + ' item(s) have no quantity. They will show as "Review Required" in the reconciliation.\n\nSave anyway?')) return;
+            const btn = document.getElementById('reconSaveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            let fileMeta = null, fileError = '';
+            const existing = d.editingId ? (p.reconBoqSources || []).find(x => String(x.id) === String(d.editingId)) : null;
+            if (existing) { fileMeta = existing.file || null; fileError = existing.fileError || ''; }
+            if (d.file) {
+                try {
+                    const meta = await uploadToOneDrive({ name: d.file.name, size: d.file.size, type: d.file.type || 'application/octet-stream', data: await fileToBase64(d.file) }, 'boq');
+                    fileMeta = JSON.parse(JSON.stringify(meta));
+                } catch (e) {
+                    fileError = e.message || 'upload failed';
+                }
+            }
+            const num = v => { const n = reconNum(v); return n === null ? null : n; };
+            const src = {
+                id: d.editingId || (Date.now().toString() + uid4()),
+                name: d.name, fileName: d.fileName || '', file: fileMeta, fileError: fileMeta ? '' : fileError,
+                items: items.map(it => ({ id: it.id || uid4(), name: String(it.name).trim(), code: String(it.code || '').trim(), unit: String(it.unit || '').trim(), quantity: num(it.quantity), rate: num(it.rate), amount: num(it.amount) })),
+                extractionNote: (d.warnings || []).join(' '),
+                createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(),
+                createdBy: existing ? (existing.createdBy || null) : (currentUser ? currentUser.uid : null)
+            };
+            const list = (p.reconBoqSources || []).filter(x => String(x.id) !== String(src.id)).concat(src);
+            const fields = { reconBoqSources: list };
+            if (!d.editingId) { fields.reconSelectedSource = 'upload:' + src.id; reconSourceChoice[p.id] = 'upload:' + src.id; }
+            const ok = await reconSaveFields(fields);
+            btn.disabled = false; btn.textContent = 'Save BOQ';
+            if (!ok) return;
+            closeModal('reconReviewModal');
+            reconDraft = null;
+            reconRerender();
+            if (d.file && !fileMeta) alert('⚠️ The extracted items were saved, but the original file was NOT stored: ' + fileError + '\n\nConnect OneDrive and re-upload if you need the original document kept.');
+            else if (d.file) alert('✅ BOQ saved and the original file was uploaded.');
+            else alert('✅ BOQ items updated.');
+        }
+
+        async function reconDeleteSource(id) {
+            if (!checkPermission('write') || !isAdmin()) return;
+            const p = reconProject();
+            const s = (p.reconBoqSources || []).find(x => String(x.id) === String(id));
+            if (!s || !confirm('Delete the uploaded BOQ "' + (s.name || s.fileName) + '" from this project?\n\nThe original file in OneDrive (if any) is not deleted.')) return;
+            const fields = { reconBoqSources: (p.reconBoqSources || []).filter(x => String(x.id) !== String(id)) };
+            const manual = JSON.parse(JSON.stringify(p.reconMatches || {}));
+            Object.keys(manual).forEach(k => { if (k.indexOf('boq:upload:' + id + '|') === 0) delete manual[k]; });
+            fields.reconMatches = manual;
+            if (reconEffectiveSource(p) === 'upload:' + id) { fields.reconSelectedSource = ''; reconSourceChoice[p.id] = ''; }
+            if (await reconSaveFields(fields)) reconRerender();
+        }
+
+        // ----- Financial Reconciler tab: every project at a glance -----
+        function finReconRender() {
+            const body = document.getElementById('finReconBody');
+            if (!body) return;
+            const filters = document.getElementById('finReconFilters');
+            if (filters) filters.style.display = finReconSelId ? 'none' : 'flex';
+            if (finReconSelId) { finReconRenderDetail(body); return; }
+            const q = (document.getElementById('finReconSearch')?.value || '').trim().toLowerCase();
+            const stage = document.getElementById('finReconStage')?.value || 'all';
+            const attn = document.getElementById('finReconAttn')?.value || 'all';
+            const th = 'padding:0.65rem 0.85rem;text-align:left;font-size:0.72rem;color:#374151;white-space:nowrap;';
+            const td = 'padding:0.8rem 0.85rem;vertical-align:top;border-bottom:1px solid #f0f0f0;font-size:0.82rem;line-height:1.5;';
+            const tdr = td + 'text-align:right;white-space:nowrap;';
+            const pill = (st, n, label) => n ? `<span title="${esc(label)}" style="display:inline-block;margin:0 0.3rem 0.3rem 0;">${reconBadge(st, n + ' ' + label)}</span>` : '';
+            const rows = [];
+            let tInv = 0, tPaid = 0, tOut = 0, tCred = 0;
+            projects.forEach(p => {
+                if (stage !== 'all' && p.stage !== stage) return;
+                if (q && (String(p.name || '') + ' ' + String(p.customerName || '')).toLowerCase().indexOf(q) < 0) return;
+                let R;
+                try { R = reconCompute(p); } catch (e) { console.error('Reconciliation failed for', p.id, e); return; }
+                const pc = R.proc.counts, bc = R.boq ? R.boq.counts : null;
+                const flags = {
+                    outstanding: R.cust.outstanding > 0, credit: R.cust.credit > 0,
+                    uninvoiced: pc.none + pc.under + pc.over > 0,
+                    review: pc.review > 0 || (bc && bc.review > 0)
+                };
+                if (attn !== 'all' && !flags[attn]) return;
+                tInv += R.cust.totalInvoiced; tPaid += R.cust.totalPaid; tOut += R.cust.outstanding; tCred += R.cust.credit;
+                rows.push({ p, R, pc, bc });
+            });
+            const stat = (l, v, c) => reconStat(l, v, c);
+            let html = `<div style="display:flex;flex-wrap:wrap;gap:0.85rem;margin-bottom:1.5rem;">
+                ${stat('Projects', rows.length, '#6b7280')}${stat('Total Tax Invoiced', formatCurrency(tInv), '#2563eb')}${stat('Total Received', formatCurrency(tPaid), '#16a34a')}
+                ${stat('Total Outstanding', formatCurrency(tOut), '#dc2626')}${stat('Total Credit / Advance', formatCurrency(tCred), '#7c3aed')}</div>`;
+            if (!rows.length) {
+                body.innerHTML = html + '<div style="padding:1.5rem;text-align:center;color:#6b7280;background:#f9fafb;border:1px dashed #d1d5db;border-radius:0.5rem;">No projects match the current filters.</div>';
+                return;
+            }
+            const stageCol = { won: '#10b981', ongoing: '#3b82f6', handovered: '#8b5cf6' };
+            html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:900px;"><thead><tr style="background:#f3f4f6;">
+                <th style="${th}">Project</th><th style="${th}">Customer</th><th style="${th}text-align:right;">Tax Invoiced</th><th style="${th}text-align:right;">Received</th>
+                <th style="${th}text-align:right;">Outstanding / Credit</th><th style="${th}">Procurement vs Invoices</th><th style="${th}">BOQ vs Invoices</th><th style="${th}"></th></tr></thead><tbody>`;
+            rows.forEach(({ p, R, pc, bc }) => {
+                const c = R.cust;
+                const bal = c.credit > 0 ? `<span style="color:#7c3aed;font-weight:700;">${formatCurrency(c.credit)}</span><div style="font-size:0.7rem;color:#6b7280;">credit / advance</div>`
+                    : `<span style="color:${c.outstanding > 0 ? '#dc2626' : '#16a34a'};font-weight:700;">${formatCurrency(c.outstanding)}</span><div style="font-size:0.7rem;color:#6b7280;">outstanding</div>`;
+                const proc = R.proc.total ? pill('match', pc.match, 'Fully') + pill('under', pc.under, 'Partial') + pill('over', pc.over, 'Over') + pill('none', pc.none, 'Not invoiced') + pill('review', pc.review, 'Review')
+                    : '<span style="color:#9ca3af;">No procurement records</span>';
+                const boq = bc ? pill('match', bc.match, 'Matched') + pill('under', bc.under, 'Under') + pill('over', bc.over, 'Over') + pill('none', bc.none, 'Not invoiced') + pill('review', bc.review, 'Review')
+                    : '<span style="color:#9ca3af;">No BOQ source selected</span>';
+                html += `<tr>
+                    <td style="${td}"><div style="font-weight:600;">${esc(p.name)}</div><div style="font-size:0.72rem;color:${stageCol[p.stage] || '#64748b'};font-weight:600;text-transform:capitalize;">${esc(p.stage || '')}</div></td>
+                    <td style="${td}">${esc(p.customerName || '—')}</td>
+                    <td style="${tdr}">${formatCurrency(c.totalInvoiced)}<div style="font-size:0.7rem;color:#6b7280;">${c.invoiceCount} invoice(s)</div></td>
+                    <td style="${tdr}">${formatCurrency(c.totalPaid)}<div style="font-size:0.7rem;color:#6b7280;">${c.paymentCount} payment(s)</div></td>
+                    <td style="${tdr}">${bal}</td>
+                    <td style="${td}">${proc}</td><td style="${td}">${boq}</td>
+                    <td style="${td}"><button class="btn btn-primary" style="padding:0.3rem 0.8rem;font-size:0.75rem;white-space:nowrap;" onclick="finReconOpen('${esc(String(p.id))}')">View</button></td></tr>`;
+            });
+            body.innerHTML = html + '</tbody></table></div><div style="font-size:0.75rem;color:#6b7280;margin-top:0.9rem;line-height:1.5;">Same rules as the Financial Reconciliation card on each project: Tax Invoices only, every recorded payment counted, procurement matched on item name and unit. Click View on a project for the item-by-item detail, to choose a BOQ source or to upload a BOQ.</div>';
+        }
+
+        function finReconRenderDetail(body) {
+            const p = projects.find(x => String(x.id) === String(finReconSelId));
+            if (!p) { finReconSelId = null; finReconRender(); return; }
+            body.innerHTML = `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <button class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="finReconBack()">← All projects</button>
+                <div><div style="font-weight:700;font-size:1.1rem;">${esc(p.name)}</div>
+                <div style="font-size:0.78rem;color:#6b7280;">${esc(p.customerName || '')}${p.customerName && p.stage ? ' · ' : ''}<span style="text-transform:capitalize;">${esc(p.stage || '')}</span></div></div></div>` + renderReconCard();
+        }
+        function finReconOpen(id) { finReconSelId = String(id); finReconRender(); window.scrollTo(0, 0); }
+        function finReconBack() { finReconSelId = null; finReconRender(); }
+
+/* ===== end Financial Reconciliation ===== */
+
 
         function renderProjectDetails() {
             if (!selectedProject) {
@@ -13416,6 +14364,9 @@ ${email} has been completely removed from the system.`);
                         </div>
                         <div>${creditNotesHtml}</div>
                     </div>
+
+                    <!-- Financial Reconciliation Section -->
+                    ${renderReconCard()}
 
                     <!-- Petty Cash Section -->
                     <div class="card">
