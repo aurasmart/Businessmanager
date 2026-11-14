@@ -14348,8 +14348,15 @@ ${email} has been completely removed from the system.`);
             `).join('');
 
             // Set default challan number
-            const challanCount = (selectedProject.deliveryChallans || []).length + 1;
-            document.getElementById('challanNumber').value = `DC-${String(challanCount).padStart(3, '0')}`;
+            // Global sequence preview (the number is reserved on save)
+            const challanNumberInput = document.getElementById('challanNumber');
+            challanNumberInput.readOnly = !editingChallanId;
+            if (!editingChallanId) {
+                challanNumberInput.value = '';
+                previewNextChallanNumber().then(n => {
+                    if (!editingChallanId && !challanNumberInput.value) challanNumberInput.value = n;
+                });
+            }
             
             // Set today's date
             document.getElementById('challanDeliveryDate').value = new Date().toISOString().split('T')[0];
@@ -14359,10 +14366,53 @@ ${email} has been completely removed from the system.`);
 
         let editingChallanId = null;
 
+        // ---- Global Delivery Challan sequence (counters/deliveryChallan = { last }) ----
+        const formatChallanNumber = n => `DC-${String(n).padStart(3, '0')}`;
+
+        function maxChallanNumberIn(projectList) {
+            let max = 0;
+            projectList.forEach(p => (p.deliveryChallans || []).forEach(dc => {
+                const m = /^DC-(\d+)$/i.exec(dc.challanNumber || '');
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            }));
+            return max;
+        }
+
+        // Highest existing DC number across ALL projects (local list is territory-filtered)
+        async function seedChallanCounter() {
+            if (!db) return maxChallanNumberIn(projects);
+            const snap = await db.collection('projects').get();
+            return maxChallanNumberIn(snap.docs.map(d => d.data()));
+        }
+
+        async function previewNextChallanNumber() {
+            try {
+                if (!db) return formatChallanNumber(maxChallanNumberIn(projects) + 1);
+                const doc = await db.collection('counters').doc('deliveryChallan').get();
+                const last = doc.exists ? (doc.data().last || 0) : await seedChallanCounter();
+                return formatChallanNumber(last + 1);
+            } catch (e) {
+                console.error('Challan number preview failed:', e);
+                return formatChallanNumber(maxChallanNumberIn(projects) + 1);
+            }
+        }
+
+        async function reserveNextChallanNumber() {
+            if (!db) return formatChallanNumber(maxChallanNumberIn(projects) + 1);
+            const ref = db.collection('counters').doc('deliveryChallan');
+            const seed = (await ref.get()).exists ? 0 : await seedChallanCounter();
+            return db.runTransaction(async tx => {
+                const doc = await tx.get(ref);
+                const next = (doc.exists ? (doc.data().last || 0) : seed) + 1;
+                tx.set(ref, { last: next });
+                return formatChallanNumber(next);
+            });
+        }
+
         async function saveDeliveryChallan() {
             if (!checkPermission('write')) return;
 
-            const challanNumber = document.getElementById('challanNumber').value.trim();
+            let challanNumber = document.getElementById('challanNumber').value.trim();
             const deliveryDate = document.getElementById('challanDeliveryDate').value;
             const vehicleNumber = document.getElementById('challanVehicle').value.trim();
             const receivedBy = document.getElementById('challanReceivedBy').value.trim();
@@ -14384,6 +14434,17 @@ ${email} has been completely removed from the system.`);
             const existingChallan = editingChallanId
                 ? (selectedProject.deliveryChallans || []).find(dc => dc.id === editingChallanId)
                 : null;
+
+            if (!editingChallanId) {
+                try {
+                    challanNumber = await reserveNextChallanNumber();
+                    document.getElementById('challanNumber').value = challanNumber;
+                } catch (error) {
+                    console.error('Error reserving challan number:', error);
+                    alert('Failed to generate challan number');
+                    return;
+                }
+            }
 
             const challan = {
                 id: editingChallanId || Date.now().toString(),
